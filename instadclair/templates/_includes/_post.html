@@ -64,9 +64,8 @@
 
                         <!-- Botón de Me Gusta -->
                         <div class="d-flex align-items-center me-3">
-
                             {% if request.user.is_authenticated %}
-                                <a href="#" 
+                                <a href="{% url 'like_post_ajax' post.pk %}" 
                                 class="btn-like btn btn-link btn-sm text-decoration-none p-0 me-1" 
                                 data-post-id="{{ post.pk }}">
                                     <i class="bi {% if request.user in post.likes.all %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}" 
@@ -78,7 +77,6 @@
                                     <i class="bi bi-heart" style="font-size: 1rem;"></i>
                                 </a>
                             {% endif %}
-
                             <span class="like-count">{{ post.likes.count }}</span>
                         </div>
 
@@ -105,37 +103,7 @@
     </div>
     <!-- FIN FILA DE PUBLICACIONES -->
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const likeButtons = document.querySelectorAll('.btn-like');
 
-    likeButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            const postId = this.dataset.postId;
-            const url = `/post/like-ajax/${postId}/`;
-            const icon = this.querySelector('i');
-            const countSpan = this.nextElementSibling; // <span class="like-count">
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.liked) {
-                        icon.classList.remove('bi-heart');
-                        icon.classList.add('bi-heart-fill', 'text-danger');
-                    } else {
-                        icon.classList.remove('bi-heart-fill', 'text-danger');
-                        icon.classList.add('bi-heart');
-                    }
-
-                    countSpan.textContent = data.likes_count;
-                })
-                .catch(err => console.error('Error al dar like:', err));
-        });
-    });
-});
-</script>
  
 
 
