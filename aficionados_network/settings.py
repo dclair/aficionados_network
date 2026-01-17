@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-TEMPLATES_DIR = BASE_DIR / "instadclair" / "templates"
+TEMPLATES_DIR = BASE_DIR / "aficionados_network" / "templates"
 
 
 # Quick-start development settings - unsuitable for production
@@ -36,9 +36,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     # Apps propias
     "posts",
-    # "profiles",
-    "profiles.apps.ProfilesConfig",
-    "notifications",
+    "profiles",
 ]
 
 MIDDLEWARE = [
@@ -51,7 +49,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "instadclair.urls"
+ROOT_URLCONF = "aficionados_network.urls"
 
 TEMPLATES = [
     {
@@ -71,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "instadclair.wsgi.application"
+WSGI_APPLICATION = "aficionados_network.wsgi.application"
 
 
 # Database

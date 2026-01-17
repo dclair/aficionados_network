@@ -31,8 +31,8 @@ python manage.py test
 🚀 Instalación
 Clona el repositorio:
 bash
-git clone git@github.com:dclair/instadclair.git
-cd instadclair
+git clone git@github.com:dclair/aficionados_network.git
+cd aficionados_network
 Crea y activa un entorno virtual:
 bash
 python -m venv venv

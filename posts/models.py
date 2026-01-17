@@ -37,7 +37,7 @@ class Posts(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"Post {self.id} by {self.user.username}"
+        return f"Post {self.id} by {self.user.username} at {self.created_at}"
 
 
 class Comment(models.Model):
