@@ -67,7 +67,8 @@
                             <div class="mb-3">
                                 <a href="{% url 'profile' profile.pk %}" class="text-decoration-none">
                                     <div class="position-relative d-inline-block">
-                                        <img src="{{ profile.profile_picture.url|default:'/media/default_profile.png' }}" 
+                                     
+                                        <img src="{{ profile.profile_picture_url }}" 
                                              class="rounded-circle img-thumbnail" 
                                              style="width: 100px; height: 100px; object-fit: cover;"
                                              alt="{{ profile.user.username }}">

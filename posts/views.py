@@ -10,7 +10,7 @@ from .forms import PostCreateForm, CommentForm
 class PostCreateView(CreateView):
     model = Posts
     form_class = PostCreateForm
-    template_name = "posts/post_form.html"
+    template_name = "posts/post_create.html"
     success_url = reverse_lazy("home")
 
     def form_valid(self, form):

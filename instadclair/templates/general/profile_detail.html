@@ -10,7 +10,8 @@
     <!-- Sección de información del perfil -->
     <div class="row mb-4">
         <div class="col-md-2 text-center">
-            <img src="{{ user_profile.profile_picture.url|default:'/media/default_profile.png' }}" 
+            {% comment %} <img src="{{ user_profile.profile_picture.url|default:'/media/default_profile.png' }}"  {% endcomment %}
+            <img src="{{ user_profile.profile_picture_url }}" 
                  alt="{{ user_profile.user.username }}" 
                  class="rounded-circle img-thumbnail" 
                  style="width: 150px; height: 150px; object-fit: cover;">

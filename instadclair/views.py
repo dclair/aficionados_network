@@ -246,7 +246,7 @@ class ProfileView(DetailView, FormView):
 
 
 class ProfileUpdateView(LoginRequiredMixin, View):
-    template_name = "general/profile_edit.html"  # correcto
+    template_name = "general/profile_edit.html"
 
     def get(self, request):
         user_form = UserUpdateForm(instance=request.user)
@@ -257,6 +257,7 @@ class ProfileUpdateView(LoginRequiredMixin, View):
             {
                 "user_form": user_form,
                 "profile_form": profile_form,
+                "user_profile": request.user.profile,  # Añadido
             },
         )
 
@@ -269,10 +270,7 @@ class ProfileUpdateView(LoginRequiredMixin, View):
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            # Redirige al perfil del usuario logueado
-            return redirect(
-                "profile_edit"
-            )  # esto requiere que exista la URL 'profile_edit'
+            return redirect("profile_edit")
 
         return render(
             request,
@@ -280,5 +278,6 @@ class ProfileUpdateView(LoginRequiredMixin, View):
             {
                 "user_form": user_form,
                 "profile_form": profile_form,
+                "user_profile": request.user.profile,  # Añadido
             },
         )

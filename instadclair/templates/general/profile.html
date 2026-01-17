@@ -12,7 +12,7 @@
     <div class="row mb-4">
         {# Columna de la foto de perfil #}
         <div class="col-md-2 text-center">
-            <img src="{{ user_profile.profile_picture.url|default:'/media/default_profile.png' }}" 
+            <img src="{{ profile.profile_picture_url }}" 
                  class="rounded-circle img-thumbnail" 
                  style="width: 150px; height: 150px; object-fit: cover;">
         </div>

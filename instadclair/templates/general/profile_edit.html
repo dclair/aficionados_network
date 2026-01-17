@@ -23,8 +23,8 @@
                         <!-- Foto de perfil -->
                         <div class="text-center mb-4">
                             <div class="position-relative d-inline-block">
-                                {% if user.profile.profile_picture %}
-                                    <img src="{{ user.profile.profile_picture.url }}" 
+                                {% if user_profile.profile_picture %}
+                                    <img src="{{ user_profile.profile_picture_url }}" 
                                          class="rounded-circle shadow"
                                          style="width:150px;height:150px;object-fit:cover;"
                                          id="profile-preview">
