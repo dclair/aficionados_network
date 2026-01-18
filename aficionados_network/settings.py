@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",  # Requerido para flatpages
+    "django.contrib.flatpages",
     # Apps de terceros
     "django_extensions",
     "crispy_forms",
@@ -51,7 +53,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",  # <--- esto es para que funcione flatpages
 ]
+
+SITE_ID = 1
 
 ROOT_URLCONF = "aficionados_network.urls"
 

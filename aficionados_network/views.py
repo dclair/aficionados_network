@@ -80,10 +80,6 @@ class HomeView(TemplateView):
         return context
 
 
-class LegalView(TemplateView):
-    template_name = "general/legal.html"
-
-
 class LoginView(FormView):
     template_name = "general/login.html"
     form_class = LoginForm

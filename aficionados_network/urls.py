@@ -7,7 +7,6 @@ from django.contrib.auth import views as auth_views
 
 from .views import (
     HomeView,
-    LegalView,
     LoginView,
     RegisterView,
     LogoutView,
@@ -21,7 +20,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("posts.urls")),  # Incluye las URLs de la app posts
     path("", HomeView.as_view(), name="home"),
-    path("legal/", LegalView.as_view(), name="legal"),
     # urls autenticación
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
@@ -30,6 +28,7 @@ urlpatterns = [
     path("profile/<int:pk>", ProfileView.as_view(), name="profile"),
     path("profile/edit/", ProfileUpdateView.as_view(), name="profile_edit"),
     path("contact/", ContactFormView.as_view(), name="contact"),
+    path("pages/", include("django.contrib.flatpages.urls")),
 ]
 
 # Configuración para servir archivos multimedia en desarrollo

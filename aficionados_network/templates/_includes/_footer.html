@@ -1,8 +1,55 @@
-<footer>
-    <hr>
-    <div class="container">
-        <p>
-            Copyright &copy; 2025 InstaDclair. Todos los derechos reservados. <a href="{% url 'legal' %}">Aviso Legal</a>
-        </p>
+<footer class="bg-dark text-light mt-5 pt-5 pb-4">
+    <div class="container text-center text-md-start">
+        <div class="row text-center text-md-start">
+            
+            <div class="col-md-4 col-lg-4 col-xl-3 mx-auto mt-3">
+                <h5 class="text-uppercase mb-4 font-weight-bold text-primary">Hubs&Clicks</h5>
+                <p class="small text-secondary">
+                    La red social para compartir tus aficiones. Conecta con personas que aman lo mismo que tú, desde el ajedrez hasta la cocina.
+                </p>
+            </div>
+
+            <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mt-3">
+                <h5 class="text-uppercase mb-4 font-weight-bold">Explorar</h5>
+                <p><a href="{% url 'home' %}" class="text-secondary text-decoration-none small">Inicio</a></p>
+                <p><a href="{% url 'profile_list' %}" class="text-secondary text-decoration-none small">Descubrir Gente</a></p>
+                <p><a href="{% url 'contact' %}" class="text-secondary text-decoration-none small">Soporte</a></p>
+            </div>
+
+            <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mt-3">
+                <h5 class="text-uppercase mb-4 font-weight-bold">Legal</h5>
+                <p><a href="/legal/" class="text-secondary text-decoration-none small">Aviso Legal</a></p>
+                <p><a href="/legal/" class="text-secondary text-decoration-none small">Privacidad</a></p>
+                <p><a href="/cookies/" class="text-secondary text-decoration-none small">Cookies</a></p>
+            </div>
+
+            <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
+                <h5 class="text-uppercase mb-4 font-weight-bold">Síguenos</h5>
+                <div class="d-flex justify-content-center justify-content-md-start">
+                    <a href="#" class="text-light me-3"><i class="bi bi-github"></i></a>
+                    <a href="#" class="text-light me-3"><i class="bi bi-linkedin"></i></a>
+                    <a href="#" class="text-light"><i class="bi bi-instagram"></i></a>
+                </div>
+                <p class="mt-3 small text-secondary">
+                    <i class="bi bi-envelope-fill me-2"></i> info@hubsandclicks.com
+                </p>
+            </div>
+
+        </div>
+
+        <hr class="mb-4 mt-5 border-secondary">
+
+        <div class="row align-items-center">
+            <div class="col-md-7 col-lg-8">
+                <p class="small text-secondary">
+                    Copyright &copy; 2026 <strong>Hubs&Clicks</strong>. Todos los derechos reservados.
+                </p>
+            </div>
+            <div class="col-md-5 col-lg-4">
+                <p class="text-end small text-secondary">
+                    Desarrollado con <i class="bi bi-heart-fill text-danger"></i> para el Master Fullstack.
+                </p>
+            </div>
+        </div>
     </div>
 </footer>
