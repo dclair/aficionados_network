@@ -1,16 +1,87 @@
 
 {% extends "general/layout.html" %}
 
-{% block head_title %}
-InstaDclair/Contacto
-{% endblock head_title %}
 
-<div class="container">
-    {% block page_title %}
-    Contacto
-    {% endblock page_title %}
-
-    {% block content %}
-
-    {% endblock content %}
+{% block page_title %}
+<div class="container-fluid px-4 mt-4">
+    <h1 class="fw-bold h2"> Formulario de Contacto</h1>
 </div>
+{% endblock page_title %}
+
+{% block content %}
+<div class="container mt-4">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <p>Rellena los campos y te responderemos lo antes posible.</p>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    
+                    {# --- BLOQUE DE DIAGNÓSTICO TEMPORAL --- #}
+                    {% if not form.fields %}
+                        <div class="alert alert-danger">
+                            <strong>Error de comunicación:</strong> La vista no está enviando el formulario o el objeto 'form' está vacío. 
+                            Revisa que en <code>views.py</code> estés usando <code>ContactFormView</code>.
+                        </div>
+                    {% endif %}
+                    {# --- FIN DIAGNÓSTICO --- #}
+
+                    <form method="post" action="{% url 'contact' %}" novalidate>
+                        {% csrf_token %}
+
+                        {# Renderizado automático para asegurar que los campos existan #}
+                        {# Si esto aparece pero lo de abajo no, es que los nombres de los campos son diferentes #}
+                        <div class="d-none"> {{ form.as_p }} </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.name.label }}</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.subject.label }}</label>
+                            {{ form.subject }}
+                            {% if form.subject.errors %}
+                                <div class="text-danger small">{{ form.subject.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.message.label }}</label>
+                            {{ form.message }}
+                            {% if form.message.errors %}
+                                <div class="text-danger small">{{ form.message.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">Enviar Mensaje</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

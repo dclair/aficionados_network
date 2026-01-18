@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from profiles.models import UserProfile
+from .models import ContactMessage
 
 
 class RegisterForm(UserCreationForm):
@@ -74,3 +75,28 @@ class ProfileFollowForm(forms.Form):
         choices=[("follow", "Seguir"), ("unfollow", "Dejar de seguir")]
     )
     profile_id = forms.IntegerField(widget=forms.HiddenInput())
+
+
+class ContactForm(forms.ModelForm):
+
+    class Meta:
+        model = ContactMessage
+        fields = ["name", "email", "subject", "message"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Tu nombre"}
+            ),
+            "email": forms.EmailInput(
+                attrs={"class": "form-control", "placeholder": "Tu correo"}
+            ),
+            "subject": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Asunto"}
+            ),
+            "message": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 5,
+                    "placeholder": "Escribe tu mensaje",
+                }
+            ),
+        }

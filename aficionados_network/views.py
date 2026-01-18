@@ -8,6 +8,9 @@ from django.views.generic import (
     UpdateView,
     ListView,
 )
+from django.views.generic.edit import FormView
+from .forms import ContactForm
+
 from django.views import View
 from django.contrib.auth import login, authenticate, logout, logout as auth_logout
 from django.http import Http404, HttpResponseRedirect
@@ -21,8 +24,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from posts.models import Posts
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.conf import settings
 
-# aficionados_network/views.py
+from django.core.mail import send_mail
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from .forms import ProfileFollowForm
@@ -132,10 +136,6 @@ class RegisterView(CreateView):
         )
         # Redirige al login
         return redirect("login")
-
-
-class ContactView(TemplateView):
-    template_name = "general/contact.html"
 
 
 class ProfilesListView(ListView):
@@ -384,3 +384,36 @@ class ProfileUpdateView(LoginRequiredMixin, View):
             )
             # Redirigir a la misma página para volver a intentar
             return redirect("profile_edit")
+
+
+class ContactFormView(FormView):
+    template_name = "general/contact.html"  # La plantilla de contacto
+    form_class = ContactForm
+    success_url = reverse_lazy("contact")  # A dónde redirigir tras enviar el formulario
+
+    def form_valid(self, form):
+        # Guardar el mensaje en la base de datos
+        contact_message = form.save()
+
+        # Enviar correo a la empresa o email que queramos
+        send_mail(
+            subject=f"Nuevo mensaje de contacto: {contact_message.subject}",
+            message=f"De: {contact_message.name} <{contact_message.email}>\n\nAsunto: {contact_message.subject}\n\nMensaje:\n{contact_message.message}",
+            from_email=settings.DEFAULT_FROM_EMAIL,  # Usa el remitente de settings
+            recipient_list=[settings.CONTACT_EMAIL],  # Usa el destinatario de settings
+            fail_silently=False,
+        )
+
+        messages.success(
+            self.request,
+            "Gracias por tu mensaje. Nos pondremos en contacto contigo pronto.",
+        )
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Esto imprimirá los errores exactos en tu terminal negra de VS Code
+        print("EL FORMULARIO ES INVÁLIDO:", form.errors)
+        messages.error(
+            self.request, "Hubo un error al enviar tu mensaje. Revisa los campos."
+        )
+        return super().form_invalid(form)

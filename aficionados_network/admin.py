@@ -1,0 +1,11 @@
+# aficionados_network/admin.py
+from django.contrib import admin
+from .models import ContactMessage
+
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ("name", "email", "subject", "created_at", "read")
+    list_filter = ("created_at", "read", "email")
+    search_fields = ("name", "email", "subject", "message")
+    readonly_fields = ("created_at",)

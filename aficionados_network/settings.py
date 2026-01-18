@@ -2,11 +2,14 @@ from pathlib import Path
 from django.urls import reverse_lazy
 from django.contrib.messages import constants as messages
 import os
-from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "aficionados_network" / "templates"
+
+# Esto le dice a Python: "Busca el archivo .env en la raíz del proyecto"
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,6 +40,7 @@ INSTALLED_APPS = [
     # Apps propias
     "posts",
     "profiles",
+    "aficionados_network",  # App para mensajes de contacto
 ]
 
 MIDDLEWARE = [
@@ -142,3 +146,21 @@ MESSAGE_TAGS = {
     messages.ERROR: "alert-danger",
 }
 LOGIN_URL = "/login/"
+
+# Correo desde el que se envían los mensajes
+DEFAULT_FROM_EMAIL = os.getenv("EMAIL_USER")
+
+# Correo de la empresa que recibirá los mensajes
+CONTACT_EMAIL = os.getenv("EMAIL_USER")
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+DEFAULT_FROM_EMAIL = os.getenv("EMAIL_USER")
+SERVER_EMAIL = os.getenv("EMAIL_USER")
+# Configuración de Gmail
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Tus credenciales
+EMAIL_HOST_USER = os.getenv("EMAIL_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASS")  # 'EMAIL_PASS' debe ir con comillas
