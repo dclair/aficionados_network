@@ -1,87 +1,89 @@
-
-
 <div class="container-fluid px-4">
-    <!-- FILA DE PUBLICACIONES -->
     <div class="row g-4">
-        <!-- INICIO DEL BUCLE DE PUBLICACIONES -->
         {% for post in last_posts %}
-        <!-- TARJETA DE PUBLICACIÓN INDIVIDUAL -->
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 shadow-sm border-0">
-                
-                <!-- ENCABEZADO DE LA TARJETA (usuario y fecha) -->
+
+                <!-- Header del post -->
                 <div class="card-header bg-white py-2 border-bottom-0">
                     <div class="d-flex align-items-center">
-                        <a href="{% url 'profile' post.user.profile.id %}" class="text-decoration-none text-dark d-flex align-items-center">
-                            {% if post.user.profile.profile_picture %}
-                                <img src="{{ post.user.profile.profile_picture.url }}" 
-                                     class="rounded-circle me-2" 
-                                     style="width: 32px; height: 32px; object-fit: cover;">
-                            {% else %}
+                        {% if post.user.profile %}
+                            <a href="{% url 'profile' post.user.profile.id %}" class="text-decoration-none text-dark d-flex align-items-center">
+                                {% if post.user.profile.profile_picture %}
+                                    <img src="{{ post.user.profile.profile_picture.url }}" 
+                                         class="rounded-circle me-2" 
+                                         style="width: 32px; height: 32px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center me-2" 
+                                         style="width: 32px; height: 32px;">
+                                        <i class="bi bi-person text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <span class="fw-bold small">{{ post.user.username }}</span>
+                            </a>
+                        {% else %}
+                            <div class="d-flex align-items-center">
                                 <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center me-2" 
                                      style="width: 32px; height: 32px;">
-                                    <i class="bi bi-person text-muted"></i>
+                                    <i class="bi bi-person-x text-muted"></i>
                                 </div>
-                            {% endif %}
-                            <span class="fw-bold small">{{ post.user.username }}</span>
-                        </a>
+                                <span class="fw-bold small text-muted">{{ post.user.username }} (Sin perfil)</span>
+                            </div>
+                        {% endif %}
                         <small class="text-muted ms-auto" style="font-size: 0.75rem;">
                             {{ post.created_at|date:"d M" }}
                         </small>
                     </div>
                 </div>
-                <!-- FIN ENCABEZADO DE LA TARJETA -->
-                
-                <!-- IMAGEN DEL POST -->
+
+                <!-- Imagen del post -->
                 {% if post.image %}
                 <div class="ratio ratio-1x1">
                     <a href="{% url 'posts:post_detail' post.pk %}">
                         <img src="{{ post.image.url }}" 
-                             class="card-img-top w-100 h-100" 
-                             alt="Post image"
+                             alt="{{ post.title|default:'Publicación de '|add:post.user.username }}"
+                             class="card-img-top"
+                             loading="lazy"
                              style="object-fit: cover;">
                     </a>
                 </div>
-                <!-- FIN IMAGEN DEL POST -->
                 {% endif %}
 
-                <!-- CUERPO DE LA TARJETA (título, descripción, botones) -->
+                <!-- Cuerpo del post -->
                 <div class="card-body d-flex flex-column p-3">
                     <a href="{% url 'posts:post_detail' post.pk %}" class="text-decoration-none text-dark mb-2">
                         {% if post.title %}
-                            <h6 class="card-title fw-bold mb-1">{{ post.title }}</h6>
+                            <h6 class="card-title mb-1">{{ post.title }}</h6>
                         {% endif %}
                         <p class="card-text small text-muted">{{ post.caption|truncatechars:80 }}</p>
                     </a>
 
-                    <!-- CONTADOR DE ME GUSTA -->
                     <div class="mb-2">
-                        <span class="fw-bold">{{ post.likes.count }} me gusta</span>
+                        <span class="fw-bold like-count">{{ post.likes.count }} me gusta</span>
                     </div>
-                    
-                    <!-- BOTONES DE INTERACCIÓN (me gusta, comentar) -->
-                    <div class="mt-auto pt-2 d-flex align-items-center border-top">
 
-                        <!-- Botón de Me Gusta -->
+                    <!-- Botones de interacción -->
+                    <div class="mt-auto pt-2 d-flex align-items-center border-top">
+                        <!-- Botón Me gusta -->
                         <div class="d-flex align-items-center me-3">
                             {% if request.user.is_authenticated %}
-                                <a href="{% url 'posts:like_post_ajax' post.pk %}" 
-                                   class="btn-like btn btn-link btn-sm text-decoration-none p-0 me-1" 
-                                   data-post-id="{{ post.pk }}">
-                                    <i class="bi {% if request.user in post.likes.all %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}" 
+                                <button type="button" 
+                                        class="btn btn-link btn-sm text-decoration-none p-0 me-1 like-button" 
+                                        data-post-id="{{ post.pk }}"
+                                        data-like-url="{% url 'posts:toggle_like' %}">
+                                    <i class="bi bi-heart{% if request.user in post.likes.all %}-fill text-danger{% endif %}" 
                                        style="font-size: 1rem;"></i>
-                                </a>
+                                </button>
                             {% else %}
-                                <a href="{% url 'login' %}?next={{ request.path }}" 
+                                <a href="{% url 'login' %}?next={{ request.path|urlencode }}" 
                                    class="btn btn-link btn-sm text-decoration-none p-0 me-1">
                                     <i class="bi bi-heart" style="font-size: 1rem;"></i>
                                 </a>
                             {% endif %}
-                            <span class="like-count">{{ post.likes.count }}</span>
                         </div>
 
-                        <!-- Botón de Comentarios -->
-                        <div class="d-flex align-items-center me-3">
+                        <!-- Botón Comentarios -->
+                        <div class="d-flex align-items-center">
                             {% if request.user.is_authenticated %}
                                 <a href="{% url 'posts:post_detail' post.pk %}#comments" 
                                    class="btn btn-link btn-sm text-decoration-none text-dark p-0">
@@ -96,26 +98,13 @@
                             <span class="ms-1">{{ post.comments.count }}</span>
                         </div>
                     </div>
-                    <!-- FIN BOTONES DE INTERACCIÓN -->
                 </div>
-                <!-- FIN CUERPO DE LA TARJETA -->
-
             </div>
         </div>
-        <!-- FIN TARJETA DE PUBLICACIÓN -->
-        
         {% empty %}
-        <!-- MENSAJE CUANDO NO HAY PUBLICACIONES -->
         <div class="col-12 text-center py-5">
             <p class="text-muted">No hay publicaciones para mostrar.</p>
         </div>
         {% endfor %}
-        <!-- FIN DEL BUCLE DE PUBLICACIONES -->
     </div>
-    <!-- FIN FILA DE PUBLICACIONES -->
 </div>
-
- 
-
-
-

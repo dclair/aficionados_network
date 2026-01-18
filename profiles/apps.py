@@ -7,4 +7,4 @@ class ProfilesConfig(AppConfig):
 
     def ready(self):
         # Importa las señales para que se registren
-        from . import signals  # noqa
+        import profiles.signals

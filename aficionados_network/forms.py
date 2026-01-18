@@ -66,3 +66,11 @@ class ProfileUpdateForm(forms.ModelForm):
             self.fields["profile_picture"].widget.template_name = (
                 "django/forms/widgets/clearable_file_input.html"
             )
+
+
+# aficionados_network/forms.py
+class ProfileFollowForm(forms.Form):
+    action = forms.ChoiceField(
+        choices=[("follow", "Seguir"), ("unfollow", "Dejar de seguir")]
+    )
+    profile_id = forms.IntegerField(widget=forms.HiddenInput())

@@ -1,6 +1,7 @@
 <header>
     <div class="container">
-    <h1>InstaDclair</h1>
+    <h1>Hubs&Clicks</h1>
+    <h2>Comparte, descubre, disfruta</h2>
     <nav>
         <ul>
         <li><a href="{% url 'home' %}">Inicio</a></li>
@@ -11,7 +12,9 @@
         {% else %}        
         <li><a href="{% url 'logout' %}">Logout</a></li>
         <li><a href="{% url 'posts:post_create' %}">Crear Post</a></li>
-        <li><a href="{% url 'profile' request.user.profile.pk %}">Mi Perfil</a></li>
+        <li>
+              <a href="{% if has_profile %}{% url 'profile' request.user.profile.pk %}{% else %}{% url 'profile_edit' %}{% endif %}">Mi Perfil</a>
+        </li>
         {% endif %}
         
         <li><a href="{% url 'contact' %}">Contacto</a></li>

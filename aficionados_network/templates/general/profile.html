@@ -3,102 +3,120 @@
 
 {# Título de la pestaña del navegador #}
 {% block head_title %}
-{{ user_profile.user.username }} | InstaDclair
+    {% if user_profile %}
+        {{ user_profile.user.username }} | InstaDclair
+    {% else %}
+        Perfil no encontrado | InstaDclair
+    {% endif %}
 {% endblock head_title %}
 
 {% block content %}
 <div class="container py-4">
-    {# Sección de encabezado del perfil #}
-    <div class="row mb-4">
-        {# Columna de la foto de perfil #}
-        <div class="col-md-2 text-center">
-            <img src="{{ profile.profile_picture_url }}" 
-                 class="rounded-circle img-thumbnail" 
-                 style="width: 150px; height: 150px; object-fit: cover;">
-        </div>
-        
-        {# Columna de información del perfil #}
-        <div class="col-md-10">
-            {# Fila de nombre de usuario y botones de acción #}
-            <div class="d-flex align-items-center mb-3">
-                <h2 class="mb-0 me-3">{{ user_profile.user.username }}</h2>
-                {% if user.is_authenticated and user != user_profile.user %}
-                    <button class="btn btn-primary btn-sm ms-3">Seguir</button>
-                {% elif user == user_profile.user %}
-                    <a href="{% url 'profile_edit' %}" class="btn btn-outline-secondary btn-sm ms-3">Editar perfil</a>
-                {% endif %}
-            </div>
-            
-            {# Contadores de publicaciones, seguidores y seguidos #}
-            <div class="d-flex mb-4">
-                <div class="me-4"><strong>{{ user_profile.user.posts.count }}</strong> publicaciones</div>
-                <div class="me-4"><strong>{{ user_profile.followers.count }}</strong> seguidores</div>
-                <div><strong>{{ user_profile.following.count }}</strong> siguiendo</div>
-            </div>
-            
-            {# Sección de información detallada del perfil #}
-            <div class="bg-light p-3 rounded mb-4">
-                {# Biografía #}
-                {% if user_profile.bio %}
-                    <div class="mb-2">
-                        <span class="fw-bold me-2">Biografía:</span>
-                        <span>{{ user_profile.bio }}</span>
-                    </div>
-                {% endif %}
-
-                {# Ubicación #}
-                {% if user_profile.location %}
-                    <div class="mb-2">
-                        <span class="fw-bold me-2"><i class="bi bi-geo-alt"></i> Ubicación:</span>
-                        <span>{{ user_profile.location }}</span>
-                    </div>
-                {% endif %}
-
-                {# Sitio web #}
-                {% if user_profile.website %}
-                    <div class="mb-2">
-                        <span class="fw-bold me-2"><i class="bi bi-link-45deg"></i> Sitio web:</span>
-                        <a href="{{ user_profile.website }}" target="_blank" class="text-decoration-none">{{ user_profile.website }}</a>
-                    </div>
-                {% endif %}
-
-                {# Fecha de nacimiento #}
-                {% if user_profile.birth_date %}
-                    <div class="mb-2">
-                        <span class="fw-bold me-2"><i class="bi bi-calendar-event"></i> Fecha de nacimiento:</span>
-                        <span>{{ user_profile.birth_date|date:"d F Y" }}</span>
-                    </div>
-                {% endif %}
+    {% if not user_profile %}
+        <div class="text-center py-5">
+            <div class="alert alert-info">
+                <h4>Perfil no encontrado</h4>
+                <p class="mb-4">Parece que aún no has creado tu perfil.</p>
+                <a href="{% url 'profile_edit' %}" class="btn btn-primary">Crear mi perfil</a>
             </div>
         </div>
-    </div>
+    {% else %}
+        {# Sección de encabezado del perfil #}
+        <div class="row mb-4">
+            {# Columna de la foto de perfil #}
+            <div class="col-md-2 text-center">
+                <img src="{{ user_profile.profile_picture_url|default:'' }}" 
+                     class="rounded-circle img-thumbnail" 
+                     style="width: 150px; height: 150px; object-fit: cover;"
+                     onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
+            </div>
+            
+            {# Resto del código del perfil... #}
+            <div class="col-md-10">
+                <div class="d-flex align-items-center mb-3">
+                    <h2 class="mb-0 me-3">{{ user_profile.user.username }}</h2>
+                    {% if user.is_authenticated and user != user_profile.user %}
+                        <form method="post" action="{% url 'profile' user_profile.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="profile_id" value="{{ user_profile.id }}">
+                            {% if is_following %}
+                                <input type="hidden" name="action" value="unfollow">
+                                <button type="submit" class="btn btn-outline-primary btn-sm ms-3">Dejar de seguir</button>
+                            {% else %}
+                                <input type="hidden" name="action" value="follow">
+                                <button type="submit" class="btn btn-primary btn-sm ms-3">Seguir</button>
+                            {% endif %}
+                        </form>
+                    {% elif user == user_profile.user %}
+                        <a href="{% url 'profile_edit' %}" class="btn btn-outline-secondary btn-sm ms-3">Editar perfil</a>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex mb-4">
+                    <div class="me-4"><strong>{{ user_profile.user.posts.count }}</strong> publicaciones</div>
+                    <div class="me-4"><strong>{{ user_profile.followers.count }}</strong> seguidores</div>
+                    <div><strong>{{ user_profile.following.count }}</strong> siguiendo</div>
+                </div>
+                
+                <div class="bg-light p-3 rounded mb-4">
+                    {% if user_profile.bio %}
+                        <div class="mb-2">
+                            <span class="fw-bold me-2">Biografía:</span>
+                            <span>{{ user_profile.bio }}</span>
+                        </div>
+                    {% endif %}
 
-    <hr class="my-5">
+                    {% if user_profile.location %}
+                        <div class="mb-2">
+                            <span class="fw-bold me-2"><i class="bi bi-geo-alt"></i> Ubicación:</span>
+                            <span>{{ user_profile.location }}</span>
+                        </div>
+                    {% endif %}
 
-    {# Sección de publicaciones del usuario #}
-    <div class="row g-2">
-        {% for post in user_profile.user.posts.all %}
-            <div class="col-4">
-                <div class="ratio ratio-1x1">
-                    <a href="{% url 'posts:post_detail' post.pk %}">
-                        {% if post.image %}
-                            <img src="{{ post.image.url }}" 
-                                 class="img-fluid w-100 h-100 shadow-sm" 
-                                 style="object-fit: cover;"
-                                 alt="Publicación de {{ user_profile.user.username }}">
-                        {% else %}
-                            <div class="bg-secondary d-flex align-items-center justify-content-center text-white h-100">
-                                <i class="bi bi-card-image fs-1"></i>
-                            </div>
-                        {% endif %}
-                    </a>
+                    {% if user_profile.website %}
+                        <div class="mb-2">
+                            <span class="fw-bold me-2"><i class="bi bi-link-45deg"></i> Sitio web:</span>
+                            <a href="{{ user_profile.website }}" target="_blank" class="text-decoration-none">{{ user_profile.website }}</a>
+                        </div>
+                    {% endif %}
+
+                    {% if user_profile.birth_date %}
+                        <div class="mb-2">
+                            <span class="fw-bold me-2"><i class="bi bi-calendar-event"></i> Fecha de nacimiento:</span>
+                            <span>{{ user_profile.birth_date|date:"d F Y" }}</span>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-        {% empty %}
-            <div class="col-12 text-center py-5">
-                <p class="text-muted">Aún no hay publicaciones.</p>
-            </div>
-        {% endfor %}
-    </div>
+        </div>
+
+        <hr class="my-5">
+
+        {# Sección de publicaciones del usuario #}
+        <div class="row g-2">
+            {% for post in user_profile.user.posts.all %}
+                <div class="col-4">
+                    <div class="ratio ratio-1x1">
+                        <a href="{% url 'posts:post_detail' post.pk %}">
+                            {% if post.image %}
+                                <img src="{{ post.image.url }}" 
+                                     class="img-fluid w-100 h-100 shadow-sm" 
+                                     style="object-fit: cover;"
+                                     alt="Publicación de {{ user_profile.user.username }}">
+                            {% else %}
+                                <div class="bg-secondary d-flex align-items-center justify-content-center text-white h-100">
+                                    <i class="bi bi-card-image fs-1"></i>
+                                </div>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">Aún no hay publicaciones.</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 </div>
 {% endblock content %}

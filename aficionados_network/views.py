@@ -9,7 +9,7 @@ from django.views.generic import (
     ListView,
 )
 from django.views import View
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, logout as auth_logout
 from django.http import Http404, HttpResponseRedirect
 from .forms import RegisterForm, LoginForm, UserUpdateForm, ProfileUpdateForm
 from posts.forms import ProfileFollowForm
@@ -20,6 +20,13 @@ from profiles.models import UserProfile, Follow
 from django.contrib.auth.mixins import LoginRequiredMixin
 from posts.models import Posts
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
+
+# aficionados_network/views.py
+from django.views.decorators.http import require_http_methods
+from django.utils.decorators import method_decorator
+from .forms import ProfileFollowForm
+from profiles.models import UserProfile, Follow
 
 
 # FICHERO DE VIEWS PRINCIPAL/BASE
@@ -32,19 +39,40 @@ class HomeView(TemplateView):
         # si el usuario está logueado, haremos que aparezcan los posts de los usuarios que sigue
         # si no está logueado, mostramos los posts más recientes
         if self.request.user.is_authenticated:
-            # Usuario autenticado: mostrar solo posts de usuarios que sigue
-            seguidos = Follow.objects.filter(
-                follower=self.request.user.profile
-            ).values_list("following__user", flat=True)
+            try:
+                # Verificar si el usuario tiene perfil
+                has_profile = hasattr(self.request.user, "profile")
+                if not has_profile:
+                    # Si no tiene perfil, redirigir a la creación de perfil o mostrar mensaje
+                    from django.contrib import messages
 
-            # Obtenemos los posts de los usuarios seguidos (sin incluir los propios)
-            last_posts = Posts.objects.filter(user__in=seguidos).order_by(
-                "-created_at"
-            )[:15]
+                    messages.warning(self.request, "Por favor, completa tu perfil.")
+                    context["has_profile"] = False
+                    context["last_posts"] = Posts.objects.all().order_by("-created_at")[
+                        :15
+                    ]
+                    return context
+
+                profile = self.request.user.profile
+                context["has_profile"] = True
+                # Usuario autenticado: mostrar solo posts de usuarios que sigue
+                seguidos = Follow.objects.filter(follower=profile).values_list(
+                    "following__user", flat=True
+                )
+
+                # Obtenemos los posts de los usuarios seguidos (sin incluir los propios)
+                last_posts = Posts.objects.filter(user__in=seguidos).order_by(
+                    "-created_at"
+                )[:15]
+            except UserProfile.DoesNotExist:
+                # Si el usuario no tiene perfil, mostramos todos los posts
+                last_posts = Posts.objects.all().order_by("-created_at")[:15]
         else:
             # Usuario no autenticado
             last_posts = Posts.objects.all().order_by("-created_at")[:15]
         context["last_posts"] = last_posts
+        if self.request.user.is_authenticated and "has_profile" not in context:
+            context["has_profile"] = hasattr(self.request.user, "profile")
         return context
 
 
@@ -71,22 +99,22 @@ class LoginView(FormView):
             return self.form_invalid(form)
 
 
-class LogoutView(LoginRequiredMixin, TemplateView):
-    template_name = "general/logout.html"
-    login_url = "home"
+class LogoutView(LoginRequiredMixin, View):
+    """
+    Vista para manejar el cierre de sesión del usuario.
+    """
+
+    login_url = "login"
 
     def get(self, request, *args, **kwargs):
-        # Si el usuario no está autenticado, redirigir a home
-        if not request.user.is_authenticated:
-            return redirect(self.login_url)
-        return render(request, self.template_name)
+        # Usamos auth_logout para cerrar la sesión
+        auth_logout(request)
+        messages.success(request, "Has cerrado sesión correctamente.")
+        return redirect("home")
 
     def post(self, request, *args, **kwargs):
-        # Verificar nuevamente la autenticación por seguridad
-        if request.user.is_authenticated:
-            logout(request)
-            messages.success(request, "Has cerrado sesión correctamente.")
-        return redirect("home")
+        # También manejamos peticiones POST para cierre de sesión
+        return self.get(request, *args, **kwargs)
 
 
 class RegisterView(CreateView):
@@ -117,7 +145,15 @@ class ProfilesListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
+        from django.db.models import Q
+
         queryset = super().get_queryset()
+        search_query = self.request.GET.get("q", "").strip()
+
+        # Aplicar búsqueda si hay un término de búsqueda
+        if search_query:
+            # Buscar solo por nombre de usuario que empiece por el término de búsqueda
+            queryset = queryset.filter(user__username__istartswith=search_query)
 
         if self.request.user.is_authenticated:
             # Excluir mi propio perfil
@@ -137,7 +173,7 @@ class ProfilesListView(ListView):
                     follower_relationships__follower=self.request.user.profile
                 )
 
-        return queryset
+        return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -160,124 +196,191 @@ class ProfilesListView(ListView):
         return context
 
 
-class ProfileView(DetailView, FormView):
+class ProfileView(LoginRequiredMixin, DetailView, FormView):
     model = UserProfile
-    template_name = "general/profile_detail.html"
+    template_name = "general/profile.html"
     context_object_name = "user_profile"
     form_class = ProfileFollowForm
+    login_url = "/login/"  # URL a la que redirigir si no está autenticado
+    redirect_field_name = "next"  # para volver a la página original después del login
 
-    def form_valid(self, form):
+    def get_object(self, queryset=None):
         """
-        Procesa el formulario cuando es válido.
-        Se ejecuta cuando el usuario hace clic en el botón 'Seguir' o 'Dejar de seguir'.
+        Obtiene el perfil solicitado o devuelve 404 si no existe.
         """
-        # Obtener el ID del perfil del formulario
-        profile_pk = form.cleaned_data.get("profile_pk")
-
-        # Obtener el perfil que se va a seguir/dejar de seguir
-        self.object = get_object_or_404(UserProfile, pk=profile_pk)
-
-        # Obtener el perfil del usuario actual
-        current_profile = self.request.user.profile
-
-        # Verificar si el usuario actual ya sigue al perfil
-        is_following = Follow.objects.filter(
-            follower=current_profile, following=self.object
-        ).exists()
-
-        if is_following:
-            # Si ya lo sigue, dejar de seguirlo
-            Follow.objects.filter(
-                follower=current_profile, following=self.object
-            ).delete()
-            messages.success(
-                self.request,
-                f"Dejaste de seguir a {self.object.user.username}",
-                extra_tags="success",
-            )
-        else:
-            # Si no lo sigue, seguirlo
-            Follow.objects.create(follower=current_profile, following=self.object)
-            messages.success(
-                self.request,
-                f"Ahora sigues a {self.object.user.username}",
-                extra_tags="success",
-            )
-
-        # Limpiar mensajes existentes para evitar duplicados
-        storage = messages.get_messages(self.request)
-        storage.used = True
-
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        """
-        Devuelve la URL a la que se redirigirá después de una acción exitosa.
-        En este caso, redirige de vuelta al perfil que se acaba de seguir.
-        """
-        # Usamos reverse para construir la URL del perfil con el ID correspondiente
-        return reverse("profile", kwargs={"pk": self.object.pk})
-
-    def get_queryset(self):
-        """
-        Especifica el conjunto de consultas que se utilizará para buscar el objeto.
-        Usamos select_related para optimizar las consultas a la base de datos.
-        """
-        return UserProfile.objects.select_related("user")
+        try:
+            # Si es el perfil del usuario actual
+            if "pk" not in self.kwargs or str(self.request.user.profile.id) == str(
+                self.kwargs.get("pk")
+            ):
+                # Si el usuario no tiene perfil, lanzamos DoesNotExist
+                if not hasattr(self.request.user, "profile"):
+                    raise UserProfile.DoesNotExist
+                return self.request.user.profile
+            # Si es otro perfil, comportamiento normal
+            return super().get_object(queryset)
+        except (UserProfile.DoesNotExist, AttributeError):
+            if (
+                self.request.user.is_authenticated
+                and "pk" in self.kwargs
+                and str(self.request.user.profile.id) == str(self.kwargs.get("pk"))
+            ):
+                # Redirigir a la creación de perfil si es el perfil del usuario actual
+                messages.warning(
+                    self.request, "Por favor, completa la información de tu perfil."
+                )
+                return None
+            raise Http404("El perfil no existe")
 
     def get_context_data(self, **kwargs):
-        """
-        Añade datos adicionales al contexto que estará disponible en la plantilla.
-        En este caso, añadimos si el usuario actual sigue al perfil que se está viendo.
-        """
-        # Obtener el contexto de la clase padre
         context = super().get_context_data(**kwargs)
-        profile = self.object
+        user_profile = self.get_object()
 
-        # Verificar si el usuario está autenticado
-        if self.request.user.is_authenticated:
-            # Añadir al contexto si el usuario actual sigue al perfil mostrado
-            context["is_following"] = profile.is_followed_by(self.request.user.profile)
+        # Verificar si el usuario autenticado sigue a este perfil
+        if self.request.user.is_authenticated and hasattr(self.request.user, "profile"):
+            context["is_following"] = user_profile.followers.filter(
+                id=self.request.user.profile.id
+            ).exists()
         else:
-            # Si no está autenticado, por defecto no sigue a nadie
             context["is_following"] = False
 
         return context
 
+    @method_decorator(require_http_methods(["POST"]))
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            action = form.cleaned_data["action"]
+            profile_id = form.cleaned_data["profile_id"]
+            target_profile = get_object_or_404(UserProfile, id=profile_id)
+
+            if action == "follow":
+                # Follow logic
+                if not request.user.profile.following.filter(
+                    id=target_profile.id
+                ).exists():
+                    request.user.profile.following.add(target_profile)
+                    messages.success(
+                        request, f"Ahora sigues a {target_profile.user.username}"
+                    )
+                else:
+                    messages.info(
+                        request, f"Ya sigues a {target_profile.user.username}"
+                    )
+            else:
+                # Unfollow logic
+                if request.user.profile.following.filter(id=target_profile.id).exists():
+                    request.user.profile.following.remove(target_profile)
+                    messages.success(
+                        request,
+                        f"Has dejado de seguir a {target_profile.user.username}",
+                    )
+                else:
+                    messages.info(
+                        request, f"No sigues a {target_profile.user.username}"
+                    )
+
+            return redirect("profile", pk=target_profile.id)
+        else:
+            messages.error(request, "Error en el formulario")
+            return redirect("profile", pk=request.user.profile.id)
+
 
 class ProfileUpdateView(LoginRequiredMixin, View):
     template_name = "general/profile_edit.html"
+    login_url = "login"
 
-    def get(self, request):
-        user_form = UserUpdateForm(instance=request.user)
-        profile_form = ProfileUpdateForm(instance=request.user.profile)
-        return render(
-            request,
-            self.template_name,
-            {
-                "user_form": user_form,
-                "profile_form": profile_form,
-                "user_profile": request.user.profile,  # Añadido
-            },
-        )
+    def get_profile(self, user):
+        """Obtiene o crea un perfil para el usuario de forma segura."""
+        try:
+            # Primero intentamos obtener el perfil existente
+            return user.profile
+        except UserProfile.DoesNotExist:
+            # Si no existe, lo creamos sin acceder a relaciones many-to-many
+            profile = UserProfile(user=user)
+            profile.save()  # Guardamos para obtener un ID
+            messages.info(
+                self.request, "Por favor, completa la información de tu perfil."
+            )
+            return profile
 
-    def post(self, request):
-        user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileUpdateForm(
-            request.POST, request.FILES, instance=request.user.profile
-        )
+    def get(self, request, *args, **kwargs):
+        try:
+            # Obtener o crear el perfil del usuario
+            profile = self.get_profile(request.user)
 
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
+            # Inicializar los formularios
+            user_form = UserUpdateForm(instance=request.user)
+            profile_form = ProfileUpdateForm(instance=profile)
+
+            return render(
+                request,
+                self.template_name,
+                {
+                    "user_form": user_form,
+                    "profile_form": profile_form,
+                    "user_profile": profile,
+                },
+            )
+        except Exception as e:
+            messages.error(request, f"Error al cargar el perfil: {str(e)}")
+            return redirect("home")
+
+    def post(self, request, *args, **kwargs):
+        try:
+            # Obtener el perfil existente o crear uno nuevo
+            profile = self.get_profile(request.user)
+
+            # Inicializar los formularios con los datos del request
+            user_form = UserUpdateForm(request.POST, instance=request.user)
+            profile_form = ProfileUpdateForm(
+                request.POST, request.FILES, instance=profile
+            )
+
+            if user_form.is_valid() and profile_form.is_valid():
+                with transaction.atomic():
+                    # 1. Guardar el usuario
+                    user = user_form.save(commit=False)
+                    user.save()
+
+                    # 2. Guardar el perfil
+                    profile = profile_form.save(commit=False)
+                    profile.user = user
+                    profile.save()
+
+                    # 3. Manejar manualmente los campos many-to-many
+                    for field_name, value in profile_form.cleaned_data.items():
+                        if hasattr(profile, field_name) and hasattr(
+                            getattr(profile, field_name), "set"
+                        ):
+                            getattr(profile, field_name).set(value)
+
+                messages.success(request, "Perfil actualizado correctamente.")
+                return redirect("profile_edit")
+            else:
+                # Mostrar errores de validación
+                for field, errors in user_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error en {field}: {error}")
+                for field, errors in profile_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error en {field}: {error}")
+
+                # Volver a mostrar el formulario con los errores
+                return render(
+                    request,
+                    self.template_name,
+                    {
+                        "user_form": user_form,
+                        "profile_form": profile_form,
+                        "user_profile": profile,
+                    },
+                )
+
+        except Exception as e:
+            # Manejar cualquier error inesperado
+            messages.error(
+                request, f"Se produjo un error al guardar el perfil: {str(e)}"
+            )
+            # Redirigir a la misma página para volver a intentar
             return redirect("profile_edit")
-
-        return render(
-            request,
-            self.template_name,
-            {
-                "user_form": user_form,
-                "profile_form": profile_form,
-                "user_profile": request.user.profile,  # Añadido
-            },
-        )

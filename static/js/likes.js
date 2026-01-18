@@ -1,26 +1,24 @@
 document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll(".btn-like").forEach((button) => {
+  document.querySelectorAll(".like-button").forEach((button) => {
     button.addEventListener("click", async function (e) {
       e.preventDefault();
-      const postId = this.getAttribute("data-post-id");
+      const postId = this.dataset.postId;
+      const likeUrl = this.dataset.likeUrl;
       const icon = this.querySelector("i");
-      const likeCount = this.nextElementSibling;
+      const likeCount = this.closest(".card").querySelector(".like-count");
 
       try {
-        const response = await fetch(this.href, {
+        const response = await fetch(likeUrl, {
           method: "POST",
           headers: {
             "X-CSRFToken": getCookie("csrftoken"),
-            "X-Requested-With": "XMLHttpRequest",
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ post_id: postId }),
         });
-
-        if (!response.ok) throw new Error("Error en la petición");
 
         const data = await response.json();
 
-        // Actualizar ícono
         if (data.liked) {
           icon.classList.remove("bi-heart");
           icon.classList.add("bi-heart-fill", "text-danger");
@@ -29,37 +27,24 @@ document.addEventListener("DOMContentLoaded", function () {
           icon.classList.add("bi-heart");
         }
 
-        // Actualizar contador
-        if (likeCount && likeCount.classList.contains("like-count")) {
-          likeCount.textContent = data.count;
-        }
+        if (likeCount) likeCount.textContent = data.count + " me gusta";
 
-        // Actualizar el contador de likes en el encabezado de la tarjeta si existe
-        const likeCountHeader = this.closest(".card").querySelector(".fw-bold");
-        if (
-          likeCountHeader &&
-          likeCountHeader.textContent.includes("me gusta")
-        ) {
-          likeCountHeader.textContent = `${data.count} me gusta`;
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        if (error.message.includes("401")) {
-          window.location.href = "/accounts/login/";
-        }
+      } catch (err) {
+        console.error(err);
+        alert("No se pudo procesar el Me gusta.");
       }
     });
   });
 });
 
-// Función auxiliar para obtener el token CSRF
+// Función para leer CSRF token
 function getCookie(name) {
   let cookieValue = null;
-  if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === name + "=") {
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
         break;
       }
