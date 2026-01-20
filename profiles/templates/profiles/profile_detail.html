@@ -20,7 +20,7 @@
             <div class="d-flex align-items-center mb-3">
                 <!-- Nombre del usuario, siempre enlaza al perfil -->
                 <h2 class="mb-0 me-3">
-                    <a href="{% url 'profile' user_profile.pk %}" class="text-decoration-none text-dark">
+                    <a href="{% url 'profiles:profile' user_profile.pk %}" class="text-decoration-none text-dark">
                         {{ user_profile.user.username }}
                     </a>
                 </h2>
@@ -43,7 +43,7 @@
                         {% endif %}  
                     </form>                        
                 {% elif user == user_profile.user %}
-                    <a href="{% url 'profile_edit' %}" class="btn btn-outline-secondary btn-sm">Editar perfil</a>
+                    <a href="{% url 'profiles:profile_edit' %}" class="btn btn-outline-secondary btn-sm">Editar perfil</a>
                 {% endif %}
             </div>
 
@@ -129,7 +129,7 @@
                     {% for post in user_profile.user.posts.all|dictsortreversed:"created_at" %}
                         <div class="col-md-4 mb-4">
                             <div class="card h-100">
-                                <a href="{% url 'posts:post_detail' post.id %}">
+                                <a href="{% url 'posts:post_detail' post.pk %}">
                                     <img src="{{ post.image.url }}" class="card-img-top" 
                                          alt="{{ post.caption|truncatechars:30 }}"
                                          style="height: 300px; object-fit: cover;">

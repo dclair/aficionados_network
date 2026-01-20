@@ -8,7 +8,7 @@
                 <div class="card-header bg-white py-2 border-bottom-0">
                     <div class="d-flex align-items-center">
                         {% if post.user.profile %}
-                            <a href="{% url 'profile' post.user.profile.id %}" class="text-decoration-none text-dark d-flex align-items-center">
+                            <a href="{% url 'profiles:profile' post.user.profile.id %}" class="text-decoration-none text-dark d-flex align-items-center">
                                 {% if post.user.profile.profile_picture %}
                                     <img src="{{ post.user.profile.profile_picture.url }}" 
                                          class="rounded-circle me-2" 
@@ -113,7 +113,7 @@
                             Parece que aún no sigues a nadie o tus amigos aún no han publicado nada.<br>
                             ¡Explora la comunidad para descubrir nuevos aficionados!
                         </p>
-                        <a href="{% url 'profile_list' %}" class="btn btn-primary btn-lg shadow-sm">
+                        <a href="{% url 'profiles:profile_list' %}" class="btn btn-primary btn-lg shadow-sm">
                             <i class="bi bi-search me-2"></i>Descubrir personas
                         </a>
                     </div>

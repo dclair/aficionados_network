@@ -17,7 +17,7 @@
             <div class="alert alert-info">
                 <h4>Perfil no encontrado</h4>
                 <p class="mb-4">Parece que aún no has creado tu perfil.</p>
-                <a href="{% url 'profile_edit' %}" class="btn btn-primary">Crear mi perfil</a>
+                <a href="{% url 'profiles:profile_edit' %}" class="btn btn-primary">Crear mi perfil</a>
             </div>
         </div>
     {% else %}
@@ -36,9 +36,9 @@
                 <div class="d-flex align-items-center mb-3">
                     <h2 class="mb-0 me-3">{{ user_profile.user.username }}</h2>
                     {% if user.is_authenticated and user != user_profile.user %}
-                        <form method="post" action="{% url 'profile' user_profile.id %}" class="d-inline">
+                        <form method="post" action="{% url 'profiles:profile' user_profile.pk %}" class="d-inline">
                             {% csrf_token %}
-                            <input type="hidden" name="profile_id" value="{{ user_profile.id }}">
+                            <input type="hidden" name="profile_id" value="{{ user_profile.pk }}">
                             {% if is_following %}
                                 <input type="hidden" name="action" value="unfollow">
                                 <button type="submit" class="btn btn-outline-primary btn-sm ms-3">Dejar de seguir</button>
@@ -48,7 +48,7 @@
                             {% endif %}
                         </form>
                     {% elif user == user_profile.user %}
-                        <a href="{% url 'profile_edit' %}" class="btn btn-outline-secondary btn-sm ms-3">Editar perfil</a>
+                        <a href="{% url 'profiles:profile_edit' %}" class="btn btn-outline-secondary btn-sm ms-3">Editar perfil</a>
                     {% endif %}
                 </div>
                 

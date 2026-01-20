@@ -10,23 +10,20 @@ from .views import (
     LoginView,
     RegisterView,
     LogoutView,
-    ProfileView,
-    ProfileUpdateView,
-    ProfilesListView,
     ContactFormView,
 )
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("posts.urls")),  # Incluye las URLs de la app posts
+    path(
+        "profile/", include("profiles.urls")
+    ),  # Esto delega las rutas a la app profiles
     path("", HomeView.as_view(), name="home"),
     # urls autenticación
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("register/", RegisterView.as_view(), name="register"),
-    path("profile/list/", ProfilesListView.as_view(), name="profile_list"),
-    path("profile/<int:pk>", ProfileView.as_view(), name="profile"),
-    path("profile/edit/", ProfileUpdateView.as_view(), name="profile_edit"),
     path("contact/", ContactFormView.as_view(), name="contact"),
     path("pages/", include("django.contrib.flatpages.urls")),
     path("notifications/", include("notifications.urls")),

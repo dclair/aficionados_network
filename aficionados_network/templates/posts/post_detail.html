@@ -18,7 +18,7 @@
                 <!-- ENCABEZADO DEL POST -->
                 <div class="card-header bg-white py-2 border-bottom-0">
                     <div class="d-flex align-items-center">
-                        <a href="{% url 'profile' post.user.profile.id %}" class="text-decoration-none text-dark d-flex align-items-center">
+                        <a href="{% url 'profiles:profile' post.user.profile.id %}" class="text-decoration-none text-dark d-flex align-items-center">
                             {% if post.user.profile.profile_picture %}
                                 <img src="{{ post.user.profile.profile_picture.url }}" 
                                      class="rounded-circle me-2" 
@@ -124,7 +124,7 @@
                         {% for comment in post.comments.all %}
                         <div class="d-flex mb-3" id="comment-{{ comment.id }}">
                             <div class="flex-shrink-0">
-                                <a href="{% url 'profile' comment.user.profile.pk %}">
+                                <a href="{% url 'profiles:profile' comment.user.profile.pk %}">
                                     <img src="{{ comment.user.profile.profile_picture.url|default:'/static/images/default-avatar.png' }}" 
                                          class="rounded-circle" 
                                          width="40" 
@@ -135,7 +135,7 @@
                             </div>
                             <div class="ms-3">
                                 <div class="bg-light p-3 rounded">
-                                    <a href="{% url 'profile' comment.user.profile.pk %}" 
+                                    <a href="{% url 'profiles:profile' comment.user.profile.pk %}" 
                                        class="fw-bold text-decoration-none text-dark">
                                         {{ comment.user.username }}
                                     </a>

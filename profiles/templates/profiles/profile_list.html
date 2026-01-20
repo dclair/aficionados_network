@@ -25,38 +25,42 @@
             </form>
 
             <!-- Filtros de seguimiento -->
-            {% if user.is_authenticated %}
+           {% if user.is_authenticated %}
             <div class="mb-4 text-center">
                 <div class="btn-group" role="group" aria-label="Filtros de perfiles">
-                    <a href="?q={{ request.GET.q|default:'' }}" 
-                       class="btn btn-outline-primary {% if not request.GET.filter or request.GET.filter == 'all' %}active{% endif %}">
-                        <i class="bi bi-people me-1"></i> Todos
+                    <a href="?filter=all{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                       class="btn btn-outline-primary {% if active_filter == 'all' %}active{% endif %}">
+                        <i class="bi bi-people me-1"></i> Todos ({{ count_all }})
                     </a>
                     <a href="?filter=following{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
-                       class="btn btn-outline-primary {% if request.GET.filter == 'following' %}active{% endif %}">
-                        <i class="bi bi-person-check me-1"></i> Siguiendo
+                       class="btn btn-outline-primary {% if active_filter == 'following' %}active{% endif %}">
+                        <i class="bi bi-person-check me-1"></i> Siguiendo ({{ count_following }})
                     </a>
                     <a href="?filter=not_following{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
-                       class="btn btn-outline-primary {% if request.GET.filter == 'not_following' %}active{% endif %}">
-                        <i class="bi bi-person-plus me-1"></i> No siguiendo
+                       class="btn btn-outline-primary {% if active_filter == 'not_following' %}active{% endif %}">
+                        <i class="bi bi-person-plus me-1"></i> No siguiendo ({{ count_not_following }})
                     </a>
                 </div>
             </div>
             {% endif %}
 
-            <!-- Contador de resultados -->
-            <div class="mb-3">
+            <!-- esto es el contador de perfiles, siguiendo, no siguiendo, todos-->
+           <div class="mb-3">
                 <h5 class="text-muted">
-                    {% if request.GET.filter == 'following' %}
-                        <i class="bi bi-people-fill me-2"></i>Usuarios que sigues ({{ profiles.paginator.count }})
-                    {% elif request.GET.filter == 'not_following' %}
-                        <i class="bi bi-person-plus-fill me-2"></i>Usuarios que no sigues ({{ profiles.paginator.count }})
+                    {% if active_filter == 'following' %}
+                        <i class="bi bi-people-fill me-2"></i>Usuarios que sigues ({{ count_following }})
+                    {% elif active_filter == 'not_following' %}
+                        <i class="bi bi-person-plus-fill me-2"></i>Usuarios que no sigues ({{ count_not_following }})
                     {% else %}
-                        <i class="bi bi-people me-2"></i>Todos los usuarios ({{ profiles.paginator.count }})
+                        <i class="bi bi-people me-2"></i>Todos los usuarios ({{ count_all }})
                     {% endif %}
                 </h5>
+                {% if request.GET.q %}
+                    <p class="small text-primary">Resultados para la búsqueda: "<strong>{{ request.GET.q }}</strong>"</p>
+                {% endif %}
             </div>
 
+            
             <!-- Lista de perfiles -->
             <div class="row g-4 justify-content-center">
                 {% for profile in profiles %}
@@ -65,7 +69,7 @@
                         <div class="card-body text-center p-4">
                             <!-- Foto de perfil -->
                             <div class="mb-3">
-                                <a href="{% url 'profile' profile.pk %}" class="text-decoration-none">
+                                <a href="{% url 'profiles:profile' profile.pk %}" class="text-decoration-none">
                                     <div class="position-relative d-inline-block">
                                        
                                         <img src="{{ profile.profile_picture_url }}" 
@@ -81,7 +85,7 @@
                             
                             <!-- Nombre de usuario -->
                             <h5 class="card-title mb-1">
-                                <a href="{% url 'profile' profile.pk %}" 
+                                <a href="{% url 'profiles:profile' profile.pk %}" 
                                    class="text-decoration-none text-dark fw-bold">
                                     {{ profile.user.username }}
                                 </a>
