@@ -1,0 +1,18 @@
+/* Animación para que la campana roja 'palpite' */
+    .text-danger.bi-bell-fill {
+        animation: pulse-red 2s infinite;
+        display: inline-block; /* Necesario para que la animación funcione bien */
+    }
+
+    @keyframes pulse-red {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+/* con este codigo la campana roja se ve mejor */
+
+    .badge.bg-danger {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-weight: bold;
+}

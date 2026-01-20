@@ -99,22 +99,29 @@ class LoginView(FormView):
             return self.form_invalid(form)
 
 
+from django.contrib.auth import logout as auth_logout
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+
 class LogoutView(LoginRequiredMixin, View):
     """
-    Vista para manejar el cierre de sesión del usuario.
+    Vista segura para manejar el cierre de sesión solo mediante POST.
     """
 
     login_url = "login"
 
-    def get(self, request, *args, **kwargs):
-        # Usamos auth_logout para cerrar la sesión
+    def post(self, request, *args, **kwargs):
         auth_logout(request)
         messages.success(request, "Has cerrado sesión correctamente.")
         return redirect("home")
 
-    def post(self, request, *args, **kwargs):
-        # También manejamos peticiones POST para cierre de sesión
-        return self.get(request, *args, **kwargs)
+    # Si alguien intenta entrar por GET (escribiendo la URL),
+    # lo redirigimos a inicio sin cerrar sesión, o a una página de confirmación.
+    def get(self, request, *args, **kwargs):
+        return redirect("home")
 
 
 class RegisterView(CreateView):

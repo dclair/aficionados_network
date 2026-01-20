@@ -1,0 +1,46 @@
+{% extends "general/layout.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="mb-4"><i class="bi bi-bell me-2"></i>Tus Notificaciones</h2>
+            
+            <div class="list-group shadow-sm">
+                {% for n in notifications %}
+                    <div class="list-group-item list-group-item-action p-3 {% if not n.is_read %}bg-light border-primary{% endif %}">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                {% if n.notification_type == 'follow' %}
+                                    <i class="bi bi-person-plus-fill text-primary me-2"></i>
+                                {% elif n.notification_type == 'like' %}
+                                    <i class="bi bi-heart-fill text-danger me-2"></i>
+                                {% else %}
+                                    <i class="bi bi-chat-dots-fill text-success me-2"></i>
+                                {% endif %}
+
+                                <strong>@{{ n.sender.username }}</strong>
+                                
+                                {% if n.notification_type == 'follow' %}
+                                    ha empezado a seguirte.
+                                {% elif n.notification_type == 'like' %}
+                                    le ha dado "me gusta" a tu 
+                                    <a href="#" class="text-decoration-none">publicación</a>.
+                                {% else %}
+                                    ha comentado: <span class="text-muted italic">"{{ n.content|truncatechars:30 }}"</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-secondary">{{ n.created_at|timesince }}</small>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-center p-5 text-muted">
+                        <i class="bi bi-bell-slash d-block mb-2 h1"></i>
+                        No tienes notificaciones por ahora.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

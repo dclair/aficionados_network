@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "posts",
     "profiles",
     "aficionados_network",  # App para mensajes de contacto
+    "notifications",  # App para notificaciones
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "notifications.context_processors.unread_notifications",  # <--- AÑADE ESTO para notificaciones
             ],
         },
     },
@@ -151,6 +153,8 @@ MESSAGE_TAGS = {
     messages.ERROR: "alert-danger",
 }
 LOGIN_URL = "/login/"
+# Después de cerrar sesión, el usuario irá a la página de inicio
+LOGOUT_REDIRECT_URL = "/"
 
 # Correo desde el que se envían los mensajes
 DEFAULT_FROM_EMAIL = os.getenv("EMAIL_USER")

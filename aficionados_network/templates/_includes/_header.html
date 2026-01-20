@@ -9,12 +9,38 @@
         {% if not user.is_authenticated %}
         <li><a href="{% url 'login' %}">Login</a></li>
         <li><a href="{% url 'register' %}">Register</a></li>
-        {% else %}        
-        <li><a href="{% url 'logout' %}">Logout</a></li>
+        {% else %}  
+        <!--Con esto se puede cerrar sesion  de manera segura utilizando csrf-->      
+        <li class="nav-item">
+            <form method="post" action="{% url 'logout' %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link nav-link p-0 border-0 align-baseline shadow-none text-dark" 
+                        style="text-decoration: none;">
+                    Cerrar Sesión
+                </button>
+            </form>
+        </li>
         <li><a href="{% url 'posts:post_create' %}">Crear Post</a></li>
         <li>
               <a href="{% if has_profile %}{% url 'profile' request.user.profile.pk %}{% else %}{% url 'profile_edit' %}{% endif %}">Mi Perfil</a>
         </li>
+        <!-- Aqui se encuentra el icono de la campana roja -->
+        <li class="nav-item me-3">
+            <a class="nav-link" href="{% url 'notifications:list' %}">
+                <span class="position-relative d-inline-block">
+                    <i class="bi bi-bell-fill {% if unread_notifications_count > 0 %}text-danger{% else %}text-dark{% endif %}" 
+                    style="font-size: 1.25rem;"></i>
+                    
+                    {% if unread_notifications_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" 
+                            style="font-size: 0.5rem; padding: 0.15rem 0.3rem; border-width: 1.5px !important;">
+                            {{ unread_notifications_count }}
+                        </span>
+                    {% endif %}
+                </span>
+            </a>
+        </li>
+       
         {% endif %}
         
         <li><a href="{% url 'contact' %}">Contacto</a></li>

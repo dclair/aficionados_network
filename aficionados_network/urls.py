@@ -29,6 +29,7 @@ urlpatterns = [
     path("profile/edit/", ProfileUpdateView.as_view(), name="profile_edit"),
     path("contact/", ContactFormView.as_view(), name="contact"),
     path("pages/", include("django.contrib.flatpages.urls")),
+    path("notifications/", include("notifications.urls")),
 ]
 
 # Configuración para servir archivos multimedia en desarrollo
