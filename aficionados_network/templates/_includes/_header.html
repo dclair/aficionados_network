@@ -23,11 +23,19 @@
             </form>
         </li>
         <li><a href="{% url 'posts:post_create' %}">Crear Post</a></li>
-        
+        <!-- ENLAZAR CON MI PERFIL O CREAR PERFIL -->
         <li>
-            <a href="{% if has_profile %}{% url 'profiles:profile' request.user.profile.pk %}{% else %}{% url 'profiles:profile_edit' %}{% endif %}">
-                Mi Perfil
-            </a>
+            {% if user.is_authenticated and user.profile %}
+                {# Esto carga profile.html (la vista de detalle) #}
+                <a href="{% url 'profiles:profile' user.profile.pk %}">
+                    <i class="bi bi-person"></i> Mi Perfil
+                </a>
+            {% else %}
+                {# Solo si NO tiene perfil, lo mandamos a crearlo #}
+                <a href="{% url 'profiles:profile_edit' %}">
+                    <i class="bi bi-person-plus"></i> Crear Perfil
+                </a>
+            {% endif %}
         </li>
 
         <li class="nav-item me-3">

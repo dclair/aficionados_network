@@ -73,22 +73,45 @@ class ProfileView(LoginRequiredMixin, DetailView):  # Simplificado para DetailVi
     context_object_name = "user_profile"
 
     def get_object(self, queryset=None):
+        pk_val = self.kwargs.get("pk")
+
         try:
-            # Usamos .pk para consistencia
-            pk_val = self.kwargs.get("pk")
-            if not pk_val or str(self.request.user.profile.pk) == str(pk_val):
+            # CASO 1: Si no hay PK en la URL o el PK es el mío, devuelvo mi perfil
+            if not pk_val or (
+                self.request.user.is_authenticated
+                and str(self.request.user.profile.pk) == str(pk_val)
+            ):
                 return self.request.user.profile
+
+            # CASO 2: Si es el PK de otra persona, lo busco normalmente
             return super().get_object(queryset)
+
         except (UserProfile.DoesNotExist, AttributeError):
+            # En lugar de 404, si es mi propio perfil y no existe,
+            # podrías redirigir a crear (opcional)
             raise Http404("El perfil no existe")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_profile = self.get_object()
-        if self.request.user.is_authenticated and hasattr(self.request.user, "profile"):
-            context["is_following"] = user_profile.followers.filter(
+        profile = self.get_object()
+
+        # Obtenemos las listas de usuarios
+        # Nota: 'following' y 'followers' son los nombres de tus campos ManyToMany
+        context["following_list"] = profile.following.all()
+        context["followers_list"] = profile.followers.all()
+        context["is_own_profile"] = self.get_object() == getattr(
+            self.request.user, "profile", None
+        )
+
+        # Conteos rápidos
+        context["following_count"] = profile.following.count()
+        context["followers_count"] = profile.followers.count()
+
+        if self.request.user.is_authenticated:
+            context["is_following"] = profile.followers.filter(
                 pk=self.request.user.profile.pk
             ).exists()
+
         return context
 
     def post(self, request, *args, **kwargs):

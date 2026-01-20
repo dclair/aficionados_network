@@ -4,9 +4,9 @@
 {# Título de la pestaña del navegador #}
 {% block head_title %}
     {% if user_profile %}
-        {{ user_profile.user.username }} | InstaDclair
+        {{ user_profile.user.username }} | Hubs$Clicks
     {% else %}
-        Perfil no encontrado | InstaDclair
+        Perfil no encontrado | Hubs$Clicks
     {% endif %}
 {% endblock head_title %}
 
@@ -31,31 +31,26 @@
                      onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
             </div>
             
-            {# Resto del código del perfil... #}
             <div class="col-md-10">
                 <div class="d-flex align-items-center mb-3">
                     <h2 class="mb-0 me-3">{{ user_profile.user.username }}</h2>
-                    {% if user.is_authenticated and user != user_profile.user %}
-                        <form method="post" action="{% url 'profiles:profile' user_profile.pk %}" class="d-inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="profile_id" value="{{ user_profile.pk }}">
-                            {% if is_following %}
-                                <input type="hidden" name="action" value="unfollow">
-                                <button type="submit" class="btn btn-outline-primary btn-sm ms-3">Dejar de seguir</button>
-                            {% else %}
-                                <input type="hidden" name="action" value="follow">
-                                <button type="submit" class="btn btn-primary btn-sm ms-3">Seguir</button>
-                            {% endif %}
-                        </form>
-                    {% elif user == user_profile.user %}
+                    {% if user.is_authenticated and user == user_profile.user %}
                         <a href="{% url 'profiles:profile_edit' %}" class="btn btn-outline-secondary btn-sm ms-3">Editar perfil</a>
                     {% endif %}
                 </div>
                 
                 <div class="d-flex mb-4">
                     <div class="me-4"><strong>{{ user_profile.user.posts.count }}</strong> publicaciones</div>
-                    <div class="me-4"><strong>{{ user_profile.followers.count }}</strong> seguidores</div>
-                    <div><strong>{{ user_profile.following.count }}</strong> siguiendo</div>
+                    
+                    {# SEGUIDORES: Ahora es un botón que abre el modal #}
+                    <div class="me-4" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followersModal">
+                        <span class="text-primary-hover"><strong>{{ user_profile.followers.count }}</strong> seguidores</span>
+                    </div>
+
+                    {# SIGUIENDO: Ahora es un botón que abre el modal #}
+                    <div style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">
+                        <span class="text-primary-hover"><strong>{{ user_profile.following.count }}</strong> siguiendo</span>
+                    </div>
                 </div>
                 
                 <div class="bg-light p-3 rounded mb-4">
@@ -119,4 +114,94 @@
         </div>
     {% endif %}
 </div>
+
+{# --- MODALES CON BUSCADOR --- #}
+
+<div class="modal fade" id="followersModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title w-100 text-center">Seguidores</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="px-3 pb-2">
+                <input type="text" class="form-control form-control-sm" id="searchFollowers" placeholder="Buscar seguidor...">
+            </div>
+            <div class="modal-body p-0">
+                <ul class="list-group list-group-flush" id="followersList">
+                    {% for follower in user_profile.followers.all %}
+                        <li class="list-group-item d-flex align-items-center border-0 px-3 search-item">
+                            <img src="{{ follower.profile_picture_url|default:'' }}" 
+                                 class="rounded-circle me-3" style="width: 35px; height: 35px; object-fit: cover;"
+                                 onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
+                            <a href="{% url 'profiles:profile' follower.pk %}" class="text-decoration-none text-dark fw-bold small username-text">
+                                {{ follower.user.username }}
+                            </a>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center py-4 text-muted small">No tiene seguidores aún.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="followingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title w-100 text-center">Siguiendo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="px-3 pb-2">
+                <input type="text" class="form-control form-control-sm" id="searchFollowing" placeholder="Buscar usuario...">
+            </div>
+            <div class="modal-body p-0">
+                <ul class="list-group list-group-flush" id="followingList">
+                    {% for followed in user_profile.following.all %}
+                        <li class="list-group-item d-flex align-items-center border-0 px-3 search-item">
+                            <img src="{{ followed.profile_picture_url|default:'' }}" 
+                                 class="rounded-circle me-3" style="width: 35px; height: 35px; object-fit: cover;"
+                                 onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
+                            <a href="{% url 'profiles:profile' followed.pk %}" class="text-decoration-none text-dark fw-bold small username-text">
+                                {{ followed.user.username }}
+                            </a>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center py-4 text-muted small">No sigue a nadie aún.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-primary-hover:hover {
+        color: #0d6efd;
+        text-decoration: underline;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function setupFilter(inputId, listId) {
+        const input = document.getElementById(inputId);
+        const list = document.getElementById(listId);
+        if (input && list) {
+            input.addEventListener('keyup', function() {
+                const filter = input.value.toLowerCase();
+                const items = list.getElementsByClassName('search-item');
+                Array.from(items).forEach(item => {
+                    const text = item.querySelector('.username-text').textContent.toLowerCase();
+                    item.style.display = text.includes(filter) ? "" : "none";
+                });
+            });
+        }
+    }
+    setupFilter('searchFollowers', 'followersList');
+    setupFilter('searchFollowing', 'followingList');
+});
+</script>
 {% endblock content %}
