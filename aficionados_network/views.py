@@ -53,7 +53,7 @@ class HomeView(TemplateView):
                     messages.warning(self.request, "Por favor, completa tu perfil.")
                     context["has_profile"] = False
                     context["last_posts"] = Posts.objects.all().order_by("-created_at")[
-                        :15
+                        :20
                     ]
                     return context
 
@@ -67,13 +67,13 @@ class HomeView(TemplateView):
                 # Obtenemos los posts de los usuarios seguidos (sin incluir los propios)
                 last_posts = Posts.objects.filter(user__in=seguidos).order_by(
                     "-created_at"
-                )[:15]
+                )[:20]
             except UserProfile.DoesNotExist:
                 # Si el usuario no tiene perfil, mostramos todos los posts
-                last_posts = Posts.objects.all().order_by("-created_at")[:15]
+                last_posts = Posts.objects.all().order_by("-created_at")[:20]
         else:
             # Usuario no autenticado
-            last_posts = Posts.objects.all().order_by("-created_at")[:15]
+            last_posts = Posts.objects.all().order_by("-created_at")[:20]
         context["last_posts"] = last_posts
         if self.request.user.is_authenticated and "has_profile" not in context:
             context["has_profile"] = hasattr(self.request.user, "profile")
