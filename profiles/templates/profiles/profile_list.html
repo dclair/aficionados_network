@@ -9,8 +9,7 @@
         <div class="col-12 col-lg-10">
             <h2 class="mb-4 text-center">Explorar Usuarios</h2>
             
-            <!-- Barra de búsqueda -->
-            <form class="mb-4" id="search-form">
+            <form class="mb-4" id="search-form" method="GET">
                 <div class="input-group">
                     <input type="text" 
                            id="search-input"
@@ -24,8 +23,7 @@
                 </div>
             </form>
 
-            <!-- Filtros de seguimiento -->
-           {% if user.is_authenticated %}
+            {% if user.is_authenticated %}
             <div class="mb-4 text-center">
                 <div class="btn-group" role="group" aria-label="Filtros de perfiles">
                     <a href="?filter=all{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
@@ -44,8 +42,7 @@
             </div>
             {% endif %}
 
-            <!-- esto es el contador de perfiles, siguiendo, no siguiendo, todos-->
-           <div class="mb-3">
+            <div class="mb-3">
                 <h5 class="text-muted">
                     {% if active_filter == 'following' %}
                         <i class="bi bi-people-fill me-2"></i>Usuarios que sigues ({{ count_following }})
@@ -61,17 +58,14 @@
             </div>
 
             
-            <!-- Lista de perfiles -->
             <div class="row g-4 justify-content-center">
                 {% for profile in profiles %}
                 <div class="col-12 col-sm-10 col-md-6 col-lg-5 col-xl-4 profile-card">
                     <div class="card h-100 shadow-sm border-0">
                         <div class="card-body text-center p-4">
-                            <!-- Foto de perfil -->
                             <div class="mb-3">
                                 <a href="{% url 'profiles:profile' profile.pk %}" class="text-decoration-none">
                                     <div class="position-relative d-inline-block">
-                                       
                                         <img src="{{ profile.profile_picture_url }}" 
                                              class="rounded-circle img-thumbnail" 
                                              style="width: 100px; height: 100px; object-fit: cover;"
@@ -83,7 +77,6 @@
                                 </a>
                             </div>
                             
-                            <!-- Nombre de usuario -->
                             <h5 class="card-title mb-1">
                                 <a href="{% url 'profiles:profile' profile.pk %}" 
                                    class="text-decoration-none text-dark fw-bold">
@@ -91,22 +84,22 @@
                                 </a>
                             </h5>
 
-                            <!-- Estado de seguimiento -->
-                            {% if user.is_authenticated and user != profile.user %}
-                                <div class="mt-2">
-                                    {% if profile.is_followed_by_user %}
+                            <div class="mb-3">
+                                {% if user.is_authenticated %}
+                                    {% if user == profile.user %}
+                                        <span class="badge bg-secondary">Tú</span>
+                                    {% elif profile.is_followed %}
                                         <span class="badge bg-success">
-                                            <i class="bi bi-check-circle-fill me-1"></i>Siguiendo
+                                            <i class="bi bi-check-circle-fill"></i> Siguiendo
                                         </span>
                                     {% else %}
-                                        <span class="badge bg-secondary">
-                                            <i class="bi bi-person-plus me-1"></i>No sigues
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-person-plus"></i> No sigues
                                         </span>
                                     {% endif %}
-                                </div>
-                            {% endif %}
+                                {% endif %}
+                            </div>
 
-                            <!-- Información adicional del perfil -->
                             <div class="mt-2 small text-muted">
                                 <div>
                                     <i class="bi bi-postcard me-1"></i>
@@ -128,7 +121,6 @@
                 {% endfor %}
             </div>
 
-            <!-- Paginación -->
             {% if is_paginated %}
             <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
@@ -171,29 +163,20 @@
     </div>
 </div>
 
-<!-- Script para manejar la búsqueda con filtros -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchForm = document.getElementById('search-form');
-    const searchInput = document.getElementById('search-input');
-    const filterLinks = document.querySelectorAll('a[href*="filter="]');
     
-    // Actualizar el formulario de búsqueda con el filtro actual
-    const currentFilter = new URLSearchParams(window.location.search).get('filter');
-    if (currentFilter) {
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'filter';
-        hiddenInput.value = currentFilter;
-        searchForm.appendChild(hiddenInput);
-    }
-    
-    // Manejar clic en los enlaces de filtro
-    filterLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            window.location.href = this.href;
-        });
+    // Al enviar el formulario, asegurarse de mantener el filtro activo
+    searchForm.addEventListener('submit', function(e) {
+        const currentFilter = new URLSearchParams(window.location.search).get('filter');
+        if (currentFilter && !searchForm.querySelector('input[name="filter"]')) {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'filter';
+            hiddenInput.value = currentFilter;
+            searchForm.appendChild(hiddenInput);
+        }
     });
 });
 </script>

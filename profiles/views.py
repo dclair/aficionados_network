@@ -11,35 +11,45 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_http_methods
 from django.views import View
 from aficionados_network.forms import UserUpdateForm, ProfileUpdateForm
+from django.db.models import Exists, OuterRef
 
 from .models import UserProfile
 
 
+from django.db.models import Exists, OuterRef  # Añade estas importaciones arriba
+
+
 class ProfilesListView(ListView):
     model = UserProfile
-    template_name = "profiles/profile_list.html"  # CAMBIO: nueva ruta
+    template_name = "profiles/profile_list.html"
     context_object_name = "profiles"
     paginate_by = 12
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        search_query = self.request.GET.get("q", "").strip()
+        user = self.request.user
 
+        # 1. Filtro de búsqueda (si existe)
+        search_query = self.request.GET.get("q", "").strip()
         if search_query:
             queryset = queryset.filter(user__username__istartswith=search_query)
 
-        if self.request.user.is_authenticated:
-            queryset = queryset.exclude(user=self.request.user)
-            filter_type = self.request.GET.get("filter", "all")
+        if user.is_authenticated:
+            # 2. Excluirme a mí mismo de la lista
+            queryset = queryset.exclude(user=user)
 
+            # 3. ¡LA CLAVE! Anotamos si el usuario actual sigue a cada perfil de la lista
+            # Comprobamos si el ID del perfil actual está en los seguidos del usuario logueado
+            queryset = queryset.annotate(
+                is_followed=Exists(user.profile.following.filter(pk=OuterRef("pk")))
+            )
+
+            # 4. Filtros de la barra lateral (Siguiendo / No siguiendo)
+            filter_type = self.request.GET.get("filter", "all")
             if filter_type == "following":
-                queryset = queryset.filter(
-                    follower_relationships__follower=self.request.user.profile
-                )
+                queryset = queryset.filter(is_followed=True)
             elif filter_type == "not_following":
-                queryset = queryset.exclude(
-                    follower_relationships__follower=self.request.user.profile
-                )
+                queryset = queryset.filter(is_followed=False)
 
         return queryset.distinct()
 
