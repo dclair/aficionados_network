@@ -17,6 +17,20 @@
         transition: all 0.5s ease;
         padding: 10px;
     }
+    :target {
+    animation: highlight-fade 4s ease-in-out;
+    border-radius: 8px;
+}
+/* Selecciona el div cuyo ID está en la URL después del # */
+@keyframes highlight-fade {
+    0% {
+        background-color: #fff3cd; /* Amarillo alerta */
+        box-shadow: 0 0 15px rgba(255, 218, 106, 0.5);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
 </style>
 
 <div class="container mt-4">

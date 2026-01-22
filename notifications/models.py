@@ -34,9 +34,14 @@ class Notification(models.Model):
         blank=True,
         verbose_name="Publicación",
     )
+
     is_read = models.BooleanField(default=False, verbose_name="¿Leída?")
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name="Fecha de creación"
+    )
+    # este campo es para cuando la notificación es de un comentario
+    comment = models.ForeignKey(
+        "posts.Comment", on_delete=models.CASCADE, null=True, blank=True
     )
 
     class Meta:
