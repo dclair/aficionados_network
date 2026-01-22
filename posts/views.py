@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 from .models import Posts
 from .forms import PostCreateForm, CommentForm
 from notifications.models import Notification
+from django.views.decorators.http import require_POST
 
 
 class PostCreateView(CreateView):
@@ -33,19 +34,30 @@ class PostDetailView(DetailView):
 
 
 @login_required
+@require_POST
 def toggle_like(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        post_id = data.get("post_id")
-        post = Posts.objects.get(pk=post_id)
-        if request.user in post.likes.all():
-            post.likes.remove(request.user)
-            liked = False
-        else:
-            post.likes.add(request.user)
-            liked = True
-        return JsonResponse({"liked": liked, "count": post.likes.count()})
-    return JsonResponse({"error": "Método no permitido"}, status=405)
+    # 1. Recibimos 'post_id' (asegúrate que sea este nombre)
+    p_id = request.POST.get("post_id")
+    post = get_object_or_404(Posts, id=p_id)
+
+    if post.likes.filter(id=request.user.id).exists():
+        post.likes.remove(request.user)
+        is_liked = False
+    else:
+        post.likes.add(request.user)
+        is_liked = True
+
+        # Notificación
+        if post.user != request.user:
+            Notification.objects.get_or_create(
+                recipient=post.user,
+                sender=request.user,
+                notification_type="like",
+                post=post,
+            )
+
+    # 2. IMPORTANTE: Los nombres aquí son 'liked' y 'count'
+    return JsonResponse({"liked": is_liked, "count": post.likes.count()})
 
 
 @login_required
