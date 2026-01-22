@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from PIL import Image
 import os
+from django.urls import reverse
 
 
 def validate_image_size(image):
@@ -125,6 +126,10 @@ class Posts(models.Model):
     def user_has_liked(self, user):
         """Verifica si un usuario ha dado like al post"""
         return self.likes.filter(pk=user.pk).exists()
+
+    def get_absolute_url(self):
+        # Asegúrate de que 'post_detail' es el nombre que usas en posts/urls.py
+        return reverse("posts:post_detail", kwargs={"pk": self.pk})
 
 
 class Comment(models.Model):

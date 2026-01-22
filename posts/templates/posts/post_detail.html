@@ -2,108 +2,77 @@
 {% load static %}
 
 {% block page_title %} 
-<!-- ========== TÍTULO DE LA PÁGINA ========== -->
 <div class="container-fluid px-4 mt-4">
     <h1 class="fw-bold h2">Publicación de {{ post.user.username }}</h1>
 </div>
 {% endblock page_title %}
 
 {% block content %}
-<!-- ========== CONTENIDO PRINCIPAL ========== -->
+<style>
+    /* Efecto de resaltado cuando vienes de una notificación */
+    .comment-highlight:target {
+        background-color: #fff3cd !important; /* Amarillo suave */
+        border: 2px solid #ffda6a;
+        border-radius: 10px;
+        transition: all 0.5s ease;
+        padding: 10px;
+    }
+</style>
+
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <!-- Post -->
             <div class="card mb-4">
-                <!-- ENCABEZADO DEL POST -->
                 <div class="card-header bg-white py-2 border-bottom-0">
                     <div class="d-flex align-items-center">
                         <a href="{% url 'profiles:profile' post.user.profile.id %}" class="text-decoration-none text-dark d-flex align-items-center">
                             {% if post.user.profile.profile_picture %}
-                                <img src="{{ post.user.profile.profile_picture.url }}" 
-                                     class="rounded-circle me-2" 
-                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                <img src="{{ post.user.profile.profile_picture.url }}" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
                             {% else %}
-                                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center me-2" 
-                                     style="width: 40px; height: 40px;">
+                                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                     <i class="bi bi-person text-muted"></i>
                                 </div>
                             {% endif %}
                             <span class="fw-bold">{{ post.user.username }}</span>
                         </a>
-                        <small class="text-muted ms-auto">
-                            {{ post.created_at|date:"d M Y" }}
-                        </small>
+                        <small class="text-muted ms-auto">{{ post.created_at|date:"d M Y" }}</small>
                     </div>
                 </div>
 
-                <!-- IMAGEN DEL POST -->
                 {% if post.image %}
                 <div class="text-center" style="background-color: #f8f9fa; min-height: 400px; display: flex; align-items: center; justify-content: center;">
-                    <img src="{{ post.image.url }}" 
-                         class="img-fluid" 
-                         alt="Post image"
-                         style="max-height: 500px; max-width: 100%; object-fit: contain;">
+                    <img src="{{ post.image.url }}" class="img-fluid" alt="Post image" style="max-height: 500px; max-width: 100%; object-fit: contain;">
                 </div>
                 {% endif %}
 
-                <!-- CUERPO DEL POST -->
                 <div class="card-body">
-                    <!-- BOTONES DE INTERACCIÓN -->
-                    
-                <div class="d-flex mb-3">
-                    <!-- Botón Me gusta -->
-                    <div class="me-4">
-                        {% if request.user.is_authenticated %}
-                            <button type="button" 
-                                    class="like-button text-decoration-none text-dark border-0 bg-transparent p-0" 
-                                    data-post-id="{{ post.pk }}"
-                                    data-like-url="{% url 'posts:toggle_like' %}">
-                                <i class="bi {% if request.user in post.likes.all %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}" 
-                                style="font-size: 1.5rem;"></i>
-                            </button>
-                        {% else %}
-                            <a href="{% url 'login' %}?next={{ request.path }}" 
-                            class="text-decoration-none text-dark">
-                                <i class="bi bi-heart" style="font-size: 1.5rem;"></i>
+                    <div class="d-flex mb-3">
+                        <div class="me-4">
+                            {% if request.user.is_authenticated %}
+                                <button type="button" class="like-button border-0 bg-transparent p-0" data-post-id="{{ post.pk }}" data-like-url="{% url 'posts:toggle_like' %}">
+                                    <i class="bi {% if request.user in post.likes.all %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}" style="font-size: 1.5rem;"></i>
+                                </button>
+                            {% else %}
+                                <a href="{% url 'login' %}?next={{ request.path }}" class="text-dark"><i class="bi bi-heart" style="font-size: 1.5rem;"></i></a>
+                            {% endif %}
+                            <span class="like-count ms-1 fw-bold">{{ post.likes.count }}</span>
+                        </div>
+                        <div>
+                            <a href="#comments" class="text-decoration-none text-dark">
+                                <i class="bi bi-chat" style="font-size: 1.5rem;"></i>
+                                <span class="ms-1 fw-bold">{{ post.comments.count }}</span>
                             </a>
-                        {% endif %}
-                        <span class="like-count ms-1 fw-bold">{{ post.likes.count }}</span>
+                        </div>
                     </div>
-
-                    <!-- Botón Comentarios -->
-                    <div>
-                        <a href="#comments" class="text-decoration-none text-dark">
-                            <i class="bi bi-chat" style="font-size: 1.5rem;"></i>
-                            <span class="ms-1 fw-bold">{{ post.comments.count }}</span>
-                        </a>
-                    </div>
-                </div>
-
-
-                    <!-- TEXTO DEL POST -->
-                    <div class="mb-3">
-                        {% if post.title %}
-                            <h5 class="fw-bold">{{ post.title }}</h5>
-                        {% endif %}
-                        <p class="mb-0">{{ post.caption|linebreaksbr }}</p>
-                    </div>
-
-                    <!-- UBICACIÓN SI EXISTE -->
-                    {% if post.location %}
-                        <p class="text-muted small mb-0">
-                            <i class="bi bi-geo-alt"></i> {{ post.location }}
-                        </p>
-                    {% endif %}
+                    {% if post.title %}<h5 class="fw-bold">{{ post.title }}</h5>{% endif %}
+                    <p class="mb-0">{{ post.caption|linebreaksbr }}</p>
                 </div>
             </div>
             
-            <!-- Comentarios -->
             <div class="card" id="comments">
                 <div class="card-body">
                     <h5 class="card-title mb-4">Comentarios</h5>
                     
-                    <!-- Formulario de comentario -->
                     {% if request.user.is_authenticated %}
                     <form method="post" action="{% url 'posts:add_comment' post.pk %}" id="comment-form" class="mb-4">
                         {% csrf_token %}
@@ -112,40 +81,30 @@
                             <button type="submit" class="btn btn-primary">Comentar</button>
                         </div>
                     </form>
-                    {% else %}
-                    <p class="text-muted">
-                        <a href="{% url 'login' %}?next={{ request.path }}">Inicia sesión</a> 
-                        para dejar un comentario.
-                    </p>
                     {% endif %}
                     
-                    <!-- Lista de comentarios -->
                     <div id="comments-list">
                         {% for comment in post.comments.all %}
-                        <div class="d-flex mb-3" id="comment-{{ comment.id }}">
+                        <div class="d-flex mb-3 comment-highlight" id="comment-{{ comment.id }}">
                             <div class="flex-shrink-0">
-                                <a href="{% url 'profiles:profile' comment.user.profile.pk %}">
-                                    <img src="{{ comment.user.profile.profile_picture.url|default:'/static/images/default-avatar.png' }}" 
-                                         class="rounded-circle" 
-                                         width="40" 
-                                         height="40" 
-                                         alt="{{ comment.user.username }}"
-                                         onerror="this.src='/static/images/default-avatar.png';">
-                                </a>
+                                <img src="{{ comment.user.profile.profile_picture.url|default:'/static/images/default-avatar.png' }}" class="rounded-circle" width="40" height="40">
                             </div>
-                            <div class="ms-3">
+                            <div class="ms-3 w-100">
                                 <div class="bg-light p-3 rounded">
-                                    <a href="{% url 'profiles:profile' comment.user.profile.pk %}" 
-                                       class="fw-bold text-decoration-none text-dark">
-                                        {{ comment.user.username }}
-                                    </a>
-                                    <p class="mb-0">{{ comment.comment }}</p>
+                                    <div class="d-flex justify-content-between">
+                                        <strong class="text-dark">{{ comment.user.username }}</strong>
+                                        <small class="text-muted">{{ comment.created_at|timesince }}</small>
+                                    </div>
+                                    <p class="mb-0 mt-1">{{ comment.comment }}</p>
                                 </div>
-                                <small class="text-muted">{{ comment.created_at|timesince }} atrás</small>
+                                <button class="btn btn-sm btn-link text-decoration-none p-0 mt-1" 
+                                        onclick="responderComentario('{{ comment.user.username }}')">
+                                    Responder
+                                </button>
                             </div>
                         </div>
                         {% empty %}
-                        <p class="text-muted">No hay comentarios aún. ¡Sé el primero en comentar!</p>
+                        <p class="text-muted">No hay comentarios aún.</p>
                         {% endfor %}
                     </div>
                 </div>
@@ -153,8 +112,16 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/comentarios.js' %}"></script>
+<script>
+    function responderComentario(username) {
+        const textarea = document.querySelector('#comment-form textarea');
+        if (textarea) {
+            textarea.value = `@${username} `;
+            textarea.focus();
+            // Desplazar suavemente al formulario
+            document.querySelector('#comment-form').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+</script>
 {% endblock %}
