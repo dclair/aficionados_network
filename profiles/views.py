@@ -12,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 from django.views import View
 from aficionados_network.forms import UserUpdateForm, ProfileUpdateForm
 from django.db.models import Exists, OuterRef
-
+from notifications.models import Notification
 from .models import UserProfile
 
 
@@ -77,43 +77,31 @@ class ProfilesListView(ListView):
         return context
 
 
-class ProfileView(LoginRequiredMixin, DetailView):  # Simplificado para DetailView
+class ProfileView(LoginRequiredMixin, DetailView):
     model = UserProfile
-    template_name = "profiles/profile.html"  # CAMBIO: nueva ruta
+    template_name = "profiles/profile.html"
     context_object_name = "user_profile"
 
     def get_object(self, queryset=None):
         pk_val = self.kwargs.get("pk")
-
         try:
-            # CASO 1: Si no hay PK en la URL o el PK es el mío, devuelvo mi perfil
             if not pk_val or (
                 self.request.user.is_authenticated
                 and str(self.request.user.profile.pk) == str(pk_val)
             ):
                 return self.request.user.profile
-
-            # CASO 2: Si es el PK de otra persona, lo busco normalmente
             return super().get_object(queryset)
-
         except (UserProfile.DoesNotExist, AttributeError):
-            # En lugar de 404, si es mi propio perfil y no existe,
-            # podrías redirigir a crear (opcional)
             raise Http404("El perfil no existe")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         profile = self.get_object()
-
-        # Obtenemos las listas de usuarios
-        # Nota: 'following' y 'followers' son los nombres de tus campos ManyToMany
         context["following_list"] = profile.following.all()
         context["followers_list"] = profile.followers.all()
         context["is_own_profile"] = self.get_object() == getattr(
             self.request.user, "profile", None
         )
-
-        # Conteos rápidos
         context["following_count"] = profile.following.count()
         context["followers_count"] = profile.followers.count()
 
@@ -121,26 +109,38 @@ class ProfileView(LoginRequiredMixin, DetailView):  # Simplificado para DetailVi
             context["is_following"] = profile.followers.filter(
                 pk=self.request.user.profile.pk
             ).exists()
-
         return context
 
     def post(self, request, *args, **kwargs):
-        # Lógica de follow/unfollow simplificada para el ejemplo
-        profile_id = request.POST.get("profile_pk")  # Ajustado a tu template
+        profile_id = request.POST.get("profile_pk")
         target_profile = get_object_or_404(UserProfile, pk=profile_id)
+        current_user_profile = request.user.profile
 
-        if request.user.profile.following.filter(pk=target_profile.pk).exists():
-            request.user.profile.following.remove(target_profile)
+        if current_user_profile.following.filter(pk=target_profile.pk).exists():
+            # DEJAR DE SEGUIR
+            current_user_profile.following.remove(target_profile)
             messages.success(
                 request, f"Has dejado de seguir a {target_profile.user.username}"
             )
         else:
-            request.user.profile.following.add(target_profile)
+            # SEGUIR
+            current_user_profile.following.add(target_profile)
+
+            # --- INICIO LÓGICA DE NOTIFICACIÓN ---
+            # Solo notificamos si no nos seguimos a nosotros mismos
+            if target_profile.user != request.user:
+                # Usamos get_or_create para no spamear si se siguen/desiguen muchas veces
+                Notification.objects.get_or_create(
+                    recipient=target_profile.user,  # El dueño del perfil seguido
+                    sender=request.user,  # El usuario que pulsa el botón
+                    notification_type="follow",
+                    is_read=False,
+                )
+            # --- FIN LÓGICA DE NOTIFICACIÓN ---
+
             messages.success(request, f"Ahora sigues a {target_profile.user.username}")
 
-        return redirect(
-            "profiles:profile", pk=target_profile.pk
-        )  # CAMBIO: Namespace y pk
+        return redirect("profiles:profile", pk=target_profile.pk)
 
 
 class ProfileUpdateView(LoginRequiredMixin, View):
