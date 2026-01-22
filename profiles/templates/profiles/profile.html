@@ -4,9 +4,9 @@
 {# Título de la pestaña del navegador #}
 {% block head_title %}
     {% if user_profile %}
-        {{ user_profile.user.username }} | Hubs$Clicks
+        {{ user_profile.user.username }} | Hubs&Clicks
     {% else %}
-        Perfil no encontrado | Hubs$Clicks
+        Perfil no encontrado | Hubs&Clicks
     {% endif %}
 {% endblock head_title %}
 
@@ -34,20 +34,43 @@
             <div class="col-md-10">
                 <div class="d-flex align-items-center mb-3">
                     <h2 class="mb-0 me-3">{{ user_profile.user.username }}</h2>
-                    {% if user.is_authenticated and user == user_profile.user %}
-                        <a href="{% url 'profiles:profile_edit' %}" class="btn btn-outline-secondary btn-sm ms-3">Editar perfil</a>
+                    
+                    {# --- BLOQUE DE BOTONES CORREGIDO --- #}
+                    {% if user.is_authenticated %}
+                        {% if is_own_profile %}
+                            {# Si es mi perfil, veo "Editar" #}
+                            <a href="{% url 'profiles:profile_edit' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil"></i> Editar perfil
+                            </a>
+                        {% else %}
+                            {# Si es perfil ajeno, veo "Seguir/Dejar de seguir" #}
+                            <form method="post" action="{% url 'profiles:profile' user_profile.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="profile_pk" value="{{ user_profile.pk }}">
+                                
+                                {% if is_following %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        Dejar de seguir
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        Seguir
+                                    </button>
+                                {% endif %}
+                            </form>
+                        {% endif %}
                     {% endif %}
                 </div>
                 
                 <div class="d-flex mb-4">
                     <div class="me-4"><strong>{{ user_profile.user.posts.count }}</strong> publicaciones</div>
                     
-                    {# SEGUIDORES: Ahora es un botón que abre el modal #}
+                    {# SEGUIDORES #}
                     <div class="me-4" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followersModal">
                         <span class="text-primary-hover"><strong>{{ user_profile.followers.count }}</strong> seguidores</span>
                     </div>
 
-                    {# SIGUIENDO: Ahora es un botón que abre el modal #}
+                    {# SIGUIENDO #}
                     <div style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#followingModal">
                         <span class="text-primary-hover"><strong>{{ user_profile.following.count }}</strong> siguiendo</span>
                     </div>
@@ -87,7 +110,7 @@
 
         <hr class="my-5">
 
-        {# Sección de publicaciones del usuario #}
+        {# Sección de publicaciones #}
         <div class="row g-2">
             {% for post in user_profile.user.posts.all %}
                 <div class="col-4">
@@ -97,7 +120,7 @@
                                 <img src="{{ post.image.url }}" 
                                      class="img-fluid w-100 h-100 shadow-sm" 
                                      style="object-fit: cover;"
-                                     alt="Publicación de {{ user_profile.user.username }}">
+                                     alt="Publicación">
                             {% else %}
                                 <div class="bg-secondary d-flex align-items-center justify-content-center text-white h-100">
                                     <i class="bi bi-card-image fs-1"></i>
@@ -115,8 +138,7 @@
     {% endif %}
 </div>
 
-{# --- MODALES CON BUSCADOR --- #}
-
+{# --- MODALES --- #}
 <div class="modal fade" id="followersModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
         <div class="modal-content">

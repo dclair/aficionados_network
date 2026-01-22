@@ -1,0 +1,137 @@
+{% extends "general/layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}Crear Publicación - InstaDclair{% endblock %}
+
+{% block content %}
+{% block page_title %} {% endblock %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h1 class="h5 mb-0 text-center">
+                        <i class="bi bi-plus-square me-2"></i>Nueva Publicación
+                    </h1>
+                </div>
+                <div class="card-body p-4">
+                    {% include "_includes/_messages.html" %}
+                    
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Image Upload -->
+                        <div class="mb-4 text-center">
+                            <div class="image-upload-container border rounded p-3 mb-3" 
+                                 style="min-height: 200px; background-color: #f8f9fa; cursor: pointer;"
+                                 id="imageUploadContainer">
+                                <div id="imagePreview" class="d-none"></div>
+                                <div id="uploadPlaceholder" class="h-100 d-flex flex-column justify-content-center align-items-center">
+                                    <i class="bi bi-images fs-1 text-muted mb-2"></i>
+                                    <p class="text-muted mb-0">Haz clic para subir una imagen</p>
+                                    <small class="text-muted">Formatos: JPG, PNG, GIF. Máx. 5MB</small>
+                                </div>
+                                {{ form.image|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <!-- Caption -->
+                        <div class="mb-4">
+                            {{ form.caption|as_crispy_field }}
+                            <div class="form-text">
+                                <small>Comparte algo sobre esta publicación (opcional)</small>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload me-2"></i>Publicar
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    #id_image {
+        display: none;
+    }
+    .image-upload-container {
+        transition: all 0.3s ease;
+    }
+    .image-upload-container:hover {
+        background-color: #e9ecef !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.querySelector('#id_image');
+    const imageContainer = document.getElementById('imageUploadContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+
+    // Handle click on container to trigger file input
+    if (imageContainer && imageInput) {
+        imageContainer.addEventListener('click', function() {
+            imageInput.click();
+        });
+
+        // Handle file selection
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Show preview
+                    uploadPlaceholder.classList.add('d-none');
+                    imagePreview.innerHTML = `
+                        <img src="${e.target.result}" class="img-fluid rounded" alt="Vista previa">
+                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="removeImage">
+                            <i class="bi bi-trash"></i> Cambiar imagen
+                        </button>
+                    `;
+                    imagePreview.classList.remove('d-none');
+                    
+                    // Add event listener to remove button
+                    document.getElementById('removeImage').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        imageInput.value = '';
+                        imagePreview.classList.add('d-none');
+                        imagePreview.innerHTML = '';
+                        uploadPlaceholder.classList.remove('d-none');
+                    });
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Bootstrap 5 form validation
+    (function () {
+        'use strict'
+        const forms = document.querySelectorAll('.needs-validation')
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+});
+</script>
+{% endblock %}

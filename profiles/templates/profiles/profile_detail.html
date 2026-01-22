@@ -2,15 +2,13 @@
 {% load static %}
 
 {% block head_title %}
-{{ user_profile.user.username }} | InstaDclair
+    {{ user_profile.user.username }} | Hubs&Clicks
 {% endblock head_title %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- Sección de información del perfil -->
     <div class="row mb-4">
         <div class="col-md-2 text-center">
-            {% comment %} <img src="{{ user_profile.profile_picture.url|default:'/media/default_profile.png' }}"  {% endcomment %}
             <img src="{{ user_profile.profile_picture_url }}" 
                  alt="{{ user_profile.user.username }}" 
                  class="rounded-circle img-thumbnail" 
@@ -18,58 +16,55 @@
         </div>
         <div class="col-md-10">
             <div class="d-flex align-items-center mb-3">
-                <!-- Nombre del usuario, siempre enlaza al perfil -->
                 <h2 class="mb-0 me-3">
-                    <a href="{% url 'profiles:profile' user_profile.pk %}" class="text-decoration-none text-dark">
-                        {{ user_profile.user.username }}
-                    </a>
+                    {{ user_profile.user.username }}
                 </h2>
-
-                <!-- Botones solo si es otro usuario-->
-                {% if user.is_authenticated and user != user_profile.user %}
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="profile_pk" value="{{ user_profile.pk }}">
-                        {% if is_following %}
-                            <button type="submit" class="btn btn-outline-danger btn-sm unfollow-btn" 
-                                    style="border-color: #dc3545; color: #dc3545;"
-                                    onmouseover="this.style.backgroundColor='#dc3545'; this.style.color='white';"
-                                    onmouseout="this.style.backgroundColor='transparent'; this.style.color='#dc3545';">
-                                Dejar de seguir
-                            </button>
+              
+                <div class="action-buttons">
+                    {% if user.is_authenticated %}
+                        {% if is_own_profile %}
+                            <a href="{% url 'profiles:profile_edit' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil-square"></i> Editar perfil
+                            </a>
                         {% else %}
-                            <!-- Botón seguir. Se activa si el usuario no está siguiendolo -->
-                            <button type="submit" class="btn btn-primary btn-sm">Seguir</button>
-                        {% endif %}  
-                    </form>                        
-                {% elif user == user_profile.user %}
-                    <a href="{% url 'profiles:profile_edit' %}" class="btn btn-outline-secondary btn-sm">Editar perfil</a>
-                {% endif %}
+                            <form method="post" action="{% url 'profiles:profile' user_profile.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="profile_pk" value="{{ user_profile.pk }}">
+                                
+                                {% if is_following %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-person-dash"></i> Dejar de seguir
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-person-plus"></i> Seguir
+                                    </button>
+                                {% endif %}
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
             </div>
 
-            <!-- Estadísticas del perfil -->
             <div class="d-flex mb-4">
-                <div class="me-4">
-                    <div class="text-muted small">Publicaciones</div>
+                <div class="me-4 text-center">
+                    <div class="text-muted small text-uppercase fw-bold">Publicaciones</div>
                     <strong class="fs-5">{{ user_profile.user.posts.count }}</strong>
                 </div>
-                <!-- Contador de seguidores -->
-                <div class="me-4">
-                    <div class="text-muted small">Seguidores</div>
-                    <strong class="fs-5">{{ user_profile.follower_relationships.count }}</strong>
+                <div class="me-4 text-center">
+                    <div class="text-muted small text-uppercase fw-bold">Seguidores</div>
+                    <strong class="fs-5">{{ followers_count }}</strong>
                 </div>
-                <!-- Contador de seguidos -->
-                <div>
-                    <div class="text-muted small">Siguiendo</div>
-                    <strong class="fs-5">{{ user_profile.following_relationships.count }}</strong>
+                <div class="me-4 text-center">
+                    <div class="text-muted small text-uppercase fw-bold">Siguiendo</div>
+                    <strong class="fs-5">{{ following_count }}</strong>
                 </div>
             </div>
 
-            <!-- Información detallada del perfil -->
-            <div class="bg-light p-3 rounded mb-4">
+            <div class="bg-light p-3 rounded mb-4 shadow-sm">
                 {% if user_profile.user.get_full_name %}
                     <div class="mb-2">
-                        <span class="fw-bold me-2">Nombre completo:</span>
+                        <span class="fw-bold me-2">Nombre:</span>
                         <span>{{ user_profile.user.get_full_name }}</span>
                     </div>
                 {% endif %}
@@ -82,15 +77,15 @@
                 {% endif %}
                 
                 {% if user_profile.location %}
-                    <div class="mb-2">
-                        <span class="fw-bold me-2">Ubicación:</span>
+                    <div class="mb-2 text-muted">
+                        <i class="bi bi-geo-alt-fill me-1"></i>
                         <span>{{ user_profile.location }}</span>
                     </div>
                 {% endif %}
                 
                 {% if user_profile.website %}
                     <div class="mb-2">
-                        <span class="fw-bold me-2">Sitio web:</span>
+                        <i class="bi bi-link-45deg me-1"></i>
                         <a href="{{ user_profile.website }}" target="_blank" class="text-decoration-none">
                             {{ user_profile.website }}
                         </a>
@@ -105,50 +100,36 @@
         </div>
     </div>
 
-    <!-- Pestañas de navegación -->
     <hr>
-    <ul class="nav nav-tabs justify-content-center mb-4" id="profileTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab" aria-controls="posts" aria-selected="true">
+    <ul class="nav nav-tabs justify-content-center mb-4 border-0" id="profileTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active border-0 bg-transparent" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts">
                 <i class="bi bi-grid-3x3"></i> PUBLICACIONES
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved" type="button" role="tab" aria-controls="saved" aria-selected="false">
+        <li class="nav-item">
+            <button class="nav-link border-0 bg-transparent" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved">
                 <i class="bi bi-bookmark"></i> GUARDADAS
             </button>
         </li>
     </ul>
 
-    <!-- Contenido de las pestañas -->
     <div class="tab-content" id="profileTabsContent">
-        <!-- Pestaña de publicaciones -->
-        <div class="tab-pane fade show active" id="posts" role="tabpanel" aria-labelledby="posts-tab">
+        <div class="tab-pane fade show active" id="posts">
             {% if user_profile.user.posts.all %}
-                <div class="row">
+                <div class="row g-3">
                     {% for post in user_profile.user.posts.all|dictsortreversed:"created_at" %}
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100">
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 shadow-sm overflow-hidden">
                                 <a href="{% url 'posts:post_detail' post.pk %}">
                                     <img src="{{ post.image.url }}" class="card-img-top" 
-                                         alt="{{ post.caption|truncatechars:30 }}"
-                                         style="height: 300px; object-fit: cover;">
+                                         alt="Post" style="height: 300px; object-fit: cover;">
                                 </a>
-                                <div class="card-body p-2">
-                                    <p class="card-text text-muted small mb-1">
-                                        {{ post.created_at|date:"d M Y" }}
-                                    </p>
-                                    <p class="card-text">
-                                        {{ post.caption|truncatechars:50 }}
-                                    </p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">
-                                            <i class="bi bi-heart-fill text-danger"></i> {{ post.likes.count }}
-                                        </small>
-                                        <small class="text-muted">
-                                            <i class="bi bi-chat"></i> {{ post.comments.count }}
-                                        </small>
-                                    </div>
+                                <div class="p-2 text-center bg-white">
+                                    <small class="text-muted">
+                                        <i class="bi bi-heart-fill text-danger"></i> {{ post.likes.count }} 
+                                        &nbsp; <i class="bi bi-chat-fill text-primary"></i> {{ post.comments.count }}
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -156,51 +137,23 @@
                 </div>
             {% else %}
                 <div class="text-center py-5">
-                    <i class="bi bi-camera" style="font-size: 3rem; opacity: 0.5;"></i>
-                    <h4 class="mt-3">No hay publicaciones aún</h4>
-                    {% if user == user_profile.user %}
-                        <p>Comparte fotos y vídeos para que aparezcan aquí.</p>
-                        <a href="{% url 'post_create' %}" class="btn btn-primary">Crear primera publicación</a>
-                    {% endif %}
+                    <i class="bi bi-camera" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <h4 class="mt-3">No hay publicaciones</h4>
                 </div>
             {% endif %}
         </div>
         
-        <!-- Pestaña de guardados (vacía por ahora) -->
-        <div class="tab-pane fade" id="saved" role="tabpanel" aria-labelledby="saved-tab">
-            <div class="text-center py-5">
-                <i class="bi bi-bookmark" style="font-size: 3rem; opacity: 0.5;"></i>
-                <h4 class="mt-3">Guardar publicaciones</h4>
-                <p>Guarda fotos y vídeos que quieras ver de nuevo. Solo tú puedes ver lo que has guardado.</p>
-            </div>
+        <div class="tab-pane fade text-center py-5" id="saved">
+            <i class="bi bi-bookmark-star" style="font-size: 3rem; opacity: 0.3;"></i>
+            <h4 class="mt-3">Publicaciones guardadas</h4>
+            <p class="text-muted">Solo tú puedes ver qué has guardado.</p>
         </div>
     </div>
 </div>
 
 <style>
-    .nav-tabs .nav-link {
-        color: #495057;
-        font-weight: 600;
-        border: none;
-        padding: 10px 20px;
-        margin-right: 5px;
-    }
-    .nav-tabs .nav-link.active {
-        color: #000;
-        border-bottom: 2px solid #000;
-        background: none;
-    }
-    .nav-tabs .nav-link:hover {
-        border: none;
-        border-bottom: 2px solid #dee2e6;
-    }
-    .card {
-        transition: transform 0.2s;
-        border: 1px solid #efefef;
-    }
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
+    .nav-tabs .nav-link { color: #8e8e8e; font-size: 0.8rem; letter-spacing: 1px; }
+    .nav-tabs .nav-link.active { color: #000; border-top: 1.5px solid #000 !important; border-radius: 0; }
+    .card:hover img { filter: brightness(0.8); transition: 0.3s; }
 </style>
 {% endblock content %}
