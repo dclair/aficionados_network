@@ -15,6 +15,18 @@ def validate_birth_date(value):
         raise ValidationError("Por favor ingrese una fecha de nacimiento válida")
 
 
+# esta clase la usaremos para crear las aficiones
+class Hobby(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = "Hobbies"
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="profile", verbose_name="usuario"
@@ -52,6 +64,10 @@ class UserProfile(models.Model):
         related_name="following",
         symmetrical=False,
         verbose_name="seguidores",
+    )
+    # Relación ManyToMany con niveles a través de un modelo intermedio
+    hobbies = models.ManyToManyField(
+        Hobby, through="UserHobby", related_name="profiles"
     )
 
     class Meta:
@@ -125,6 +141,26 @@ class UserProfile(models.Model):
                 from django.core.exceptions import ValidationError
 
                 raise ValidationError("No puedes seguirte a ti mismo.")
+
+
+# Con esta clase gestionaremos los niveles de cada afición
+class UserHobby(models.Model):
+    LEVEL_CHOICES = [
+        ("beginner", "Principiante"),
+        ("intermediate", "Intermedio"),
+        ("advanced", "Avanzado"),
+        ("expert", "Experto"),
+    ]
+
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    hobby = models.ForeignKey(Hobby, on_delete=models.CASCADE)
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default="beginner")
+
+    class Meta:
+        unique_together = (
+            "profile",
+            "hobby",
+        )  # Evita que un usuario repita la misma afición
 
 
 class Follow(models.Model):

@@ -1,34 +1,8 @@
-# from django.contrib import admin
-# from .models import UserProfile, Follow
-
-
-# @admin.register(UserProfile)
-# class UserProfileAdmin(admin.ModelAdmin):
-#     list_display = [
-#         "pk",
-#         "user",
-#         "profile_picture",
-#         "bio",
-#         "birth_date",
-#         "location",
-#         "website",
-#     ]
-
-#     list_filter = ["location"]  # Añade filtros en el lateral
-#     search_fields = ["user__username", "bio"]  # Añade búsqueda
-#     list_per_page = 20  # Número de elementos por página
-#     readonly_fields = ["created_at", "updated_at"]  # Campos de solo lectura
-
-
-# @admin.register(Follow)
-# class FollowAdmin(admin.ModelAdmin):
-#     list_display = ["pk", "follower", "following", "created_at"]
-
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 
-from .models import UserProfile, Follow
+from .models import UserProfile, Follow, Hobby, UserHobby
 
 
 @admin.register(UserProfile)
@@ -139,3 +113,16 @@ class FollowAdmin(admin.ModelAdmin):
 
     following_username.short_description = "Siguiendo a"
     following_username.admin_order_field = "following__user__username"
+
+
+@admin.register(Hobby)
+class HobyAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "description")
+    search_fields = ("name", "description")
+
+
+@admin.register(UserHobby)
+class UserHobbyAdmin(admin.ModelAdmin):
+    list_display = ("id", "profile", "hobby")
+    search_fields = ("profile__user__username", "hobby__name")
+    list_filter = ("hobby", "profile")
