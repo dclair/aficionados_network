@@ -5,6 +5,7 @@ from .models import Notification
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
+from django.http import HttpResponse
 
 
 # Esta función debe estar FUERA de la clase NotificationListView
@@ -17,29 +18,35 @@ def notification_redirect(request, pk):
     n.is_read = True
     n.save()
 
-    # PRIORIDAD 1: Comentarios (Con salto al ancla #comment-id)
+    # --- CATEGORÍA: COMENTARIOS ---
     if n.notification_type == "comment":
-        if n.post and n.comment:
-            url = reverse("posts:post_detail", kwargs={"pk": n.post.pk})
-            return redirect(f"{url}#comment-{n.comment.id}")
-        elif n.post:
+        # CASO A: Es un comentario en un EVENTO (Quedada)
+        if n.event:
+            return redirect("posts:event_detail", pk=n.event.pk)
+
+        # CASO B: Es un comentario en un POST (Publicación normal)
+        if n.post:
+            if n.comment:
+                url = reverse("posts:post_detail", kwargs={"pk": n.post.pk})
+                return redirect(f"{url}#comment-{n.comment.id}")
             return redirect("posts:post_detail", pk=n.post.pk)
 
-    # PRIORIDAD 2: Seguimiento
+    # --- CATEGORÍA: QUEDADAS (EVENTOS) ---
+    elif n.notification_type == "event":
+        if n.event:
+            return redirect("posts:event_detail", pk=n.event.pk)
+
+    # --- CATEGORÍA: SEGUIMIENTO ---
     elif n.notification_type == "follow":
         if n.sender and hasattr(n.sender, "profile"):
+            # Ajustado a 'profiles:profile' según tu configuración
             return redirect("profiles:profile", pk=n.sender.profile.pk)
 
-    # PRIORIDAD 3: Me gusta
+    # --- CATEGORÍA: ME GUSTA ---
     elif n.notification_type == "like" and n.post:
         return redirect("posts:post_detail", pk=n.post.pk)
 
-    # --- NUEVA PRIORIDAD 4: Quedadas (Eventos) ---
-    elif n.notification_type == "event" and n.event:
-        # Redirigimos a la vista de detalle del evento que creamos
-        return redirect("posts:event_detail", pk=n.event.pk)
-
-    # Si no entra en ninguna categoría, vuelve a la lista de notificaciones
+    # Si por alguna razón el objeto (post/evento) fue borrado, volvemos a la lista
     return redirect("notifications:list")
 
 
@@ -58,3 +65,12 @@ class NotificationListView(LoginRequiredMixin, ListView):
         unread_notifications = self.get_queryset().filter(is_read=False)
         unread_notifications.update(is_read=True)
         return context
+
+
+@login_required
+def api_unread_count(request):
+    count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+    # Si el contador es 0, podemos devolver un texto vacío o el número
+    if count > 0:
+        return HttpResponse(str(count))
+    return HttpResponse("")

@@ -12,56 +12,95 @@
     <div class="card shadow-sm border-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
+                <thead class="bg-light text-secondary small fw-bold">
                     <tr>
-                        <th>Evento</th>
-                        <th>Fecha</th>
+                        <th class="ps-4">Evento</th>
+                        <th>Fecha y Hora</th>
                         <th>Estado</th>
                         <th>Asistentes</th>
-                        <th class="text-end">Acciones</th>
+                        <th class="text-end pe-4">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for event in my_events %}
                     <tr>
-                        <td>
+                        <td class="ps-4">
                             <div class="fw-bold text-dark">{{ event.title }}</div>
-                            <small class="text-muted">{{ event.hobby.name }}</small>
+                            <small class="badge bg-light text-muted fw-normal">{{ event.hobby.name }}</small>
                         </td>
+
                         <td>
-                            <div class="small">{{ event.event_date|date:"d/m/Y" }}</div>
-                            <div class="small text-muted">{{ event.event_date|date:"H:i" }} hrs</div>
+                            <div class="text-dark">{{ event.event_date|date:"d M, Y" }}</div>
+                            <div class="small text-muted"><i class="bi bi-clock me-1"></i>{{ event.event_date|date:"H:i" }}</div>
                         </td>
+
                         <td>
                             {% if event.is_canceled %}
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Cancelado</span>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3">
+                                    <i class="bi bi-x-circle me-1"></i> Cancelado
+                                </span>
                             {% elif event.event_date < now %}
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Finalizado</span>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3">
+                                    <i class="bi bi-check2-all me-1"></i> Finalizado
+                                </span>
                             {% else %}
-                                <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3">
+                                    <i class="bi bi-calendar-check me-1"></i> Activo
+                                </span>
                             {% endif %}
                         </td>
+
                         <td>
-                            <i class="bi bi-people me-1"></i> {{ event.participants.count }}/{{ event.max_participants }}
+                            <div class="d-flex align-items-center">
+                                <span class="me-2 small text-muted">{{ event.participants.count }}/{{ event.max_participants }}</span>
+                                <div class="progress flex-grow-1" style="height: 4px; max-width: 60px;">
+                                    <div class="progress-bar bg-primary" style="width: {% widthratio event.participants.count event.max_participants 100 %}%"></div>
+                                </div>
+                            </div>
                         </td>
-                        <td class="text-end">
-                            <div class="btn-group">
-                                <a href="{% url 'posts:event_detail' event.pk %}" class="btn btn-sm btn-outline-dark" title="Ver detalle">
+
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'posts:event_detail' event.pk %}" class="btn btn-sm btn-light border" title="Ver detalle">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                {% if not event.is_canceled and event.event_date > now %}
-                                    <a href="{% url 'posts:event_update' event.pk %}" class="btn btn-sm btn-outline-dark" title="Editar">
+
+                                {% if event.is_canceled %}
+                                    {% if event.event_date > now %}
+                                        <form action="{% url 'posts:event_reactivate' event.pk %}" method="post" class="d-inline m-0">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-arrow-clockwise"></i> Reactivar
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-muted small fst-italic ms-2">Expirado</span>
+                                    {% endif %}
+
+                                {% elif event.event_date > now %}
+                                    <a href="{% url 'posts:event_update' event.pk %}" class="btn btn-sm btn-outline-dark">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    
+                                    <form action="{% url 'posts:event_cancel' event.pk %}" method="post" class="d-inline m-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                onclick="return confirm('¿Seguro que quieres cancelar este plan? Se avisará a los asistentes.')">
+                                            <i class="bi bi-slash-circle"></i>
+                                        </button>
+                                    </form>
                                 {% endif %}
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
-                            <i class="bi bi-emoji-frown d-block fs-1 mb-2"></i>
-                            Aún no has organizado ningún evento.
+                        <td colspan="5" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-calendar-x fs-1 mb-3 d-block"></i>
+                                <p class="mb-0">No has organizado ningún evento todavía.</p>
+                                <a href="{% url 'posts:event_create' %}" class="btn btn-link">¡Crea tu primer plan ahora!</a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

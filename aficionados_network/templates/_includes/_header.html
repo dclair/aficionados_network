@@ -5,9 +5,7 @@
         <nav>
             <ul>
                 <li><a href="{% url 'home' %}">Inicio</a></li>
-                
                 <li><a href="{% url 'posts:event_list' %}"><i class="bi bi-calendar3"></i> Eventos</a></li>
-                
                 <li><a href="{% url 'profiles:profile_list' %}">Perfiles</a></li>
                 
                 {% if not user.is_authenticated %}
@@ -19,9 +17,7 @@
                             <i class="bi bi-calendar-check"></i> Mis Planes
                         </a>
                     </li>
-
                     <li><a href="{% url 'posts:post_create' %}">Crear Post</a></li>
-                    
                     <li>
                         {% if user.profile %}
                             <a href="{% url 'profiles:profile' user.profile.pk %}">
@@ -40,12 +36,13 @@
                                 <i class="bi bi-bell-fill {% if unread_notifications_count > 0 %}text-danger{% else %}text-dark{% endif %}" 
                                    style="font-size: 1.25rem;"></i>
                                 
-                                {% if unread_notifications_count > 0 %}
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" 
-                                        style="font-size: 0.5rem; padding: 0.15rem 0.3rem; border-width: 1.5px !important;">
-                                        {{ unread_notifications_count }}
-                                    </span>
-                                {% endif %}
+                                <span id="notification-badge" 
+                                      hx-get="{% url 'notifications:api_unread_count' %}" 
+                                      hx-trigger="every 30s"
+                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white {% if unread_notifications_count == 0 %}d-none{% endif %}" 
+                                      style="font-size: 0.5rem; padding: 0.15rem 0.3rem; border-width: 1.5px !important;">
+                                    {{ unread_notifications_count }}
+                                </span>
                             </span>
                         </a>
                     </li>
@@ -65,3 +62,17 @@
         </nav>
     </div>
 </header>
+
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<script>
+    // Pequeño truco para que el badge desaparezca si el número es 0
+    document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+        const badge = document.getElementById('notification-badge');
+        if (badge && (badge.innerHTML.trim() === "" || badge.innerHTML.trim() === "0")) {
+            badge.classList.add('d-none');
+        } else {
+            badge.classList.remove('d-none');
+        }
+    });
+</script>

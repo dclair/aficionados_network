@@ -230,6 +230,10 @@ class Event(models.Model):
         default=10, verbose_name="Número máximo de asistentes"
     )
 
+    def get_absolute_url(self):
+        # Esto le dice a Django que la página "maestra" de un evento es su detalle
+        return reverse("posts:event_detail", kwargs={"pk": self.pk})
+
     class Meta:
         ordering = ["event_date"]  # Los más próximos primero
         verbose_name = "Quedada"

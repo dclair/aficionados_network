@@ -19,17 +19,11 @@ from notifications.models import Notification
 from django.db.models import Q  # Importante para el buscador
 from notifications.models import Notification as NotificationModel
 from django.contrib import messages
-
-# Busca esta línea (o similar) al principio de tu archivo:
-from django.views.generic import (
-    ListView,
-    CreateView,
-    UpdateView,
-    DetailView,
-)  # ... etc
-
-# Y asegúrate de tener esta importación específica para la clase View:
-from django.views import View  # <--- ¡ESTA ES LA QUE FALTA!
+from django.core.mail import send_mail
+from django.conf import settings
+from django.views import View
+from django.urls import reverse
+from django.utils import timezone
 
 
 # --- VISTA PARA CREAR POST ---
@@ -310,15 +304,58 @@ def add_event_comment(request, event_id):
             comment.user = request.user
             comment.save()
 
-            # NOTIFICACIÓN al organizador
+            # --- LÓGICA DE NOTIFICACIONES ---
+
+            # CASO 1: Alguien comenta en tu evento (Tú eres Juan y recibes el aviso)
             if event.organizer != request.user:
+                recipient = event.organizer
+                subject = f"💬 Nuevo comentario de {request.user.username}"
+                message = f"Hola {recipient.username}, han comentado en tu plan '{event.title}'."
+
+                # Enviar email al organizador
+                if recipient.email:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [recipient.email],
+                        fail_silently=True,
+                    )
+
+                # Notificación de campana
                 Notification.objects.create(
-                    recipient=event.organizer,
+                    recipient=recipient,
                     sender=request.user,
                     notification_type="comment",
                     event=event,
-                    content=f"ha comentado en tu evento: {event.title}",
                 )
+
+            # CASO 2: TÚ (Juan/Organizador) respondes a Pepe
+            else:
+                # Buscamos a Pepe (y a cualquier otro que esté apuntado)
+                participantes = event.participants.exclude(id=request.user.id)
+
+                for pepe in participantes:
+                    if pepe.email:
+                        # 1. Le mandamos el email a Pepe
+                        subject = f"📢 Juan ha respondido en: {event.title}"
+                        message = f"Hola {pepe.username},\n\nJuan (el organizador) ha puesto un comentario en el evento '{event.title}'.\n\nPuedes verlo aquí: {request.build_absolute_uri(reverse('posts:event_detail', args=[event.id]))}"
+
+                        send_mail(
+                            subject,
+                            message,
+                            settings.DEFAULT_FROM_EMAIL,
+                            [pepe.email],
+                            fail_silently=True,
+                        )
+
+                        # 2. Le creamos la campana roja en la web
+                        Notification.objects.create(
+                            recipient=pepe,
+                            sender=request.user,
+                            notification_type="comment",
+                            event=event,
+                        )
 
             messages.success(request, "Comentario publicado.")
 
@@ -341,3 +378,26 @@ class MyEventsListView(LoginRequiredMixin, ListView):
         # Pasamos la fecha actual para comparar en el HTML
         context["now"] = timezone.now()
         return context
+
+
+class EventReactivateView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        event = get_object_or_404(Event, pk=self.kwargs["pk"])
+        return self.request.user == event.organizer
+
+    def post(self, request, pk):
+        event = get_object_or_404(Event, pk=pk)
+        ahora = timezone.now()
+
+        # VALIDACIÓN: ¿Está en el pasado?
+        if event.event_date <= ahora:
+            messages.error(request, "No puedes reactivar un evento que ya ha pasado.")
+            return redirect("posts:my_events")
+
+        if event.is_canceled:
+            event.is_canceled = False
+            event.save()
+            # ... lógica de emails y notificaciones que pusimos antes ...
+            messages.success(request, f"¡El evento '{event.title}' ha sido reactivado!")
+
+        return redirect("posts:my_events")

@@ -18,7 +18,7 @@ urlpatterns = [
     path("events/<int:pk>/", views.EventDetailView.as_view(), name="event_detail"),
     path("event/<int:pk>/edit/", views.EventUpdateView.as_view(), name="event_update"),
     path(
-        "event/<int:pk>/cancel/", views.EventCancelView.as_view(), name="event_delete"
+        "event/<int:pk>/cancel/", views.EventCancelView.as_view(), name="event_cancel"
     ),
     path(
         "event/<int:event_id>/comment/",
@@ -26,4 +26,9 @@ urlpatterns = [
         name="add_event_comment",
     ),
     path("my-events/", views.MyEventsListView.as_view(), name="my_events"),
+    path(
+        "event/<int:pk>/reactivate/",
+        views.EventReactivateView.as_view(),
+        name="event_reactivate",
+    ),
 ]

@@ -104,7 +104,7 @@
                                         <a href="{% url 'posts:event_update' event.id %}" class="btn btn-dark">
                                             <i class="bi bi-pencil-square me-1"></i> Editar
                                         </a>
-                                        <form action="{% url 'posts:event_delete' event.id %}" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar este plan?');">
+                                        <form action="{% url 'posts:event_cancel' event.id %}" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar este plan?');">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-outline-danger shadow-sm">
                                                 <i class="bi bi-trash"></i> Cancelar Plan

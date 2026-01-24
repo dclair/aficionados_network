@@ -8,4 +8,6 @@ urlpatterns = [
     path("", views.NotificationListView.as_view(), name="list"),
     # LA CORRECCIÓN: Quita "NotificationListView." de aquí
     path("read/<int:pk>/", views.notification_redirect, name="notification_redirect"),
+    # esta urls es para el contador de notificaciones
+    path("api/unread-count/", views.api_unread_count, name="api_unread_count"),
 ]
