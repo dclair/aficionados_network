@@ -5,20 +5,21 @@
         <nav>
             <ul>
                 <li><a href="{% url 'home' %}">Inicio</a></li>
+                
+                <li><a href="{% url 'posts:event_list' %}"><i class="bi bi-calendar3"></i> Eventos</a></li>
+                
                 <li><a href="{% url 'profiles:profile_list' %}">Perfiles</a></li>
                 
                 {% if not user.is_authenticated %}
                     <li><a href="{% url 'login' %}">Login</a></li>
                     <li><a href="{% url 'register' %}">Register</a></li>
                 {% else %}  
-                    <li class="nav-item">
-                        <form method="post" action="{% url 'logout' %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-link nav-link p-0 border-0 align-baseline shadow-none text-dark" style="text-decoration: none;">
-                                Cerrar Sesión
-                            </button>
-                        </form>
+                    <li>
+                        <a href="{% url 'posts:my_events' %}" class="fw-bold text-primary">
+                            <i class="bi bi-calendar-check"></i> Mis Planes
+                        </a>
                     </li>
+
                     <li><a href="{% url 'posts:post_create' %}">Crear Post</a></li>
                     
                     <li>
@@ -48,10 +49,18 @@
                             </span>
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-link nav-link p-0 border-0 align-baseline shadow-none text-muted small" style="text-decoration: none;">
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </li>
                 {% endif %}
                 
-                <li><a href="{% url 'contact' %}">Contacto</a></li>
-                <li><a href="/legal/">Legal</a></li>
+                <li class="ms-3"><a href="{% url 'contact' %}" class="text-muted small">Contacto</a></li>
             </ul>
         </nav>
     </div>

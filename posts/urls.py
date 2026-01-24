@@ -20,4 +20,10 @@ urlpatterns = [
     path(
         "event/<int:pk>/cancel/", views.EventCancelView.as_view(), name="event_delete"
     ),
+    path(
+        "event/<int:event_id>/comment/",
+        views.add_event_comment,
+        name="add_event_comment",
+    ),
+    path("my-events/", views.MyEventsListView.as_view(), name="my_events"),
 ]

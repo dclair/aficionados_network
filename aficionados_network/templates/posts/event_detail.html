@@ -141,5 +141,62 @@
             </div>
         </div>
     </div>
+    <hr class="my-5">
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h4 class="fw-bold mb-4"><i class="bi bi-chat-left-text me-2"></i>Comentarios</h4>
+
+        {% if not event.is_canceled %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form action="{% url 'posts:add_event_comment' event.id %}" method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ comment_form.content }}
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary btn-sm px-4">Publicar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-light text-muted small py-2">
+                Los comentarios están cerrados porque el evento ha sido cancelado.
+            </div>
+        {% endif %}
+        <!-- FIN DEL FORMULARIO DE COMENTARIOS -->
+         <!-- INICIO DE LA LISTA DE COMENTARIOS SOBRE EL EVENTO -->
+        <div class="comments-list">
+            {% for comment in event.comments.all %}
+                <div class="d-flex mb-3">
+                    <div class="flex-shrink-0">
+                        {% if comment.user.profile.profile_picture %}
+                            <img src="{{ comment.user.profile.profile_picture.url }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                        {% else %}
+                            <img src="https://ui-avatars.com/api/?name={{ comment.user.username }}&background=random" class="rounded-circle" style="width: 40px; height: 40px;">
+                        {% endif %}
+                    </div>
+                    <div class="ms-3 bg-light p-3 rounded-4 flex-grow-1 border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="mb-0 fw-bold">@{{ comment.user.username }} 
+                                {% if comment.user == event.organizer %}
+                                    <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">Organizador</span>
+                                {% endif %}
+                            </h6>
+                            <small class="text-muted" style="font-size: 0.7rem;">{{ comment.created_at|timesince }}</small>
+                        </div>
+                        <p class="mb-0 text-dark small">{{ comment.content|linebreaksbr }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-center text-muted py-4">No hay comentarios todavía. ¡Sé el primero en preguntar!</p>
+            {% endfor %}
+        </div>
+        <!-- FIN DE LA LISTA DE COMENTARIOS SOBRE EL EVENTO -->
+    </div>
+</div>
+
 </div>
 {% endblock %}

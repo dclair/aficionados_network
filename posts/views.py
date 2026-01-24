@@ -14,7 +14,7 @@ from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from .models import Posts, Event, Hobby
-from .forms import PostCreateForm, CommentForm, EventForm
+from .forms import PostCreateForm, CommentForm, EventForm, EventCommentForm
 from notifications.models import Notification
 from django.db.models import Q  # Importante para el buscador
 from notifications.models import Notification as NotificationModel
@@ -233,9 +233,13 @@ class EventDetailView(LoginRequiredMixin, DetailView):
     login_url = "login"
 
     def get_context_data(self, **kwargs):
+        # 1. Obtenemos el diccionario base de Django (que ya trae al 'event')
         context = super().get_context_data(**kwargs)
-        # Esto nos servirá para mostrar quiénes están ya apuntados
+        # 2. Obtenemos la lista de participantes
         context["participants"] = self.object.participants.all()
+        # 3. Obtenemos la lista de comentarios
+        context["comment_form"] = EventCommentForm()
+        # 4. Devolvemos la caja de comentarios
         return context
 
 
@@ -291,3 +295,49 @@ class EventCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
             "El evento ha sido cancelado y los asistentes han sido notificados.",
         )
         return redirect("posts:event_detail", pk=event.pk)
+
+
+# --- VISTA PARA COMENTAR EN UN EVENTO ---
+@login_required
+def add_event_comment(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+
+    if request.method == "POST":
+        form = EventCommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.event = event
+            comment.user = request.user
+            comment.save()
+
+            # NOTIFICACIÓN al organizador
+            if event.organizer != request.user:
+                Notification.objects.create(
+                    recipient=event.organizer,
+                    sender=request.user,
+                    notification_type="comment",
+                    event=event,
+                    content=f"ha comentado en tu evento: {event.title}",
+                )
+
+            messages.success(request, "Comentario publicado.")
+
+    return redirect("posts:event_detail", pk=event.id)
+
+
+# --- VISTA PARA VER MIS EVENTOS, los que él mismo ha creado ---
+class MyEventsListView(LoginRequiredMixin, ListView):
+    model = Event
+    template_name = "posts/my_events.html"
+    context_object_name = "my_events"
+    paginate_by = 10  # Por si el usuario es muy activo
+
+    def get_queryset(self):
+        # Traemos todos sus eventos, ordenados del más reciente al más antiguo
+        return Event.objects.filter(organizer=self.request.user).order_by("-event_date")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pasamos la fecha actual para comparar en el HTML
+        context["now"] = timezone.now()
+        return context

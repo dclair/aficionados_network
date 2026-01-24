@@ -1,5 +1,5 @@
 from django import forms
-from .models import Posts, Comment, Event
+from .models import Posts, Comment, Event, EventComment
 
 
 class PostCreateForm(forms.ModelForm):
@@ -110,5 +110,20 @@ class EventForm(forms.ModelForm):
             ),
             "max_participants": forms.NumberInput(
                 attrs={"class": "form-control", "min": 1}
+            ),
+        }
+
+
+class EventCommentForm(forms.ModelForm):
+    class Meta:
+        model = EventComment
+        fields = ["content"]
+        widgets = {
+            "content": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Escribe un comentario o pregunta...",
+                    "rows": "2",
+                }
             ),
         }

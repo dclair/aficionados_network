@@ -19,6 +19,14 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "hobby", "event_date", "created_at")
-    list_filter = ("hobby", "event_date", "created_at")
-    search_fields = ("title", "hobby")
+    list_display = (
+        "id",
+        "title",
+        "hobby",
+        "event_date",
+        "organizer",
+        "is_canceled",
+        "created_at",
+    )
+    list_filter = ("is_canceled", "hobby", "event_date", "created_at")
+    search_fields = ("title", "hobby", "is_canceled", "organizer")
