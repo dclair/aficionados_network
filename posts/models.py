@@ -201,3 +201,38 @@ class Comment(models.Model):
         # Validar que el comentario padre pertenezca al mismo post
         if self.parent and self.parent.post != self.post:
             raise ValidationError("El comentario padre debe pertenecer al mismo post")
+
+
+class Event(models.Model):
+    title = models.CharField(max_length=200, verbose_name="Título de la quedada")
+    description = models.TextField(verbose_name="Descripción del plan")
+    location = models.CharField(max_length=255, verbose_name="Lugar de encuentro")
+    event_date = models.DateTimeField(verbose_name="Fecha y hora del evento")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # RELACIONES
+    # El usuario que crea la quedada
+    organizer = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="events_created"
+    )
+
+    # A qué afición pertenece (Fotografía, Ciclismo, etc.)
+    hobby = models.ForeignKey(Hobby, on_delete=models.CASCADE, related_name="events")
+
+    # Lista de usuarios que se apuntan (Muchos a Muchos)
+    participants = models.ManyToManyField(
+        User, related_name="events_attending", blank=True
+    )
+
+    # Aforo máximo
+    max_participants = models.PositiveIntegerField(
+        default=10, verbose_name="Número máximo de asistentes"
+    )
+
+    class Meta:
+        ordering = ["event_date"]  # Los más próximos primero
+        verbose_name = "Quedada"
+        verbose_name_plural = "Quedadas"
+
+    def __str__(self):
+        return f"{self.title} - {self.hobby.name}"

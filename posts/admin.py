@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Posts, Comment
+from .models import Posts, Comment, Event
 
 
 # Register your models here.
@@ -15,3 +15,10 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "post", "comment", "created_at", "updated_at")
     list_filter = ("user", "post", "created_at", "updated_at")
     search_fields = ("user", "post")
+
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "hobby", "event_date", "created_at")
+    list_filter = ("hobby", "event_date", "created_at")
+    search_fields = ("title", "hobby")

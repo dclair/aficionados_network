@@ -1,5 +1,5 @@
 from django import forms
-from .models import Posts, Comment
+from .models import Posts, Comment, Event
 
 
 class PostCreateForm(forms.ModelForm):
@@ -73,4 +73,42 @@ class CommentForm(forms.ModelForm):
                     "required": True,
                 }
             )
+        }
+
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = [
+            "title",
+            "description",
+            "hobby",
+            "location",
+            "event_date",
+            "max_participants",
+        ]
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ej: Quedada para fotos nocturnas",
+                }
+            ),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "hobby": forms.Select(attrs={"class": "form-select"}),
+            "location": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "¿Dónde nos encontramos?",
+                }
+            ),
+            "event_date": forms.DateTimeInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "datetime-local",  # Esto activa el calendario en el navegador
+                }
+            ),
+            "max_participants": forms.NumberInput(
+                attrs={"class": "form-control", "min": 1}
+            ),
         }

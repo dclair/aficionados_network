@@ -8,4 +8,11 @@ urlpatterns = [
     path("post/<int:pk>/", views.PostDetailView.as_view(), name="post_detail"),
     path("like/", views.toggle_like, name="toggle_like"),
     path("post/<int:post_id>/comment/", views.add_comment, name="add_comment"),
+    path("events/", views.EventListView.as_view(), name="event_list"),
+    path("events/new/", views.EventCreateView.as_view(), name="event_create"),
+    path(
+        "events/<int:event_id>/toggle/",
+        views.toggle_attendance,
+        name="toggle_attendance",
+    ),
 ]

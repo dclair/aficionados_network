@@ -10,7 +10,7 @@ from django.views.generic import (
 )
 from django.views.generic.edit import FormView
 from .forms import ContactForm
-
+from django.utils import timezone
 from django.views import View
 from django.contrib.auth import login, authenticate, logout, logout as auth_logout
 from django.http import Http404, HttpResponseRedirect
@@ -21,7 +21,7 @@ from django.contrib import messages
 from django.shortcuts import redirect, render, get_object_or_404
 from profiles.models import UserProfile, Follow
 from django.contrib.auth.mixins import LoginRequiredMixin
-from posts.models import Posts
+from posts.models import Posts, Event
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.conf import settings
@@ -34,49 +34,50 @@ from profiles.models import UserProfile, Follow
 
 
 # FICHERO DE VIEWS PRINCIPAL/BASE
+
+
 class HomeView(TemplateView):
     template_name = "general/home.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # si el usuario está logueado, haremos que aparezcan los posts de los usuarios que sigue
-        # si no está logueado, mostramos los posts más recientes
+        # --- LÓGICA DE POSTS (Manteniendo tu funcionalidad original) ---
+        last_posts = Posts.objects.none()  # Inicializamos vacío
+
         if self.request.user.is_authenticated:
-            try:
-                # Verificar si el usuario tiene perfil
-                has_profile = hasattr(self.request.user, "profile")
-                if not has_profile:
-                    # Si no tiene perfil, redirigir a la creación de perfil o mostrar mensaje
-                    from django.contrib import messages
+            has_profile = hasattr(self.request.user, "profile")
+            context["has_profile"] = has_profile
 
-                    messages.warning(self.request, "Por favor, completa tu perfil.")
-                    context["has_profile"] = False
-                    context["last_posts"] = Posts.objects.all().order_by("-created_at")[
-                        :20
-                    ]
-                    return context
-
+            if not has_profile:
+                messages.warning(self.request, "Por favor, completa tu perfil.")
+                last_posts = Posts.objects.all().order_by("-created_at")[:20]
+            else:
                 profile = self.request.user.profile
-                context["has_profile"] = True
-                # Usuario autenticado: mostrar solo posts de usuarios que sigue
+                # Obtenemos los usuarios a los que sigue el perfil actual
                 seguidos = Follow.objects.filter(follower=profile).values_list(
                     "following__user", flat=True
                 )
-
-                # Obtenemos los posts de los usuarios seguidos (sin incluir los propios)
+                # Posts de seguidos
                 last_posts = Posts.objects.filter(user__in=seguidos).order_by(
                     "-created_at"
                 )[:20]
-            except UserProfile.DoesNotExist:
-                # Si el usuario no tiene perfil, mostramos todos los posts
-                last_posts = Posts.objects.all().order_by("-created_at")[:20]
+
+                # Opcional: Si el feed de seguidos está vacío, mostrar globales para que no se vea vacío
+                if not last_posts.exists():
+                    last_posts = Posts.objects.all().order_by("-created_at")[:20]
         else:
-            # Usuario no autenticado
+            # Usuario no autenticado: Posts globales
             last_posts = Posts.objects.all().order_by("-created_at")[:20]
+
         context["last_posts"] = last_posts
-        if self.request.user.is_authenticated and "has_profile" not in context:
-            context["has_profile"] = hasattr(self.request.user, "profile")
+
+        # --- NUEVA LÓGICA DE EVENTOS (Quedadas) ---
+        # Cargamos los 5 eventos más próximos que no hayan pasado todavía
+        context["upcoming_events"] = Event.objects.filter(
+            event_date__gte=timezone.now()
+        ).order_by("event_date")[:5]
+
         return context
 
 

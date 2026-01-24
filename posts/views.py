@@ -2,13 +2,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.views.generic import CreateView, DetailView
+from django.views.generic import CreateView, DetailView, ListView
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 # Tus modelos y formularios
-from .models import Posts
-from .forms import PostCreateForm, CommentForm
+from .models import Posts, Event
+from .forms import PostCreateForm, CommentForm, EventForm
 from notifications.models import Notification
 
 
@@ -107,3 +108,52 @@ def add_comment(request, post_id):
 
             return redirect("posts:post_detail", pk=post_id)
     return redirect("posts:post_detail", pk=post_id)
+
+
+# Vista para CREAR la quedada
+class EventCreateView(LoginRequiredMixin, CreateView):
+    model = Event
+    form_class = EventForm
+    template_name = "posts/event_form.html"
+    success_url = reverse_lazy("posts:event_list")
+    login_url = "login"
+
+    def form_valid(self, form):
+        form.instance.organizer = self.request.user
+        return super().form_valid(form)
+
+
+# Vista para VER la lista de quedadas
+class EventListView(LoginRequiredMixin, ListView):
+    model = Event
+    template_name = "posts/event_list.html"
+    context_object_name = "events"
+    login_url = "login"
+
+    def get_queryset(self):
+        # Filtramos para ver solo eventos que no hayan pasado aún
+        return Event.objects.filter(event_date__gte=timezone.now()).order_by(
+            "event_date"
+        )
+
+
+# Función para APUNTARSE o DESAPUNTARSE
+@login_required
+def toggle_attendance(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    if request.user in event.participants.all():
+        event.participants.remove(request.user)
+    else:
+        if event.participants.count() < event.max_participants:
+            event.participants.add(request.user)
+
+            # NUEVO: Notificar al organizador
+            if event.organizer != request.user:
+                Notification.objects.create(
+                    recipient=event.organizer,
+                    sender=request.user,
+                    notification_type="comment",  # O añade "event" a tus tipos si prefieres
+                    post=None,  # Los eventos no son posts, puede dejarse como None
+                    # Podrías añadir un mensaje personalizado si tu modelo lo permite
+                )
+    return redirect("posts:event_list")
