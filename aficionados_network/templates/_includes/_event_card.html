@@ -1,8 +1,20 @@
 <!--Tarjeta MINI para los eventos (quedadas)-->
 <div class="event-item mb-3 pb-3 border-bottom last-child-border-0">
-    <span class="badge bg-primary-subtle text-primary border border-primary-subtle category-badge mb-1" style="font-size: 0.7rem;">
-        <i class="bi bi-tag-fill"></i> {{ event.hobby.name|upper }}
-    </span>
+    <div class="d-flex justify-content-between align-items-start mb-1 flex-wrap gap-1">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle category-badge" style="font-size: 0.7rem;">
+            <i class="bi bi-tag-fill"></i> {{ event.hobby.name|upper }}
+        </span>
+
+        {% if request.user == event.organizer %}
+            <span class="badge bg-warning text-dark border border-warning shadow-sm" style="font-size: 0.65rem;" title="Eres el anfitrión">
+                <i class="bi bi-star-fill"></i> MÍO
+            </span>
+        {% elif request.user in event.participants.all %}
+            <span class="badge bg-success text-white border border-success shadow-sm" style="font-size: 0.65rem;" title="Ya tienes tu plaza">
+                <i class="bi bi-check-lg"></i> APUNTADO
+            </span>
+        {% endif %}
+    </div>
     
     <h6 class="mb-1 fw-bold text-dark" style="font-size: 0.9rem;">{{ event.title }}</h6>
     
@@ -11,13 +23,14 @@
             <i class="bi bi-calendar3 me-1"></i> {{ event.event_date|date:"d M - H:i" }}
         </small>
         <small class="text-muted">
-            <i class="bi bi-geo-alt-fill me-1 text-danger"></i> {{ event.location }}
+            <i class="bi bi-geo-alt-fill me-1 text-danger"></i> {{ event.location|truncatechars:25 }}
         </small>
     </div>
 
     <div class="mt-2 d-flex align-items-center justify-content-between">
-        <div class="progress flex-grow-1 me-2" style="height: 4px;">
-            <div class="progress-bar" role="progressbar" 
+        <div class="progress flex-grow-1 me-2" style="height: 6px; background-color: #e9ecef;">
+            <div class="progress-bar {% if event.participants.count >= event.max_participants %}bg-danger{% else %}bg-primary{% endif %}" 
+                 role="progressbar" 
                  style="width: {% widthratio event.participants.count event.max_participants 100 %}%" 
                  aria-valuenow="{{ event.participants.count }}" aria-valuemin="0" aria-valuemax="{{ event.max_participants }}">
             </div>
@@ -27,7 +40,7 @@
         </small>
     </div>
 
-    <a href="{% url 'posts:event_detail' event.id %}" class="btn btn-sm btn-link p-0 mt-1 text-decoration-none small fw-bold">
-    Ver detalles <i class="bi bi-arrow-right"></i>
-</a>
+    <a href="{% url 'posts:event_detail' event.id %}" class="btn btn-sm btn-link p-0 mt-2 text-decoration-none small fw-bold">
+        Ver detalles <i class="bi bi-arrow-right"></i>
+    </a>
 </div>
