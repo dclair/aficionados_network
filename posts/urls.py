@@ -16,4 +16,8 @@ urlpatterns = [
         name="toggle_attendance",
     ),
     path("events/<int:pk>/", views.EventDetailView.as_view(), name="event_detail"),
+    path("event/<int:pk>/edit/", views.EventUpdateView.as_view(), name="event_update"),
+    path(
+        "event/<int:pk>/cancel/", views.EventCancelView.as_view(), name="event_delete"
+    ),
 ]

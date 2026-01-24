@@ -8,38 +8,56 @@
             
             <div class="list-group shadow-sm">
                 {% for n in notifications %}
+                    {# LÓGICA DE FONDO: Si es cancelación, ponemos un tono rojizo suave #}
                     <a href="{% url 'notifications:notification_redirect' n.pk %}" 
-                       class="list-group-item list-group-item-action p-3 {% if not n.is_read %}bg-light border-start border-primary border-4{% endif %}">
+                       class="list-group-item list-group-item-action p-3 
+                       {% if not n.is_read %}bg-light border-start border-primary border-4{% endif %}
+                       {% if n.notification_type == 'event' and n.event.is_canceled %}bg-danger-subtle{% endif %}">
                         
                         <div class="d-flex w-100 justify-content-between align-items-center">
-                            <div>
-                                {# 1. ICONOS SEGÚN TIPO #}
-                                {% if n.notification_type == 'follow' %}
-                                    <i class="bi bi-person-plus-fill text-primary me-2"></i>
-                                {% elif n.notification_type == 'like' %}
-                                    <i class="bi bi-heart-fill text-danger me-2"></i>
-                                {% elif n.notification_type == 'event' %}
-                                    <i class="bi bi-calendar-check-fill text-info me-2"></i>
-                                {% else %}
-                                    <i class="bi bi-chat-dots-fill text-success me-2"></i>
-                                {% endif %}
-
-                                <strong class="text-dark">@{{ n.sender.username }}</strong>
-                                
-                                <span class="text-dark">
-                                    {# 2. MENSAJES SEGÚN TIPO #}
+                            <div class="d-flex align-items-center">
+                                {# 1. ICONOS SEGÚN TIPO Y ESTADO #}
+                                <div class="me-3">
                                     {% if n.notification_type == 'follow' %}
-                                        ha empezado a seguirte.
+                                        <i class="bi bi-person-plus-fill text-primary fs-5"></i>
                                     {% elif n.notification_type == 'like' %}
-                                        le ha dado "me gusta" a tu publicación.
+                                        <i class="bi bi-heart-fill text-danger fs-5"></i>
                                     {% elif n.notification_type == 'event' %}
-                                        se ha apuntado a tu quedada: <strong>{{ n.event.title }}</strong>
+                                        {% if n.event.is_canceled %}
+                                            <i class="bi bi-x-circle-fill text-danger fs-5"></i>
+                                        {% else %}
+                                            <i class="bi bi-calendar-check-fill text-info fs-5"></i>
+                                        {% endif %}
                                     {% else %}
-                                        ha comentado: <span class="text-muted fst-italic">"{{ n.content|truncatechars:30 }}"</span>
+                                        <i class="bi bi-chat-dots-fill text-success fs-5"></i>
                                     {% endif %}
-                                </span>
+                                </div>
+
+                                <div>
+                                    <strong class="text-dark">@{{ n.sender.username }}</strong>
+                                    
+                                    <span class="text-dark">
+                                        {# 2. MENSAJES SEGÚN TIPO Y ESTADO #}
+                                        {% if n.notification_type == 'follow' %}
+                                            ha empezado a seguirte.
+                                        {% elif n.notification_type == 'like' %}
+                                            le ha dado "me gusta" a tu publicación.
+                                        {% elif n.notification_type == 'event' %}
+                                            {% if n.event.is_canceled %}
+                                                <span class="text-danger fw-bold">ha cancelado el evento:</span> 
+                                                <span class="text-decoration-line-through">{{ n.event.title }}</span>
+                                            {% else %}
+                                                se ha apuntado a tu quedada: <strong>{{ n.event.title }}</strong>
+                                            {% endif %}
+                                        {% else %}
+                                            ha comentado: <span class="text-muted fst-italic">"{{ n.content|truncatechars:30 }}"</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
                             </div>
-                            <small class="text-secondary">{{ n.created_at|timesince }}</small>
+                            <small class="text-secondary ms-2 text-end" style="min-width: 80px;">
+                                {{ n.created_at|timesince }}
+                            </small>
                         </div>
                     </a>
                 {% empty %}
@@ -54,11 +72,21 @@
 </div>
 
 <style>
+    /* Borde azul para notificaciones no leídas */
     .border-primary {
         border-left: 4px solid #0d6efd !important;
     }
+    
+    /* Hover suave */
     .list-group-item-action:hover {
-        background-color: #f8f9fa;
+        filter: brightness(0.98);
+        transition: 0.2s;
+    }
+
+    /* Estilo para que el nombre del evento tachado se vea bien */
+    .text-decoration-line-through {
+        color: #6c757d;
+        font-size: 0.95em;
     }
 </style>
 {% endblock %}

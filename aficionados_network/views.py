@@ -36,13 +36,17 @@ from django.db.models import Q  # Importante para la lógica de "O"
 from django.utils import timezone
 
 
+from django.db.models import Q
+from django.utils import timezone
+
+
 class HomeView(TemplateView):
     template_name = "general/home.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # --- LÓGICA DE POSTS (Mantenida exactamente igual) ---
+        # --- LÓGICA DE POSTS (Mantenida exactamente igual para no romper nada) ---
         last_posts = Posts.objects.none()
         if self.request.user.is_authenticated:
             has_profile = hasattr(self.request.user, "profile")
@@ -65,36 +69,37 @@ class HomeView(TemplateView):
 
         context["last_posts"] = last_posts
 
-        # --- LÓGICA DE EVENTOS (Corregida para incluir eventos propios) ---
+        # --- LÓGICA DE EVENTOS (Actualizada con is_cancelled) ---
+        # Filtro base: Futuros y NO cancelados
+        base_filter = Q(event_date__gte=timezone.now(), is_canceled=False)
+
         if self.request.user.is_authenticated and hasattr(self.request.user, "profile"):
             user_hobbies = self.request.user.profile.hobbies.all()
 
-            # Base de la consulta: solo eventos futuros
-            base_filter = Q(event_date__gte=timezone.now())
-
             if user_hobbies.exists():
-                # Condición: (Que coincida con mis hobbies) O (Que yo sea el organizador)
+                # Condición: Mis hobbies O Yo soy el organizador
                 personal_filter = Q(hobby__in=user_hobbies) | Q(
                     organizer=self.request.user
                 )
 
                 context["upcoming_events"] = (
                     Event.objects.filter(base_filter & personal_filter)
-                    .distinct()  # Evita duplicados si un evento coincide con varios hobbies
+                    .select_related("hobby")  # Optimización para la tarjeta mini
+                    .distinct()
                     .order_by("event_date")[:5]
                 )
                 context["filtered_by_hobbies"] = True
             else:
-                # Si no tiene hobbies, mostramos todos los eventos futuros (incluye los propios)
+                # Si no tiene hobbies, mostramos planes generales (no cancelados)
                 context["upcoming_events"] = Event.objects.filter(base_filter).order_by(
                     "event_date"
                 )[:5]
                 context["filtered_by_hobbies"] = False
         else:
-            # Para usuarios no logueados
-            context["upcoming_events"] = Event.objects.filter(
-                event_date__gte=timezone.now()
-            ).order_by("event_date")[:5]
+            # Para usuarios no logueados o sin perfil
+            context["upcoming_events"] = Event.objects.filter(base_filter).order_by(
+                "event_date"
+            )[:5]
 
         return context
 

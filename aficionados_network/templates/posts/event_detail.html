@@ -4,18 +4,30 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none mb-3 p-0">
+            <a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none mb-3 p-0 text-muted">
                 <i class="bi bi-arrow-left"></i> Volver al calendario
             </a>
 
-            <div class="card shadow-sm border-0 pt-3">
+            {% if event.is_canceled %}
+            <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center p-4 mb-4">
+                <i class="bi bi-exclamation-octagon-fill fs-1 me-3"></i>
+                <div>
+                    <h4 class="alert-heading fw-bold mb-1">EVENTO CANCELADO</h4>
+                    <p class="mb-0">Este plan ha sido cancelado por el organizador y ya no se llevará a cabo.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm border-0 pt-3 {% if event.is_canceled %}opacity-75{% endif %}">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <span class="badge bg-primary-subtle text-primary mb-2">{{ event.hobby.name }}</span>
-                            <h1 class="fw-bold h2">{{ event.title }}</h1>
+                            <h1 class="fw-bold h2 {% if event.is_canceled %}text-decoration-line-through text-muted{% endif %}">
+                                {{ event.title }}
+                            </h1>
                         </div>
-                        <div class="text-end">
+                        <div class="text-end bg-light p-2 rounded px-3 border border-primary-subtle">
                             <div class="h4 fw-bold text-primary mb-0">{{ event.event_date|date:"d" }}</div>
                             <div class="text-uppercase small fw-bold">{{ event.event_date|date:"M" }}</div>
                         </div>
@@ -23,7 +35,7 @@
 
                     <div class="row g-3 mb-4">
                         <div class="col-sm-6">
-                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <div class="d-flex align-items-center p-3 bg-light rounded h-100">
                                 <i class="bi bi-clock-fill text-primary fs-4 me-3"></i>
                                 <div>
                                     <div class="small text-muted">Hora</div>
@@ -32,7 +44,7 @@
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <div class="d-flex align-items-center p-3 bg-light rounded h-100">
                                 <i class="bi bi-geo-alt-fill text-danger fs-4 me-3"></i>
                                 <div>
                                     <div class="small text-muted">Lugar</div>
@@ -46,11 +58,10 @@
                     <p class="text-muted fs-5">{{ event.description|linebreaks }}</p>
 
                     <hr class="my-4">
-                    <!-- ASISTENTES -->
-                    <div class="d-flex align-items-center justify-content-between mb-4">
+
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-4 mb-4">
                         <div>
                             <h5 class="fw-bold mb-1">Asistentes ({{ event.participants.count }}/{{ event.max_participants }})</h5>
-                            
                             <div class="avatar-group d-flex mt-2" style="padding-left: 10px;">
                                 {% for participant in event.participants.all %}
                                     <div class="position-relative" style="margin-left: -10px;">
@@ -58,7 +69,7 @@
                                             <img src="{{ participant.profile.profile_picture.url }}" 
                                                 class="rounded-circle border border-2 border-white shadow-sm" 
                                                 style="width: 45px; height: 45px; object-fit: cover;" 
-                                                title="{{ participant.username }} {% if participant == event.organizer %}(Organizador){% endif %}">
+                                                title="{{ participant.username }}">
                                         {% else %}
                                             <img src="https://ui-avatars.com/api/?name={{ participant.username }}&background=random" 
                                                 class="rounded-circle border border-2 border-white shadow-sm" 
@@ -66,7 +77,6 @@
                                                 title="{{ participant.username }}">
                                         {% endif %}
                                         
-                                        {# Badge de corona si es el organizador #}
                                         {% if participant == event.organizer %}
                                             <span class="position-absolute bottom-0 end-0 bg-warning rounded-circle d-flex align-items-center justify-content-center border border-white" 
                                                 style="width: 18px; height: 18px; margin-bottom: -2px;">
@@ -80,23 +90,48 @@
                             </div>
                         </div>
 
-                        {% if request.user == event.organizer %}
-                            <button class="btn btn-secondary btn-lg shadow-sm" disabled title="No puedes desapuntarte de tu propio evento">
-                                <i class="bi bi-person-check-fill me-2"></i>Eres el organizador
-                            </button>
-                        {% else %}
-                            <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST">
-                                {% csrf_token %}
-                                {% if request.user in event.participants.all %}
-                                    <button type="submit" class="btn btn-outline-danger btn-lg shadow-sm">No asistir</button>
+                        <div class="d-flex flex-column align-items-end gap-2">
+                            {% if event.is_canceled %}
+                                <span class="badge bg-danger p-3 px-4 shadow-sm fs-6">
+                                    <i class="bi bi-x-circle-fill me-2"></i>ESTE PLAN HA SIDO CANCELADO
+                                </span>
+                            {% else %}
+                                {% if request.user == event.organizer %}
+                                    <span class="badge bg-warning text-dark p-2 px-3 mb-1 shadow-sm">
+                                        <i class="bi bi-person-check-fill me-1"></i> Eres el organizador
+                                    </span>
+                                    <div class="d-flex gap-2">
+                                        <a href="{% url 'posts:event_update' event.id %}" class="btn btn-dark">
+                                            <i class="bi bi-pencil-square me-1"></i> Editar
+                                        </a>
+                                        <form action="{% url 'posts:event_delete' event.id %}" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar este plan?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger shadow-sm">
+                                                <i class="bi bi-trash"></i> Cancelar Plan
+                                            </button>
+                                        </form>
+                                    </div>
                                 {% else %}
-                                    <button type="submit" class="btn btn-success btn-lg shadow-sm" 
-                                        {% if event.participants.count >= event.max_participants %}disabled{% endif %}>
-                                        {% if event.participants.count >= event.max_participants %}Aforo completo{% else %}¡Me apunto!{% endif %}
-                                    </button>
+                                    <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST">
+                                        {% csrf_token %}
+                                        {% if request.user in event.participants.all %}
+                                            <button type="submit" class="btn btn-outline-danger btn-lg shadow-sm">
+                                                <i class="bi bi-x-circle me-1"></i> No asistir
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" class="btn btn-success btn-lg shadow-sm" 
+                                                {% if event.participants.count >= event.max_participants %}disabled{% endif %}>
+                                                {% if event.participants.count >= event.max_participants %}
+                                                    <i class="bi bi-lock-fill me-1"></i> Aforo completo
+                                                {% else %}
+                                                    <i class="bi bi-person-plus-fill me-1"></i> ¡Me apunto!
+                                                {% endif %}
+                                            </button>
+                                        {% endif %}
+                                    </form>
                                 {% endif %}
-                            </form>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="small text-muted border-top pt-3">

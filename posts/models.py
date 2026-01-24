@@ -209,6 +209,7 @@ class Event(models.Model):
     location = models.CharField(max_length=255, verbose_name="Lugar de encuentro")
     event_date = models.DateTimeField(verbose_name="Fecha y hora del evento")
     created_at = models.DateTimeField(auto_now_add=True)
+    is_canceled = models.BooleanField(default=False, verbose_name="¿Cancelado?")
 
     # RELACIONES
     # El usuario que crea la quedada

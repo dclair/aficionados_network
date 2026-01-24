@@ -1,18 +1,35 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    ListView,
+    UpdateView,
+    DeleteView,
+)
+from django.views import View
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-
-# Tus modelos y formularios
-from .models import Posts, Event
+from .models import Posts, Event, Hobby
 from .forms import PostCreateForm, CommentForm, EventForm
 from notifications.models import Notification
 from django.db.models import Q  # Importante para el buscador
 from notifications.models import Notification as NotificationModel
+from django.contrib import messages
+
+# Busca esta línea (o similar) al principio de tu archivo:
+from django.views.generic import (
+    ListView,
+    CreateView,
+    UpdateView,
+    DetailView,
+)  # ... etc
+
+# Y asegúrate de tener esta importación específica para la clase View:
+from django.views import View  # <--- ¡ESTA ES LA QUE FALTA!
 
 
 # --- VISTA PARA CREAR POST ---
@@ -134,10 +151,6 @@ class EventCreateView(LoginRequiredMixin, CreateView):
 
 
 # Vista para VER la lista de quedadas
-from django.db.models import Q  # Importante para el buscador
-from .models import Hobby, Event
-
-
 class EventListView(LoginRequiredMixin, ListView):
     model = Event
     template_name = "posts/event_list.html"
@@ -145,32 +158,39 @@ class EventListView(LoginRequiredMixin, ListView):
     login_url = "login"
 
     def get_queryset(self):
-        # Empezamos con todos los eventos futuros
-        queryset = Event.objects.filter(event_date__gte=timezone.now()).order_by(
-            "event_date"
+        # 1. OPTIMIZACIÓN: usamos select_related para traer los datos del Hobby
+        # y del Organizador en una sola consulta (evita el error N+1)
+        queryset = (
+            Event.objects.select_related("hobby", "organizer")
+            .filter(event_date__gte=timezone.now(), is_canceled=False)
+            .order_by("event_date")
         )
 
-        # Capturamos los datos del formulario (GET)
+        # 2. CAPTURA DE FILTROS
         search_query = self.request.GET.get("q")
         hobby_id = self.request.GET.get("hobby")
 
-        # Filtro por texto (Busca en título o localización)
+        # 3. FILTRADO DINÁMICO
         if search_query:
             queryset = queryset.filter(
-                Q(title__icontains=search_query) | Q(location__icontains=search_query)
+                Q(title__icontains=search_query)
+                | Q(location__icontains=search_query)
+                | Q(
+                    description__icontains=search_query
+                )  # Añadido descripción para mejorar búsqueda
             )
 
-        # Filtro por categoría (Hobby)
         if hobby_id and hobby_id != "all":
             queryset = queryset.filter(hobby_id=hobby_id)
 
-        return queryset
+        # Usamos distinct() por si los filtros Q duplican resultados (aunque en este caso es raro)
+        return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Pasamos todos los hobbies para llenar el desplegable del filtro
+        # Cargamos los hobbies para el select
         context["hobbies"] = Hobby.objects.all()
-        # Mantenemos los valores actuales en el formulario tras recargar
+        # Valores para mantener el estado del formulario en la UI
         context["current_q"] = self.request.GET.get("q", "")
         context["current_hobby"] = self.request.GET.get("hobby", "all")
         return context
@@ -217,3 +237,57 @@ class EventDetailView(LoginRequiredMixin, DetailView):
         # Esto nos servirá para mostrar quiénes están ya apuntados
         context["participants"] = self.object.participants.all()
         return context
+
+
+# VISTA PARA EDITAR
+class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Event
+    fields = [
+        "title",
+        "description",
+        "location",
+        "event_date",
+        "max_participants",
+        "hobby",
+    ]
+    template_name = "posts/event_form.html"  # Reutilizamos el mismo de crear
+
+    def test_func(self):
+        # Solo el organizador puede editar
+        return self.get_object().organizer == self.request.user
+
+
+# VISTA PARA (CANCELAR)
+class EventCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        event = get_object_or_404(Event, pk=self.kwargs["pk"])
+        return event.organizer == self.request.user
+
+    def post(self, request, pk):
+        event = get_object_or_404(Event, pk=pk)
+
+        # 1. ESCUDO DE SEGURIDAD: Si ya está cancelado, salimos de aquí inmediatamente
+        if event.is_canceled:
+            messages.info(request, "Este evento ya ha sido cancelado anteriormente.")
+            return redirect("posts:event_detail", pk=event.pk)
+
+        # 2. MARCADO Y GUARDADO
+        event.is_canceled = True
+        event.save()
+
+        # 3. NOTIFICAR SOLO UNA VEZ
+        participants = event.participants.all()
+        for p in participants:
+            if p != request.user:
+                Notification.objects.create(
+                    recipient=p,
+                    sender=request.user,
+                    notification_type="event",
+                    event=event,
+                )
+
+        messages.success(
+            request,
+            "El evento ha sido cancelado y los asistentes han sido notificados.",
+        )
+        return redirect("posts:event_detail", pk=event.pk)
