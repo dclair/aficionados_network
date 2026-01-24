@@ -1,6 +1,7 @@
 # posts/models.py
 from django.db import models
 from django.contrib.auth.models import User
+from profiles.models import Hobby
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -62,8 +63,17 @@ class Posts(models.Model):
     likes = models.ManyToManyField(
         User, related_name="liked_posts", blank=True, verbose_name="me gusta"
     )
+    # este campo se usa para generar la url amigable
     slug = models.SlugField(
         max_length=255, unique=True, blank=True, null=True, verbose_name="slug"
+    )
+    # --- NUEVO CAMPO: Categoría por Afición ---
+    category = models.ForeignKey(
+        Hobby,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=False,  # Obligamos a elegir una para que tenga sentido la red
+        related_name="posts",
     )
 
     class Meta:

@@ -20,11 +20,22 @@ class PostCreateForm(forms.ModelForm):
 
     class Meta:
         model = Posts
-        fields = ["image", "caption"]
+        fields = ["image", "title", "caption", "category"]
         widgets = {
             "image": forms.FileInput(
                 attrs={"class": "form-control", "accept": "image/*"}
             ),
+            "title": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Título llamativo"}
+            ),
+            "caption": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Cuéntanos sobre esto...",
+                }
+            ),
+            "category": forms.Select(attrs={"class": "form-select"}),
         }
         error_messages = {
             "image": {
@@ -32,6 +43,9 @@ class PostCreateForm(forms.ModelForm):
             },
             "caption": {
                 "max_length": "La descripción es demasiado larga (máximo %(limit_value)d caracteres).",
+            },
+            "category": {
+                "required": "Por favor, selecciona una categoría para tu publicación.",
             },
         }
 

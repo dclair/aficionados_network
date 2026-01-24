@@ -1,11 +1,10 @@
-<!--DIBUJA LA TARJETA DE UN POST-->
 <div class="container-fluid px-4">
     <div class="row g-4">
+        <h1 style="color: red; background: yellow;">¡ESTOY EDITANDO EL ARCHIVO CORRECTO!Muro de Posts</h1>
         {% for post in last_posts %}
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 shadow-sm border-0">
 
-                <!-- Header del post -->
                 <div class="card-header bg-white py-2 border-bottom-0">
                     <div class="d-flex align-items-center">
                         {% if post.user.profile %}
@@ -28,8 +27,14 @@
                                      style="width: 32px; height: 32px;">
                                     <i class="bi bi-person-x text-muted"></i>
                                 </div>
-                                <span class="fw-bold small text-muted">{{ post.user.username }} (Sin perfil)</span>
+                                <span class="fw-bold small text-muted">{{ post.user.username }}</span>
                             </div>
+                        {% endif %}
+
+                        {% if post.category %}
+                            <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle ms-2" style="font-size: 0.65rem;">
+                                <i class="bi bi-tag-fill me-1"></i>{{ post.category.name|upper }}
+                            </span>
                         {% endif %}
                         <small class="text-muted ms-auto" style="font-size: 0.75rem;">
                             {{ post.created_at|date:"d M" }}
@@ -37,7 +42,6 @@
                     </div>
                 </div>
 
-                <!-- Imagen del post -->
                 {% if post.image %}
                 <div class="ratio ratio-1x1">
                     <a href="{% url 'posts:post_detail' post.pk %}">
@@ -50,22 +54,19 @@
                 </div>
                 {% endif %}
 
-                <!-- Cuerpo del post -->
                 <div class="card-body d-flex flex-column p-3">
                     <a href="{% url 'posts:post_detail' post.pk %}" class="text-decoration-none text-dark mb-2">
                         {% if post.title %}
-                            <h6 class="card-title mb-1">{{ post.title }}</h6>
+                            <h6 class="card-title mb-1 fw-bold">{{ post.title }}</h6>
                         {% endif %}
                         <p class="card-text small text-muted">{{ post.caption|truncatechars:80 }}</p>
                     </a>
 
                     <div class="mb-2">
-                        <span class="fw-bold like-count">{{ post.likes.count }} me gusta</span>
+                        <span class="fw-bold like-count" style="font-size: 0.9rem;">{{ post.likes.count }} me gusta</span>
                     </div>
 
-                    <!-- Botones de interacción -->
                     <div class="mt-auto pt-2 d-flex align-items-center border-top">
-                        <!-- Botón Me gusta -->
                         <div class="d-flex align-items-center me-3">
                             {% if request.user.is_authenticated %}
                                 <button type="button" 
@@ -83,7 +84,6 @@
                             {% endif %}
                         </div>
 
-                        <!-- Botón Comentarios -->
                         <div class="d-flex align-items-center">
                             {% if request.user.is_authenticated %}
                                 <a href="{% url 'posts:post_detail' post.pk %}#comments" 
@@ -96,7 +96,7 @@
                                     <i class="bi bi-chat"></i>
                                 </a>
                             {% endif %}
-                            <span class="ms-1">{{ post.comments.count }}</span>
+                            <span class="ms-1 small">{{ post.comments.count }}</span>
                         </div>
                     </div>
                 </div>
@@ -104,21 +104,7 @@
         </div>
         {% empty %}
             <div class="col-12 text-center py-5">
-                <div class="card shadow-sm border-0 py-5">
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
-                        </div>
-                        <h3 class="fw-bold">Tu muro está esperando...</h3>
-                        <p class="text-muted mb-4">
-                            Parece que aún no sigues a nadie o tus amigos aún no han publicado nada.<br>
-                            ¡Explora la comunidad para descubrir nuevos aficionados!
-                        </p>
-                        <a href="{% url 'profiles:profile_list' %}" class="btn btn-primary btn-lg shadow-sm">
-                            <i class="bi bi-search me-2"></i>Descubrir personas
-                        </a>
-                    </div>
-                </div>
+                ...
             </div>
         {% endfor %}
     </div>
