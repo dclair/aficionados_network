@@ -8,16 +8,18 @@
             
             <div class="list-group shadow-sm">
                 {% for n in notifications %}
-                    {# Hemos cambiado el div por un 'a' y apunta a la vista de redirección #}
                     <a href="{% url 'notifications:notification_redirect' n.pk %}" 
                        class="list-group-item list-group-item-action p-3 {% if not n.is_read %}bg-light border-start border-primary border-4{% endif %}">
                         
                         <div class="d-flex w-100 justify-content-between align-items-center">
                             <div>
+                                {# 1. ICONOS SEGÚN TIPO #}
                                 {% if n.notification_type == 'follow' %}
                                     <i class="bi bi-person-plus-fill text-primary me-2"></i>
                                 {% elif n.notification_type == 'like' %}
                                     <i class="bi bi-heart-fill text-danger me-2"></i>
+                                {% elif n.notification_type == 'event' %}
+                                    <i class="bi bi-calendar-check-fill text-info me-2"></i>
                                 {% else %}
                                     <i class="bi bi-chat-dots-fill text-success me-2"></i>
                                 {% endif %}
@@ -25,10 +27,13 @@
                                 <strong class="text-dark">@{{ n.sender.username }}</strong>
                                 
                                 <span class="text-dark">
+                                    {# 2. MENSAJES SEGÚN TIPO #}
                                     {% if n.notification_type == 'follow' %}
                                         ha empezado a seguirte.
                                     {% elif n.notification_type == 'like' %}
                                         le ha dado "me gusta" a tu publicación.
+                                    {% elif n.notification_type == 'event' %}
+                                        se ha apuntado a tu quedada: <strong>{{ n.event.title }}</strong>
                                     {% else %}
                                         ha comentado: <span class="text-muted fst-italic">"{{ n.content|truncatechars:30 }}"</span>
                                     {% endif %}
@@ -38,7 +43,6 @@
                         </div>
                     </a>
                 {% empty %}
-                    {# Mantenemos esta sección tal cual pediste #}
                     <div class="list-group-item text-center p-5 text-muted">
                         <i class="bi bi-bell-slash d-block mb-2 h1"></i>
                         No tienes notificaciones por ahora.
@@ -50,7 +54,6 @@
 </div>
 
 <style>
-    /* Estilo para que las notificaciones no leídas tengan una barra azul a la izquierda */
     .border-primary {
         border-left: 4px solid #0d6efd !important;
     }

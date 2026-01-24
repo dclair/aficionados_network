@@ -12,6 +12,7 @@ from .models import Posts, Event
 from .forms import PostCreateForm, CommentForm, EventForm
 from notifications.models import Notification
 from django.db.models import Q  # Importante para el buscador
+from notifications.models import Notification as NotificationModel
 
 
 # --- VISTA PARA CREAR POST ---
@@ -120,8 +121,16 @@ class EventCreateView(LoginRequiredMixin, CreateView):
     login_url = "login"
 
     def form_valid(self, form):
+        # 1. Asignamos al usuario como organizador
         form.instance.organizer = self.request.user
-        return super().form_valid(form)
+
+        # 2. Guardamos el objeto primero para que tenga un ID en la base de datos
+        response = super().form_valid(form)
+
+        # 3. ¡Aquí está el truco! Añadimos al creador como participante
+        self.object.participants.add(self.request.user)
+
+        return response
 
 
 # Vista para VER la lista de quedadas
@@ -171,21 +180,29 @@ class EventListView(LoginRequiredMixin, ListView):
 @login_required
 def toggle_attendance(request, event_id):
     event = get_object_or_404(Event, id=event_id)
+
+    # Si el que intenta cambiar su asistencia es el organizador, no le dejamos
+    if request.user == event.organizer:
+        messages.warning(
+            request, "Como organizador, no puedes desapuntarte de tu propio evento."
+        )
+        return redirect("posts:event_detail", pk=event.id)
+
     if request.user in event.participants.all():
         event.participants.remove(request.user)
     else:
         if event.participants.count() < event.max_participants:
             event.participants.add(request.user)
 
-            # NUEVO: Notificar al organizador
+            # --- Lógica de Notificación ---
             if event.organizer != request.user:
-                Notification.objects.create(
+                NotificationModel.objects.create(
                     recipient=event.organizer,
                     sender=request.user,
-                    notification_type="comment",  # O añade "event" a tus tipos si prefieres
-                    post=None,  # Los eventos no son posts, puede dejarse como None
-                    # Podrías añadir un mensaje personalizado si tu modelo lo permite
+                    notification_type="event",
+                    event=event,  # Enlazamos la notificación a este evento
                 )
+
     return redirect("posts:event_detail", pk=event.id)
 
 

@@ -9,6 +9,7 @@ class Notification(models.Model):
         ("follow", "Seguimiento"),
         ("like", "Me gusta"),
         ("comment", "Comentario"),
+        ("event", "Quedada"),
     )
 
     # Añadimos verbose_name a cada campo
@@ -33,6 +34,14 @@ class Notification(models.Model):
         null=True,
         blank=True,
         verbose_name="Publicación",
+    )
+
+    event = models.ForeignKey(
+        "posts.Event",  # Apuntamos al modelo que creamos antes
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="Quedada",
     )
 
     is_read = models.BooleanField(default=False, verbose_name="¿Leída?")

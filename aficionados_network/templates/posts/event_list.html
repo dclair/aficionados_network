@@ -13,12 +13,10 @@
         </a>
     </div>
 
-    {# 2. NUEVA SECCIÓN: BARRA DE FILTROS Y BÚSQUEDA #}
+    {# 2. SECCIÓN: BARRA DE FILTROS Y BÚSQUEDA #}
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body bg-light rounded">
             <form method="GET" action="{% url 'posts:event_list' %}" class="row g-3 align-items-end">
-                
-                {# Buscador por texto #}
                 <div class="col-md-5">
                     <label class="form-label small fw-bold text-muted">¿Qué buscas?</label>
                     <div class="input-group">
@@ -27,8 +25,6 @@
                                placeholder="Título o lugar..." value="{{ current_q }}">
                     </div>
                 </div>
-                
-                {# Filtro por Categoría (Hobby) #}
                 <div class="col-md-4">
                     <label class="form-label small fw-bold text-muted">Categoría</label>
                     <select name="hobby" class="form-select">
@@ -40,12 +36,8 @@
                         {% endfor %}
                     </select>
                 </div>
-
-                {# Botones de acción del filtro #}
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-dark w-100">Filtrar</button>
-                    
-                    {# Botón para limpiar filtros (solo aparece si hay filtros activos) #}
                     {% if current_q or current_hobby != 'all' %}
                         <a href="{% url 'posts:event_list' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
                             <i class="bi bi-x-circle"></i>
@@ -61,8 +53,8 @@
         {% for event in events %}
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <span class="badge bg-primary-subtle text-primary mb-2">{{ event.hobby.name }}</span>
+                <div class="card-body d-flex flex-column">
+                    <span class="badge bg-primary-subtle text-primary mb-2 align-self-start">{{ event.hobby.name }}</span>
                     
                     <h5 class="card-title fw-bold">{{ event.title }}</h5>
                     <p class="text-muted small mb-3">{{ event.description|truncatechars:80 }}</p>
@@ -82,21 +74,25 @@
                         </span>
                         
                         <div class="d-flex gap-2">
-                            {# Botón para ver detalles (Sugerencia anterior) #}
                             <a href="{% url 'posts:event_detail' event.id %}" class="btn btn-sm btn-outline-primary">Detalles</a>
                             
-                            {# Botón Me apunto / Desapuntarme #}
-                            <a href="{% url 'posts:toggle_attendance' event.id %}" 
-                               class="btn btn-sm {% if request.user in event.participants.all %}btn-danger{% else %}btn-success{% endif %}">
-                                {% if request.user in event.participants.all %}Desapuntarme{% else %}¡Me apunto!{% endif %}
-                            </a>
+                            {# --- CAMBIO AQUÍ: VALIDACIÓN DE ORGANIZADOR --- #}
+                            {% if request.user == event.organizer %}
+                                <span class="btn btn-sm btn-secondary disabled shadow-none">
+                                    <i class="bi bi-star-fill text-warning"></i> Organizo
+                                </span>
+                            {% else %}
+                                <a href="{% url 'posts:toggle_attendance' event.id %}" 
+                                   class="btn btn-sm {% if request.user in event.participants.all %}btn-danger{% else %}btn-success{% endif %}">
+                                    {% if request.user in event.participants.all %}Desapuntarme{% else %}¡Me apunto!{% endif %}
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         {% empty %}
-            {# Mensaje cuando no hay resultados (ajustado por si es debido a un filtro) #}
             <div class="col-12 text-center py-5">
                 <i class="bi bi-search text-muted display-1"></i>
                 <p class="text-muted fs-4 mt-3">No hay quedadas que coincidan con tu búsqueda.</p>

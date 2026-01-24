@@ -20,7 +20,6 @@ def notification_redirect(request, pk):
     # PRIORIDAD 1: Comentarios (Con salto al ancla #comment-id)
     if n.notification_type == "comment":
         if n.post and n.comment:
-            # Construimos la URL manualmente para asegurar el ancla
             url = reverse("posts:post_detail", kwargs={"pk": n.post.pk})
             return redirect(f"{url}#comment-{n.comment.id}")
         elif n.post:
@@ -28,7 +27,6 @@ def notification_redirect(request, pk):
 
     # PRIORIDAD 2: Seguimiento
     elif n.notification_type == "follow":
-        # Verificamos que el sender y su perfil existan para evitar errores 500
         if n.sender and hasattr(n.sender, "profile"):
             return redirect("profiles:profile", pk=n.sender.profile.pk)
 
@@ -36,8 +34,13 @@ def notification_redirect(request, pk):
     elif n.notification_type == "like" and n.post:
         return redirect("posts:post_detail", pk=n.post.pk)
 
+    # --- NUEVA PRIORIDAD 4: Quedadas (Eventos) ---
+    elif n.notification_type == "event" and n.event:
+        # Redirigimos a la vista de detalle del evento que creamos
+        return redirect("posts:event_detail", pk=n.event.pk)
+
     # Si no entra en ninguna categoría, vuelve a la lista de notificaciones
-    return redirect("notifications:notification_list")
+    return redirect("notifications:list")
 
 
 class NotificationListView(LoginRequiredMixin, ListView):

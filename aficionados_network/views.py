@@ -25,22 +25,24 @@ from posts.models import Posts, Event
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.conf import settings
-
 from django.core.mail import send_mail
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
-from .forms import ProfileFollowForm
-from profiles.models import UserProfile, Follow
+from django.db.models import Q
 
 
 # FICHERO DE VIEWS PRINCIPAL/BASE
+from django.db.models import Q  # Importante para la lógica de "O"
+from django.utils import timezone
+
+
 class HomeView(TemplateView):
     template_name = "general/home.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # --- LÓGICA DE POSTS (Se mantiene tu funcionalidad original) ---
+        # --- LÓGICA DE POSTS (Mantenida exactamente igual) ---
         last_posts = Posts.objects.none()
         if self.request.user.is_authenticated:
             has_profile = hasattr(self.request.user, "profile")
@@ -63,31 +65,33 @@ class HomeView(TemplateView):
 
         context["last_posts"] = last_posts
 
-        # --- NUEVA LÓGICA DE EVENTOS FILTRADOS POR AFICIONES ---
+        # --- LÓGICA DE EVENTOS (Corregida para incluir eventos propios) ---
         if self.request.user.is_authenticated and hasattr(self.request.user, "profile"):
-            # 1. Obtenemos las aficiones (hobbies) que el usuario tiene en su perfil
-            # Nota: Asegúrate de que tu modelo UserProfile tenga un campo 'hobbies' (M2M)
             user_hobbies = self.request.user.profile.hobbies.all()
 
+            # Base de la consulta: solo eventos futuros
+            base_filter = Q(event_date__gte=timezone.now())
+
             if user_hobbies.exists():
-                # 2. Filtramos eventos: que coincidan con sus hobbies Y que sean futuros
-                context["upcoming_events"] = (
-                    Event.objects.filter(
-                        hobby__in=user_hobbies, event_date__gte=timezone.now()
-                    )
-                    .distinct()
-                    .order_by("event_date")[:5]
+                # Condición: (Que coincida con mis hobbies) O (Que yo sea el organizador)
+                personal_filter = Q(hobby__in=user_hobbies) | Q(
+                    organizer=self.request.user
                 )
 
+                context["upcoming_events"] = (
+                    Event.objects.filter(base_filter & personal_filter)
+                    .distinct()  # Evita duplicados si un evento coincide con varios hobbies
+                    .order_by("event_date")[:5]
+                )
                 context["filtered_by_hobbies"] = True
             else:
-                # Si el usuario no tiene aficiones seleccionadas, mostramos eventos generales
-                context["upcoming_events"] = Event.objects.filter(
-                    event_date__gte=timezone.now()
-                ).order_by("event_date")[:5]
+                # Si no tiene hobbies, mostramos todos los eventos futuros (incluye los propios)
+                context["upcoming_events"] = Event.objects.filter(base_filter).order_by(
+                    "event_date"
+                )[:5]
                 context["filtered_by_hobbies"] = False
         else:
-            # Para usuarios no logueados, mostramos todo lo próximo
+            # Para usuarios no logueados
             context["upcoming_events"] = Event.objects.filter(
                 event_date__gte=timezone.now()
             ).order_by("event_date")[:5]
@@ -112,13 +116,6 @@ class LoginView(FormView):
         else:
             messages.error(self.request, "Usuario o contraseña incorrectos")
             return self.form_invalid(form)
-
-
-from django.contrib.auth import logout as auth_logout
-from django.contrib import messages
-from django.shortcuts import redirect
-from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 class LogoutView(LoginRequiredMixin, View):

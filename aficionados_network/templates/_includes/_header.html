@@ -1,64 +1,58 @@
 <header>
     <div class="container">
-    <h1>Hubs&Clicks</h1>
-    <h2>Comparte, descubre, disfruta</h2>
-    <nav>
-        <ul>
-        <li><a href="{% url 'home' %}">Inicio</a></li>
-        
-        <li><a href="{% url 'profiles:profile_list' %}">Perfiles</a></li>
-        
-        {% if not user.is_authenticated %}
-        <li><a href="{% url 'login' %}">Login</a></li>
-        <li><a href="{% url 'register' %}">Register</a></li>
-        {% else %}  
-        
-        <li class="nav-item">
-            <form method="post" action="{% url 'logout' %}" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-link nav-link p-0 border-0 align-baseline shadow-none text-dark" 
-                        style="text-decoration: none;">
-                    Cerrar Sesión
-                </button>
-            </form>
-        </li>
-        <li><a href="{% url 'posts:post_create' %}">Crear Post</a></li>
-        <!-- ENLAZAR CON MI PERFIL O CREAR PERFIL -->
-        <li>
-            {% if user.is_authenticated and user.profile %}
-                {# Esto carga profile.html (la vista de detalle) #}
-                <a href="{% url 'profiles:profile' user.profile.pk %}">
-                    <i class="bi bi-person"></i> Mi Perfil
-                </a>
-            {% else %}
-                {# Solo si NO tiene perfil, lo mandamos a crearlo #}
-                <a href="{% url 'profiles:profile_edit' %}">
-                    <i class="bi bi-person-plus"></i> Crear Perfil
-                </a>
-            {% endif %}
-        </li>
-
-        <li class="nav-item me-3">
-            <a class="nav-link" href="{% url 'notifications:list' %}">
-                <span class="position-relative d-inline-block">
-                    <i class="bi bi-bell-fill {% if unread_notifications_count > 0 %}text-danger{% else %}text-dark{% endif %}" 
-                    style="font-size: 1.25rem;"></i>
+        <h1>Hubs&Clicks</h1>
+        <h2>Comparte, descubre, disfruta</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li><a href="{% url 'profiles:profile_list' %}">Perfiles</a></li>
+                
+                {% if not user.is_authenticated %}
+                    <li><a href="{% url 'login' %}">Login</a></li>
+                    <li><a href="{% url 'register' %}">Register</a></li>
+                {% else %}  
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-link nav-link p-0 border-0 align-baseline shadow-none text-dark" style="text-decoration: none;">
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </li>
+                    <li><a href="{% url 'posts:post_create' %}">Crear Post</a></li>
                     
-                    {% if unread_notifications_count > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" 
-                            style="font-size: 0.5rem; padding: 0.15rem 0.3rem; border-width: 1.5px !important;">
-                            {{ unread_notifications_count }}
-                        </span>
-                    {% endif %}
-                </span>
-            </a>
-        </li>
-       
-        {% endif %}
-        
-        <li><a href="{% url 'contact' %}">Contacto</a></li>
-        <li><a href="/legal/">Legal</a></li>
-    </ul>
-    </nav>
+                    <li>
+                        {% if user.profile %}
+                            <a href="{% url 'profiles:profile' user.profile.pk %}">
+                                <i class="bi bi-person"></i> Mi Perfil
+                            </a>
+                        {% else %}
+                            <a href="{% url 'profiles:profile_edit' %}">
+                                <i class="bi bi-person-plus"></i> Crear Perfil
+                            </a>
+                        {% endif %}
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'notifications:list' %}">
+                            <span class="position-relative d-inline-block">
+                                <i class="bi bi-bell-fill {% if unread_notifications_count > 0 %}text-danger{% else %}text-dark{% endif %}" 
+                                   style="font-size: 1.25rem;"></i>
+                                
+                                {% if unread_notifications_count > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" 
+                                        style="font-size: 0.5rem; padding: 0.15rem 0.3rem; border-width: 1.5px !important;">
+                                        {{ unread_notifications_count }}
+                                    </span>
+                                {% endif %}
+                            </span>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                <li><a href="{% url 'contact' %}">Contacto</a></li>
+                <li><a href="/legal/">Legal</a></li>
+            </ul>
+        </nav>
     </div>
 </header>
