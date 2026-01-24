@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from profiles.models import UserProfile
+from profiles.models import UserProfile, UserHobby, Hobby
 from .models import ContactMessage
 
 
@@ -99,4 +99,15 @@ class ContactForm(forms.ModelForm):
                     "placeholder": "Escribe tu mensaje",
                 }
             ),
+        }
+
+
+class AddHobbyForm(forms.ModelForm):
+    class Meta:
+        model = UserHobby
+        fields = ["hobby", "level"]
+        labels = {"hobby": "Afición", "level": "Nivel de experiencia"}
+        widgets = {
+            "hobby": forms.Select(attrs={"class": "form-select"}),
+            "level": forms.Select(attrs={"class": "form-select"}),
         }

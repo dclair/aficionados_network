@@ -5,73 +5,119 @@
 {% block head_title %}Editar Perfil - {{ user.username }}{% endblock %}
 
 {% block content %}
-{% block page_title %}{% endblock page_title %}
 <div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
+    <div class="row g-4"> <div class="col-lg-7">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white text-center">
-                    <h1 class="h4 mb-0">
-                        <i class="bi bi-pencil-square me-2"></i>Editar perfil
-                    </h1>
+                <div class="card-header bg-white">
+                    <h1 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Información básica</h1>
                 </div>
-
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
 
-                        <!-- Foto de perfil -->
                         <div class="text-center mb-4">
                             <div class="position-relative d-inline-block">
                                 {% if user_profile.profile_picture %}
-                                    <img src="{{ user_profile.profile_picture_url }}" 
+                                    <img src="{{ user_profile.profile_picture.url }}" 
                                          class="rounded-circle shadow"
-                                         style="width:150px;height:150px;object-fit:cover;"
+                                         style="width:130px;height:130px;object-fit:cover;"
                                          id="profile-preview">
                                 {% else %}
                                     <div class="rounded-circle shadow bg-light d-flex align-items-center justify-content-center" 
-                                         style="width:150px;height:150px;">
-                                        <i class="bi bi-person-fill text-muted" style="font-size: 4rem;"></i>
+                                         style="width:130px;height:130px;">
+                                        <i class="bi bi-person-fill text-muted" style="font-size: 3rem;"></i>
                                     </div>
                                 {% endif %}
                                 <label for="id_profile_picture"
-                                       class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0"
-                                       style="transform: translate(-10px, -10px);">
+                                       class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0">
                                     <i class="bi bi-camera"></i>
                                 </label>
-                                {{ profile_form.profile_picture|as_crispy_field }}
+                                <div class="d-none">{{ profile_form.profile_picture }}</div>
                             </div>
                         </div>
 
-                        <!-- Resto del formulario... -->
-                        <h5 class="mb-3">Datos de usuario</h5>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">{{ user_form.username|as_crispy_field }}</div>
                             <div class="col-md-6">{{ user_form.email|as_crispy_field }}</div>
-                            <div class="col-md-6">{{ user_form.first_name|as_crispy_field }}</div>
-                            <div class="col-md-6">{{ user_form.last_name|as_crispy_field }}</div>
                         </div>
 
-                        <h5 class="mb-3">Datos del perfil</h5>
                         <div class="row g-3">
                             <div class="col-12">{{ profile_form.bio|as_crispy_field }}</div>
-                            <div class="col-md-6">{{ profile_form.birth_date|as_crispy_field }}</div>
                             <div class="col-md-6">{{ profile_form.location|as_crispy_field }}</div>
-                            <div class="col-12">{{ profile_form.website|as_crispy_field }}</div>
+                            <div class="col-md-6">{{ profile_form.website|as_crispy_field }}</div>
                         </div>
 
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'profiles:profile' user.profile.pk %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left me-1"></i> Cancelar
+                                <i class="bi bi-arrow-left"></i> Volver
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save me-1"></i> Guardar cambios
+                                <i class="bi bi-check-lg"></i> Actualizar Perfil
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-warning text-dark d-flex align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-star-fill me-2"></i>Mis Aficiones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        {% for uh in current_hobbies %}
+                            <div class="d-flex justify-content-between align-items-center p-2 mb-2 bg-light rounded border">
+                                <div>
+                                    <span class="fw-bold">{{ uh.hobby.name }}</span>
+                                    <small class="badge bg-primary ms-2">{{ uh.get_level_display }}</small>
+                                </div>
+                                <a href="{% url 'profiles:delete_hobby' uh.id %}" class="text-danger" title="Eliminar afición">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </a>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted small text-center my-3">No has añadido aficiones todavía.</p>
+                        {% endfor %}
+                    </div>
+
+                    <hr>
+
+                    <p class="small fw-bold text-muted mb-2">Añadir nueva afición</p>
+                    <form action="{% url 'profiles:add_hobby' %}" method="post" class="p-3 bg-light rounded border border-warning">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label small">¿Cuál es tu pasión?</label>
+                            <select name="hobby" class="form-select form-select-sm" required>
+                                <option value="">Selecciona...</option>
+                                {% for hobby in all_hobbies %}
+                                    <option value="{{ hobby.id }}">{{ hobby.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Tu nivel</label>
+                            <select name="level" class="form-select form-select-sm">
+                                <option value="beginner">Principiante</option>
+                                <option value="intermediate">Intermedio</option>
+                                <option value="advanced">Avanzado</option>
+                                <option value="expert">Experto</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold">
+                            <i class="bi bi-plus-lg"></i> Añadir Afición
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-info border-0 shadow-sm small">
+                <i class="bi bi-info-circle-fill me-2"></i> 
+                Añadir aficiones te ayuda a conectar con otros aficionados cercanos.
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
@@ -90,15 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.onload = function(e) {
                     if (profilePreview) {
                         profilePreview.src = e.target.result;
-                        profilePreview.style.display = 'block';
-                    } else {
-                        // Si no existe el preview, lo creamos
-                        const preview = document.createElement('img');
-                        preview.id = 'profile-preview';
-                        preview.src = e.target.result;
-                        preview.className = 'rounded-circle shadow';
-                        preview.style = 'width:150px;height:150px;object-fit:cover;';
-                        document.querySelector('.position-relative').prepend(preview);
                     }
                 }
                 reader.readAsDataURL(file);
