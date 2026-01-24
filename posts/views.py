@@ -156,4 +156,17 @@ def toggle_attendance(request, event_id):
                     post=None,  # Los eventos no son posts, puede dejarse como None
                     # Podrías añadir un mensaje personalizado si tu modelo lo permite
                 )
-    return redirect("posts:event_list")
+    return redirect("posts:event_detail", pk=event.id)
+
+
+class EventDetailView(LoginRequiredMixin, DetailView):
+    model = Event
+    template_name = "posts/event_detail.html"
+    context_object_name = "event"
+    login_url = "login"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Esto nos servirá para mostrar quiénes están ya apuntados
+        context["participants"] = self.object.participants.all()
+        return context

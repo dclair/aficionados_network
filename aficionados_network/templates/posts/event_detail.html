@@ -1,0 +1,86 @@
+{% extends "general/layout.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none mb-3 p-0">
+                <i class="bi bi-arrow-left"></i> Volver al calendario
+            </a>
+
+            <div class="card shadow-sm border-0 pt-3">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-primary-subtle text-primary mb-2">{{ event.hobby.name }}</span>
+                            <h1 class="fw-bold h2">{{ event.title }}</h1>
+                        </div>
+                        <div class="text-end">
+                            <div class="h4 fw-bold text-primary mb-0">{{ event.event_date|date:"d" }}</div>
+                            <div class="text-uppercase small fw-bold">{{ event.event_date|date:"M" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <i class="bi bi-clock-fill text-primary fs-4 me-3"></i>
+                                <div>
+                                    <div class="small text-muted">Hora</div>
+                                    <div class="fw-bold">{{ event.event_date|date:"H:i" }} hrs</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <i class="bi bi-geo-alt-fill text-danger fs-4 me-3"></i>
+                                <div>
+                                    <div class="small text-muted">Lugar</div>
+                                    <div class="fw-bold">{{ event.location }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold">Sobre esta quedada</h5>
+                    <p class="text-muted fs-5">{{ event.description|linebreaks }}</p>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h5 class="fw-bold mb-1">Asistentes ({{ event.participants.count }}/{{ event.max_participants }})</h5>
+                            <div class="avatar-group d-flex mt-2">
+                                {% for participant in event.participants.all %}
+                                    <img src="{{ participant.profile.profile_picture.url }}" 
+                                         class="rounded-circle border border-white" 
+                                         style="width: 40px; height: 40px; object-fit: cover; margin-left: -10px;" 
+                                         title="{{ participant.username }}">
+                                {% empty %}
+                                    <span class="small text-muted">Nadie se ha apuntado todavía.</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST">
+                            {% csrf_token %}
+                            {% if request.user in event.participants.all %}
+                                <button type="submit" class="btn btn-outline-danger btn-lg">No asistir</button>
+                            {% else %}
+                                <button type="submit" class="btn btn-success btn-lg" 
+                                    {% if event.participants.count >= event.max_participants %}disabled{% endif %}>
+                                    {% if event.participants.count >= event.max_participants %}Aforo completo{% else %}¡Me apunto!{% endif %}
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
+
+                    <div class="small text-muted border-top pt-3">
+                        Organizado por: <strong>{{ event.organizer.username }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

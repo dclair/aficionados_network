@@ -15,4 +15,5 @@ urlpatterns = [
         views.toggle_attendance,
         name="toggle_attendance",
     ),
+    path("events/<int:pk>/", views.EventDetailView.as_view(), name="event_detail"),
 ]
