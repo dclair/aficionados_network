@@ -37,8 +37,8 @@
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-9 col-lg-8">
+            
             <div class="card shadow-sm border-0 mb-4">
-                
                 <div class="card-header bg-white py-3 border-bottom-0">
                     <div class="d-flex align-items-center">
                         <a href="{% url 'profiles:profile' post.user.profile.id %}" class="text-decoration-none text-dark d-flex align-items-center">
@@ -86,17 +86,106 @@
                             </button>
                             <span class="like-count ms-2 fw-bold">{{ post.likes.count }}</span>
                         </div>
-                        <i class="bi bi-chat" style="font-size: 1.5rem;"></i>
-                        <span class="ms-2 fw-bold">{{ post.comments.count }}</span>
+                        <a href="#comments-section" class="text-decoration-none text-dark">
+                            <i class="bi bi-chat" style="font-size: 1.5rem;"></i>
+                            <span class="ms-2 fw-bold">{{ post.comments.count }}</span>
+                        </a>
                     </div>
                 </div>
             </div>
 
-            </div>
-    </div>
-</div>
+            <div class="card shadow-sm border-0 mb-5" id="comments-section">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">Comentarios</h5>
+                    
+                    {% if request.user.is_authenticated %}
+                    <form method="post" action="{% url 'posts:add_comment' post.pk %}" id="comment-form" class="mb-4">
+                        {% csrf_token %}
+                        <div class="input-group shadow-sm">
+                            {{ comment_form.comment }} 
+                            <button type="submit" class="btn btn-primary px-4">Comentar</button>
+                        </div>
+                    </form>
+                    {% endif %}
 
-<script>
-    // ... (Mantén aquí el script que ya tenías)
+                    <div id="comments-list">
+                        {% for comment in post.comments.all %}
+                        <div class="d-flex mb-3 comment-highlight" id="comment-{{ comment.id }}">
+                            <div class="flex-shrink-0">
+                                {% if comment.user.profile.profile_picture %}
+                                    <img src="{{ comment.user.profile.profile_picture.url }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="ms-3 w-100">
+                                <div class="bg-light p-3 rounded shadow-sm border-0">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <strong class="text-dark">{{ comment.user.username }}</strong>
+                                        <small class="text-muted">{{ comment.created_at|timesince }}</small>
+                                    </div>
+                                    <p class="mb-0 mt-1">{{ comment.comment }}</p>
+                                </div>
+                                <button class="btn btn-sm btn-link text-decoration-none p-0 mt-1 text-primary small" 
+                                        onclick="responderComentario('{{ comment.user.username }}')">
+                                    <i class="bi bi-reply"></i> Responder
+                                </button>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center py-4">No hay comentarios aún. ¡Sé el primero!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div> </div> </div> <script>
+    // 1. Script para responder comentarios (menciones)
+    function responderComentario(username) {
+        const textarea = document.querySelector('textarea[name="comment"]');
+        if (textarea) {
+            textarea.value = `@${username} `;
+            textarea.focus();
+            // Desplazar suavemente al formulario
+            document.querySelector('#comment-form').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    // 2. Script para LIKES por AJAX
+    document.addEventListener('DOMContentLoaded', function() {
+        const likeButtons = document.querySelectorAll('.like-button');
+        likeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const postId = this.dataset.postId;
+                const url = this.dataset.likeUrl;
+                const icon = this.querySelector('i');
+                const countSpan = this.parentElement.querySelector('.like-count');
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                const formData = new FormData();
+                formData.append('post_id', postId);
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.liked) {
+                        icon.classList.replace('bi-heart', 'bi-heart-fill');
+                        icon.classList.add('text-danger');
+                    } else {
+                        icon.classList.replace('bi-heart-fill', 'bi-heart');
+                        icon.classList.remove('text-danger');
+                    }
+                    countSpan.textContent = data.count;
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    });
 </script>
 {% endblock content %}
