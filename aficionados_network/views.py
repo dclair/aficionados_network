@@ -34,49 +34,63 @@ from profiles.models import UserProfile, Follow
 
 
 # FICHERO DE VIEWS PRINCIPAL/BASE
-
-
 class HomeView(TemplateView):
     template_name = "general/home.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # --- LÓGICA DE POSTS (Manteniendo tu funcionalidad original) ---
-        last_posts = Posts.objects.none()  # Inicializamos vacío
-
+        # --- LÓGICA DE POSTS (Se mantiene tu funcionalidad original) ---
+        last_posts = Posts.objects.none()
         if self.request.user.is_authenticated:
             has_profile = hasattr(self.request.user, "profile")
             context["has_profile"] = has_profile
 
             if not has_profile:
-                messages.warning(self.request, "Por favor, completa tu perfil.")
                 last_posts = Posts.objects.all().order_by("-created_at")[:20]
             else:
                 profile = self.request.user.profile
-                # Obtenemos los usuarios a los que sigue el perfil actual
                 seguidos = Follow.objects.filter(follower=profile).values_list(
                     "following__user", flat=True
                 )
-                # Posts de seguidos
                 last_posts = Posts.objects.filter(user__in=seguidos).order_by(
                     "-created_at"
                 )[:20]
-
-                # Opcional: Si el feed de seguidos está vacío, mostrar globales para que no se vea vacío
                 if not last_posts.exists():
                     last_posts = Posts.objects.all().order_by("-created_at")[:20]
         else:
-            # Usuario no autenticado: Posts globales
             last_posts = Posts.objects.all().order_by("-created_at")[:20]
 
         context["last_posts"] = last_posts
 
-        # --- NUEVA LÓGICA DE EVENTOS (Quedadas) ---
-        # Cargamos los 5 eventos más próximos que no hayan pasado todavía
-        context["upcoming_events"] = Event.objects.filter(
-            event_date__gte=timezone.now()
-        ).order_by("event_date")[:5]
+        # --- NUEVA LÓGICA DE EVENTOS FILTRADOS POR AFICIONES ---
+        if self.request.user.is_authenticated and hasattr(self.request.user, "profile"):
+            # 1. Obtenemos las aficiones (hobbies) que el usuario tiene en su perfil
+            # Nota: Asegúrate de que tu modelo UserProfile tenga un campo 'hobbies' (M2M)
+            user_hobbies = self.request.user.profile.hobbies.all()
+
+            if user_hobbies.exists():
+                # 2. Filtramos eventos: que coincidan con sus hobbies Y que sean futuros
+                context["upcoming_events"] = (
+                    Event.objects.filter(
+                        hobby__in=user_hobbies, event_date__gte=timezone.now()
+                    )
+                    .distinct()
+                    .order_by("event_date")[:5]
+                )
+
+                context["filtered_by_hobbies"] = True
+            else:
+                # Si el usuario no tiene aficiones seleccionadas, mostramos eventos generales
+                context["upcoming_events"] = Event.objects.filter(
+                    event_date__gte=timezone.now()
+                ).order_by("event_date")[:5]
+                context["filtered_by_hobbies"] = False
+        else:
+            # Para usuarios no logueados, mostramos todo lo próximo
+            context["upcoming_events"] = Event.objects.filter(
+                event_date__gte=timezone.now()
+            ).order_by("event_date")[:5]
 
         return context
 

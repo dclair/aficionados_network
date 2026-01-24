@@ -11,6 +11,7 @@ from django.utils import timezone
 from .models import Posts, Event
 from .forms import PostCreateForm, CommentForm, EventForm
 from notifications.models import Notification
+from django.db.models import Q  # Importante para el buscador
 
 
 # --- VISTA PARA CREAR POST ---
@@ -124,6 +125,10 @@ class EventCreateView(LoginRequiredMixin, CreateView):
 
 
 # Vista para VER la lista de quedadas
+from django.db.models import Q  # Importante para el buscador
+from .models import Hobby, Event
+
+
 class EventListView(LoginRequiredMixin, ListView):
     model = Event
     template_name = "posts/event_list.html"
@@ -131,10 +136,35 @@ class EventListView(LoginRequiredMixin, ListView):
     login_url = "login"
 
     def get_queryset(self):
-        # Filtramos para ver solo eventos que no hayan pasado aún
-        return Event.objects.filter(event_date__gte=timezone.now()).order_by(
+        # Empezamos con todos los eventos futuros
+        queryset = Event.objects.filter(event_date__gte=timezone.now()).order_by(
             "event_date"
         )
+
+        # Capturamos los datos del formulario (GET)
+        search_query = self.request.GET.get("q")
+        hobby_id = self.request.GET.get("hobby")
+
+        # Filtro por texto (Busca en título o localización)
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) | Q(location__icontains=search_query)
+            )
+
+        # Filtro por categoría (Hobby)
+        if hobby_id and hobby_id != "all":
+            queryset = queryset.filter(hobby_id=hobby_id)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pasamos todos los hobbies para llenar el desplegable del filtro
+        context["hobbies"] = Hobby.objects.all()
+        # Mantenemos los valores actuales en el formulario tras recargar
+        context["current_q"] = self.request.GET.get("q", "")
+        context["current_hobby"] = self.request.GET.get("hobby", "all")
+        return context
 
 
 # Función para APUNTARSE o DESAPUNTARSE

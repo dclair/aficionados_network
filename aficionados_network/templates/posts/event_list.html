@@ -1,43 +1,107 @@
+{# Extendemos la plantilla base layout.html #}
 {% extends "general/layout.html" %}
 
+{# Inicio del bloque de contenido principal #}
 {% block content %}
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold"><i class="bi bi-calendar-event me-2"></i>Próximas Quedadas</h2>
-        <a href="{% url 'posts:event_create' %}" class="btn btn-primary">
+    
+    {# 1. ENCABEZADO: Título y botón de acción #}
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h2 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2"></i>Explorar Quedadas</h2>
+        <a href="{% url 'posts:event_create' %}" class="btn btn-primary shadow-sm">
             <i class="bi bi-plus-lg"></i> Proponer Plan
         </a>
     </div>
 
+    {# 2. NUEVA SECCIÓN: BARRA DE FILTROS Y BÚSQUEDA #}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body bg-light rounded">
+            <form method="GET" action="{% url 'posts:event_list' %}" class="row g-3 align-items-end">
+                
+                {# Buscador por texto #}
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted">¿Qué buscas?</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0" 
+                               placeholder="Título o lugar..." value="{{ current_q }}">
+                    </div>
+                </div>
+                
+                {# Filtro por Categoría (Hobby) #}
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Categoría</label>
+                    <select name="hobby" class="form-select">
+                        <option value="all">Todas las aficiones</option>
+                        {% for hobby in hobbies %}
+                            <option value="{{ hobby.id }}" {% if current_hobby == hobby.id|stringformat:"s" %}selected{% endif %}>
+                                {{ hobby.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Botones de acción del filtro #}
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark w-100">Filtrar</button>
+                    
+                    {# Botón para limpiar filtros (solo aparece si hay filtros activos) #}
+                    {% if current_q or current_hobby != 'all' %}
+                        <a href="{% url 'posts:event_list' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# 3. CONTENEDOR DE EVENTOS #}
     <div class="row g-4">
         {% for event in events %}
         <div class="col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
                     <span class="badge bg-primary-subtle text-primary mb-2">{{ event.hobby.name }}</span>
-                    <h5 class="card-title fw-bold">{{ event.title }}</h5>
-                    <p class="text-muted small">{{ event.description|truncatechars:100 }}</p>
                     
-                    <div class="bg-light p-2 rounded mb-3 small">
-                        <i class="bi bi-geo-alt-fill text-danger"></i> {{ event.location }}<br>
-                        <i class="bi bi-calendar"></i> {{ event.event_date|date:"d M - H:i" }}
+                    <h5 class="card-title fw-bold">{{ event.title }}</h5>
+                    <p class="text-muted small mb-3">{{ event.description|truncatechars:80 }}</p>
+                    
+                    <div class="bg-light p-3 rounded mb-3 small">
+                        <div class="mb-1">
+                            <i class="bi bi-geo-alt-fill text-danger me-2"></i><strong>{{ event.location }}</strong>
+                        </div>
+                        <div>
+                            <i class="bi bi-calendar me-2"></i>{{ event.event_date|date:"d M - H:i" }}
+                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="small fw-bold">
-                            <i class="bi bi-people"></i> {{ event.participants.count }}/{{ event.max_participants }}
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <span class="small fw-bold text-muted">
+                            <i class="bi bi-people me-1"></i>{{ event.participants.count }}/{{ event.max_participants }}
                         </span>
                         
-                        <a href="{% url 'posts:toggle_attendance' event.id %}" 
-                           class="btn btn-sm {% if request.user in event.participants.all %}btn-danger{% else %}btn-success{% endif %}">
-                            {% if request.user in event.participants.all %}Desapuntarme{% else %}¡Me apunto!{% endif %}
-                        </a>
+                        <div class="d-flex gap-2">
+                            {# Botón para ver detalles (Sugerencia anterior) #}
+                            <a href="{% url 'posts:event_detail' event.id %}" class="btn btn-sm btn-outline-primary">Detalles</a>
+                            
+                            {# Botón Me apunto / Desapuntarme #}
+                            <a href="{% url 'posts:toggle_attendance' event.id %}" 
+                               class="btn btn-sm {% if request.user in event.participants.all %}btn-danger{% else %}btn-success{% endif %}">
+                                {% if request.user in event.participants.all %}Desapuntarme{% else %}¡Me apunto!{% endif %}
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         {% empty %}
-            <p class="text-center py-5">No hay quedadas próximas. ¡Sé el primero en proponer una!</p>
+            {# Mensaje cuando no hay resultados (ajustado por si es debido a un filtro) #}
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-search text-muted display-1"></i>
+                <p class="text-muted fs-4 mt-3">No hay quedadas que coincidan con tu búsqueda.</p>
+                <a href="{% url 'posts:event_list' %}" class="btn btn-link">Ver todas las quedadas</a>
+            </div>
         {% endfor %}
     </div>
 </div>
