@@ -1,87 +1,62 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    {% load static %}
-    <title>
-      {% block head_title %}
-        Hubs&Clicks
-      {% endblock head_title %}
-    </title>   
-  </head>
-  {% include "_includes/_messages.html" %}<!--Es para que se muestren los mensajes de error, success, warning, info-->
-  <!--Boton para volver arriba-->
-    <button type="button" class="btn btn-primary btn-lg rounded-circle shadow-lg d-none" id="btn-back-to-top" 
-          style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; width: 50px; height: 50px; padding: 0;">
-      <i class="bi bi-arrow-up"></i>
-    </button>
-  <body>
+    <link rel="stylesheet" href="{% static 'css/hubs_identity.css' %}">
+    
+    <title>{% block head_title %}Hubs&Clicks{% endblock %}</title>   
+</head>
+
+<body>
     {% include "_includes/_header.html" %}
-    
-    <div class="container">
-    
-    {% block page_title %}
-    {% endblock page_title %}
-    
-    {% block content %}
-      <!-- Contenido base -->
-      <p>Aqui va el contenido base de las páginas</p>
-    {% endblock content %}
-    <!-- Incluimos el footer -->
-    {% include "_includes/_footer.html" %}
+
+    <div class="message-container" style="position: fixed; top: 90px; right: 20px; z-index: 2100; width: auto; max-width: 350px;">
+        {% include "_includes/_messages.html" %}
     </div>
+
+    <main class="container shadow-sm p-4 bg-white rounded" style="margin-top: 130px !important;">
+        {% block page_title %}{% endblock %}
+        
+        {% block content %}
+            <p>Aquí va el contenido base</p>
+        {% endblock %}
+    </main>
+
+    {% include "_includes/_footer.html" %}
+
+    <button type="button" class="btn btn-lg rounded-circle d-none shadow-lg" id="btn-back-to-top" 
+      style="position: fixed; bottom: 20px; right: 20px; z-index: 2100; width: 55px; height: 55px; padding: 0; 
+             background-color: #0b5961 !important; border: 2px solid #ffffff !important; 
+             display: flex; align-items: center; justify-content: center;">
+      <i class="bi bi-arrow-up text-white" style="font-size: 1.5rem;"></i>
+    </button>
+
     {% include "_includes/_cookies_banner.html" %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-    <!-- Scripts adicionales  como los likes y otros js -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/likes.js' %}"></script>
-    
-    <!-- Scripts para las cookies -->
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const cookieBanner = document.getElementById('cookie-banner');
-        const acceptBtn = document.getElementById('accept-cookies');
+        // Este script también debe estar aquí para que el botón funcione
+        const mybutton = document.getElementById("btn-back-to-top");
 
-        // 1. Comprobamos si ya aceptó las cookies antes
-        if (!localStorage.getItem('cookies-accepted')) {
-            cookieBanner.style.display = 'block';
-        }
+        window.onscroll = function () {
+            if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
+                mybutton.classList.remove("d-none");
+            } else {
+                mybutton.classList.add("d-none");
+            }
+        };
 
-        // 2. Al hacer clic en aceptar, guardamos la decisión y ocultamos el banner
-        acceptBtn.addEventListener('click', function() {
-            localStorage.setItem('cookies-accepted', 'true');
-            cookieBanner.style.fadeOut = "slow"; // Efecto visual si tienes jQuery o simple:
-            cookieBanner.style.display = 'none';
+        mybutton.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
         });
-    });
-</script>
-<script>
-    // Seleccionamos el botón
-    const mybutton = document.getElementById("btn-back-to-top");
-
-    // Cuando el usuario hace scroll 20px hacia abajo, el botón aparece
-    window.onscroll = function () {
-        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-            mybutton.classList.remove("d-none");
-        } else {
-            mybutton.classList.add("d-none");
-        }
-    };
-
-    // Al hacer clic, sube suavemente al inicio
-    mybutton.addEventListener("click", () => {
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-    });
-</script>
+    </script>
     
-    
-  </body>
+    </body>
 </html>

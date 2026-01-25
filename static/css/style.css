@@ -28,3 +28,182 @@
         -webkit-overflow-scrolling: touch;
     }
 }
+/* Hubs & Clicks - Brand Identity System */
+
+:root {
+    /* Colores Nucleares */
+    --hubs-primary: #0b5961;
+    --hubs-primary-hover: #084349;
+    --hubs-primary-subtle: #e7eff0;
+    
+    /* Escala de Grises y Neutros */
+    --hubs-dark: #333333;
+    --hubs-text-muted: #6c757d;
+    --hubs-light: #f8f9fa;
+    --hubs-border: #e0e0e0;
+    
+    /* Semántica */
+    --hubs-success: #198754;
+    --hubs-danger: #dc3545;
+    
+    /* Layout y Formas */
+    --hubs-radius: 8px;
+    --hubs-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* --- REGLAS GLOBALES --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--hubs-dark);
+    background-color: var(--hubs-light);
+    
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+h1, h2, h3, h4, .text-hubs {
+    color: var(--hubs-primary);
+    font-weight: 700;
+}
+
+/* --- COMPONENTES CORPORATIVOS --- */
+
+/* Botón Principal Hubs */
+.btn-hubs {
+    background-color: var(--hubs-primary) !important;
+    color: white !important;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--hubs-radius);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-hubs:hover {
+    background-color: var(--hubs-primary-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Tarjetas de Eventos/Post */
+.card-hubs {
+    border: 1px solid var(--hubs-border);
+    border-radius: var(--hubs-radius);
+    box-shadow: var(--hubs-shadow);
+    background-color: white;
+    transition: transform 0.2s ease;
+}
+
+.card-hubs:hover {
+    border-color: var(--hubs-primary);
+}
+
+/* Badges de Aficiones */
+.badge-hubs {
+    background-color: var(--hubs-primary-subtle);
+    color: var(--hubs-primary);
+    border: 1px solid var(--hubs-primary);
+    padding: 0.4em 0.8em;
+    border-radius: 20px;
+}
+
+/* Lógica de Cancelación */
+.event-canceled {
+    opacity: 0.75;
+    text-decoration: line-through;
+    filter: grayscale(0.5);
+}
+/* --- NAVEGACIÓN CORPORATIVA --- */
+
+/* --- NAVEGACIÓN CORPORATIVA (SOLUCIÓN ESTRUCTURAL) --- */
+
+/* hubs_identity.css */
+
+/* Selector de máxima prioridad: etiqueta + 3 clases + estado */
+nav.navbar.navbar-hubs.fixed-top {
+    background-color: #ffffff !important; /* Blanco sólido */
+    background: #ffffff !important;       /* Doble refuerzo */
+    opacity: 1 !important;                 /* Cero transparencias */
+    z-index: 999999 !important;            /* Por encima de todo el universo */
+    
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    border-bottom: 2px solid var(--hubs-primary-subtle) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.navbar-hubs .nav-link {
+    color: var(--hubs-dark);
+    font-weight: 500;
+    margin: 0 5px;
+    padding: 5px 10px;
+    border-bottom: 2px solid transparent; /* Espacio para el subrayado */
+    transition: all 0.3s ease-in-out;
+}
+
+/* Estado Hover y Activo */
+.navbar-hubs .nav-link:hover,
+.navbar-hubs .nav-link.active {
+    color: var(--hubs-primary) !important;
+    border-bottom: 2px solid var(--hubs-primary);
+}
+
+.navbar-hubs .navbar-brand img {
+    height: 40px; /* Tamaño optimizado según nuestra guía */
+    transition: transform 0.3s ease;
+}
+
+.navbar-hubs .navbar-brand:hover img {
+    transform: scale(1.05); /* Pequeño guiño al pasar el ratón */
+}
+
+
+#btn-back-to-top {
+    background-color: var(--hubs-primary) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    transition: transform 0.3s ease, background-color 0.3s ease !important;
+}
+
+#btn-back-to-top:hover {
+    background-color: var(--hubs-primary-hover) !important;
+    transform: scale(1.1); /* Crece al pasar el ratón */
+}
+
+/* Aseguramos que la flecha sea blanca siempre */
+#btn-back-to-top i.bi-arrow-up {
+    color: #ffffff !important;
+}
+/* --- FOOTER CORPORATIVO --- */
+
+.footer-hubs {
+    background-color: var(--hubs-primary); /* Usamos nuestro Teal */
+    border-top: 5px solid var(--hubs-primary-hover);
+}
+
+.footer-link {
+    transition: color 0.3s ease, padding-left 0.3s ease;
+}
+
+.footer-link:hover {
+    color: #ffffff !important;
+    padding-left: 5px; /* Pequeño efecto de desplazamiento */
+}
+
+/* Efecto para los iconos de redes sociales */
+.footer-hubs .btn-outline-light {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.footer-hubs .btn-outline-light:hover {
+    transform: translateY(-3px);
+    background-color: white;
+    color: var(--hubs-primary);
+}
