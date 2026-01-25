@@ -74,3 +74,36 @@ def api_unread_count(request):
     if count > 0:
         return HttpResponse(str(count))
     return HttpResponse("")
+
+
+@login_required
+def read_and_redirect(request, notification_id):
+    # 1. Buscamos la notificación (asegurándonos de que sea del usuario actual)
+    notification = get_object_or_404(
+        Notification, id=notification_id, recipient=request.user
+    )
+
+    # 2. La marcamos como leída
+    notification.is_read = True
+    notification.save()
+
+    # 3. Lógica de redirección inteligente según el tipo
+    # Redirección para Valoraciones
+    if notification.notification_type == "review":
+        # Mandamos al perfil de quien recibió la valoración
+        return redirect("profiles:profile", pk=notification.recipient.profile.pk)
+
+    # Redirección para Likes o Comentarios en Posts
+    elif notification.notification_type in ["like", "comment"] and notification.post:
+        return redirect("posts:post_detail", pk=notification.post.pk)
+
+    # Redirección para Eventos (Quedadas)
+    elif notification.notification_type == "event" and notification.event:
+        return redirect("posts:event_detail", pk=notification.event.pk)
+
+    # Redirección para Seguimientos (Follows)
+    elif notification.notification_type == "follow":
+        return redirect("profiles:profile", pk=notification.sender.profile.pk)
+
+    # Por si acaso no coincide con nada, volvemos al historial
+    return redirect("notifications:list")

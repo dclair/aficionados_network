@@ -71,9 +71,10 @@
                                 <button type="button" 
                                         class="btn btn-link btn-sm text-decoration-none p-0 me-1 like-button" 
                                         data-post-id="{{ post.pk }}"
-                                        data-like-url="{% url 'posts:toggle_like' %}">
+                                        {# AÑADIMOS post.pk AQUÍ ABAJO #}
+                                        data-like-url="{% url 'posts:toggle_like' post.pk %}">
                                     <i class="bi bi-heart{% if request.user in post.likes.all %}-fill text-danger{% endif %}" 
-                                       style="font-size: 1rem;"></i>
+                                    style="font-size: 1rem;"></i>
                                 </button>
                             {% else %}
                                 <a href="{% url 'login' %}?next={{ request.path|urlencode }}" 

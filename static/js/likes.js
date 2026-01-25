@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const likeUrl = button.dataset.likeUrl;
     const icon = button.querySelector("i");
     // Buscamos el contador cerca del botón
-    const likeCountSpan = button.parentElement.querySelector(".like-count");
+   const likeCountSpan = button.closest(".card-body").querySelector(".like-count");
 
     try {
       // 2. Usamos FormData para que Django pueda leerlo con request.POST

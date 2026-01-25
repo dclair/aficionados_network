@@ -267,3 +267,30 @@ def add_review(request, event_id):
             print(error_msg)
 
     return redirect("posts:my_participations")
+
+
+# leer y redirigir a la lista de notificaciones
+@login_required
+def read_and_redirect(request, notification_id):
+    # 1. Buscamos la notificación
+    n = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+
+    # 2. La marcamos como leída
+    n.is_read = True
+    n.save()
+
+    # 3. ¿A dónde lo mandamos? (Lógica de redirección)
+    if n.notification_type == "review":
+        return redirect("profiles:profile", pk=n.recipient.profile.pk)
+
+    if n.notification_type in ["like", "comment"] and n.post:
+        return redirect("posts:post_detail", pk=n.post.pk)
+
+    if n.notification_type == "event" and n.event:
+        return redirect("posts:event_detail", pk=n.event.pk)
+
+    if n.notification_type == "follow":
+        return redirect("profiles:profile", pk=n.sender.profile.pk)
+
+    # Si no sabemos a dónde ir, al historial general
+    return redirect("notifications:list")

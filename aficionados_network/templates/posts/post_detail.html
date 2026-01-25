@@ -81,7 +81,7 @@
                             {% csrf_token %}
                             <button type="button" class="like-button border-0 bg-transparent p-0" 
                                     data-post-id="{{ post.pk }}" 
-                                    data-like-url="{% url 'posts:toggle_like' %}">
+                                    data-like-url="{% url 'posts:toggle_like' post.pk %}">
                                 <i class="bi {% if request.user in post.likes.all %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}" style="font-size: 1.5rem;"></i>
                             </button>
                             <span class="like-count ms-2 fw-bold">{{ post.likes.count }}</span>

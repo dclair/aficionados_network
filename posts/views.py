@@ -66,69 +66,91 @@ class PostDetailView(LoginRequiredMixin, DetailView):
 # --- LÓGICA DE LIKES (Se mantiene igual, ya tiene el decorador) ---
 @login_required
 @require_POST
-def toggle_like(request):
-    p_id = request.POST.get("post_id")
-    post = get_object_or_404(Posts, id=p_id)
+def toggle_like(request, post_id):
+    # 1. Buscamos el post
+    post = get_object_or_404(Posts, id=post_id)
+    user = request.user
 
-    if post.likes.filter(id=request.user.id).exists():
-        post.likes.remove(request.user)
-        is_liked = False
+    if user in post.likes.all():
+        post.likes.remove(user)
+        liked = False
+        # 2. IMPORTANTE: Cambiamos recipient=post.author por recipient=post.user
+        Notification.objects.filter(
+            sender=user,
+            recipient=post.user,  # <--- Corregido
+            post=post,
+            notification_type="like",
+        ).delete()
     else:
-        post.likes.add(request.user)
-        is_liked = True
-        if post.user != request.user:
-            Notification.objects.get_or_create(
-                recipient=post.user,
-                sender=request.user,
-                notification_type="like",
+        post.likes.add(user)
+        liked = True
+
+        # 3. Solo notificamos si el dueño del post no es quien da el like
+        if post.user != user:  # <--- Corregido
+            Notification.objects.create(
+                sender=user,
+                recipient=post.user,  # <--- Corregido
                 post=post,
+                notification_type="like",
             )
-    return JsonResponse({"liked": is_liked, "count": post.likes.count()})
+
+    # 4. Devolvemos la respuesta que el JS espera
+    return JsonResponse({"liked": liked, "count": post.likes.count()})
 
 
-# --- LÓGICA DE COMENTARIOS (Se mantiene igual) ---
+# --- LÓGICA DE COMENTARIOS ---
 @login_required
 def add_comment(request, post_id):
-    post = get_object_or_404(Posts, pk=post_id)
+    post = get_object_or_404(Posts, id=post_id)
+
     if request.method == "POST":
         form = CommentForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
-            comment.user = request.user
             comment.post = post
+            comment.user = request.user
             comment.save()
 
+            print(f"\n--- DEBUG COMENTARIOS ---")
+            print(f"Post de: {post.user.username} | Comenta: {request.user.username}")
+
+            # CASO A: Alguien externo comenta el post de Pepe
             if post.user != request.user:
                 Notification.objects.create(
-                    recipient=post.user,
                     sender=request.user,
+                    recipient=post.user,
                     notification_type="comment",
                     post=post,
-                    comment=comment,
+                )
+                print(
+                    f"ACCION: Notificación enviada al dueño del post ({post.user.username})"
                 )
 
-            # Soporte para AJAX (si lo usas)
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                profile = getattr(request.user, "profile", None)
-                avatar_url = (
-                    profile.profile_picture.url
-                    if profile and profile.profile_picture
-                    else "/static/images/default-avatar.png"
+            # CASO B: El dueño (Pepe) responde en su propio post
+            else:
+                # Buscamos quién más ha comentado aquí (excluyendo a Pepe)
+                # Usamos set() para asegurar que sean únicos sin líos de Django
+                todos_los_comentarios = post.comments.exclude(user=post.user)
+                ids_a_notificar = set(
+                    todos_los_comentarios.values_list("user_id", flat=True)
                 )
 
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "comment": comment.comment,
-                        "username": comment.user.username,
-                        "avatar_url": avatar_url,
-                        "comment_id": comment.id,
-                        "created_at": "Ahora mismo",
-                    }
-                )
+                print(f"Usuarios a notificar encontrados: {list(ids_a_notificar)}")
 
-            return redirect("posts:post_detail", pk=post_id)
-    return redirect("posts:post_detail", pk=post_id)
+                for u_id in ids_a_notificar:
+                    Notification.objects.create(
+                        sender=request.user,
+                        recipient_id=u_id,
+                        notification_type="comment",
+                        post=post,
+                    )
+                    print(
+                        f"ACCION: Notificación de respuesta enviada al usuario ID {u_id}"
+                    )
+
+            print(f"--- FIN DEBUG ---\n")
+
+    return redirect("posts:post_detail", pk=post.pk)
 
 
 # Vista para CREAR la quedada
