@@ -24,6 +24,11 @@ from django.conf import settings
 from django.views import View
 from django.urls import reverse
 from django.utils import timezone
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
+from email.mime.image import MIMEImage
+import os
 
 
 # --- VISTA PARA CREAR POST ---
@@ -304,25 +309,63 @@ def add_event_comment(request, event_id):
             comment.user = request.user
             comment.save()
 
+            action_url = request.build_absolute_uri(
+                reverse("posts:event_detail", args=[event.id])
+            )
+
+            # --- PREPARACIÓN DEL LOGO ---
+            # Ajusta 'img/logo.png' a la ruta real dentro de tu carpeta static
+            logo_path = os.path.join(
+                settings.BASE_DIR, "static", "img", "logo_hubs.png"
+            )
+            # TRUCO DE DEPURACIÓN: Añade este print para ver en tu terminal si Django encuentra el logo
+            if os.path.exists(logo_path):
+                print(f"✅ LOGO ENCONTRADO en: {logo_path}")
+            else:
+                print(f"❌ LOGO NO ENCONTRADO. Revisa la ruta: {logo_path}")
+
+            def send_html_email(subject, recipient, message_body):
+                context = {
+                    "recipient_name": recipient.username,
+                    "message_body": message_body,
+                    "action_url": action_url,
+                }
+                html_content = render_to_string(
+                    "emails/notification_email.html", context
+                )
+                text_content = strip_tags(html_content)
+
+                email = EmailMultiAlternatives(
+                    subject,
+                    text_content,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [recipient.email],
+                )
+                email.attach_alternative(html_content, "text/html")
+
+                # Incrustar el logo si el archivo existe
+                if os.path.exists(logo_path):
+                    with open(logo_path, "rb") as f:
+                        logo_data = f.read()
+                        logo_image = MIMEImage(logo_data)
+                        logo_image.add_header(
+                            "Content-ID", "<logo_hubs>"
+                        )  # ID que usaremos en el HTML
+                        email.attach(logo_image)
+
+                email.send(fail_silently=True)
+
             # --- LÓGICA DE NOTIFICACIONES ---
 
-            # CASO 1: Alguien comenta en tu evento (Tú eres Juan y recibes el aviso)
             if event.organizer != request.user:
+                # CASO 1: Alguien comenta -> Juan recibe aviso
                 recipient = event.organizer
-                subject = f"💬 Nuevo comentario de {request.user.username}"
-                message = f"Hola {recipient.username}, han comentado en tu plan '{event.title}'."
-
-                # Enviar email al organizador
                 if recipient.email:
-                    send_mail(
-                        subject,
-                        message,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [recipient.email],
-                        fail_silently=True,
+                    send_html_email(
+                        f"💬 Nuevo comentario de {request.user.username}",
+                        recipient,
+                        f"{request.user.username} ha comentado en tu plan '{event.title}'.",
                     )
-
-                # Notificación de campana
                 Notification.objects.create(
                     recipient=recipient,
                     sender=request.user,
@@ -330,39 +373,29 @@ def add_event_comment(request, event_id):
                     event=event,
                 )
 
-            # CASO 2: TÚ (Juan/Organizador) respondes a Pepe
             else:
-                # Buscamos a Pepe (y a cualquier otro que esté apuntado)
+                # CASO 2: Juan responde -> Participantes reciben aviso
                 participantes = event.participants.exclude(id=request.user.id)
-
                 for pepe in participantes:
+                    Notification.objects.create(
+                        recipient=pepe,
+                        sender=request.user,
+                        notification_type="comment",
+                        event=event,
+                    )
                     if pepe.email:
-                        # 1. Le mandamos el email a Pepe
-                        subject = f"📢 Juan ha respondido en: {event.title}"
-                        message = f"Hola {pepe.username},\n\nJuan (el organizador) ha puesto un comentario en el evento '{event.title}'.\n\nPuedes verlo aquí: {request.build_absolute_uri(reverse('posts:event_detail', args=[event.id]))}"
-
-                        send_mail(
-                            subject,
-                            message,
-                            settings.DEFAULT_FROM_EMAIL,
-                            [pepe.email],
-                            fail_silently=True,
+                        send_html_email(
+                            f"📢 Juan ha respondido en: {event.title}",
+                            pepe,
+                            f"Juan (el organizador) ha puesto un comentario en el evento '{event.title}'.",
                         )
 
-                        # 2. Le creamos la campana roja en la web
-                        Notification.objects.create(
-                            recipient=pepe,
-                            sender=request.user,
-                            notification_type="comment",
-                            event=event,
-                        )
-
-            messages.success(request, "Comentario publicado.")
+            messages.success(request, "Comentario publicado y avisos enviados.")
 
     return redirect("posts:event_detail", pk=event.id)
 
 
-# --- VISTA PARA VER MIS EVENTOS, los que él mismo ha creado ---
+# --- VISTA PARA VER MIS EVENTOS, los que uno mismo ha creado ---
 class MyEventsListView(LoginRequiredMixin, ListView):
     model = Event
     template_name = "posts/my_events.html"
