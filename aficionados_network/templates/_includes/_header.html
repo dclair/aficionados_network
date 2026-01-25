@@ -1,85 +1,63 @@
-<header class="py-3 mb-4 border-bottom bg-white shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom py-3 mb-4 sticky-top" style="z-index: 1020;">
     <div class="container">
-        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between">
-            <a href="{% url 'home' %}" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
-                <div>
-                    <h1 class="h3 mb-0 fw-bold" style="color: #0b5961;">Hubs&Clicks</h1>
-                    <small class="text-muted d-block" style="font-size: 0.75rem; margin-top: -5px;">Descubre, Comparte, Disfruta</small>
-                </div>
-            </a>
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+            <div>
+                <h1 class="h3 mb-0 fw-bold" style="color: #0b5961;">Hubs&Clicks</h1>
+                <small class="text-muted d-block" style="font-size: 0.70rem; margin-top: -5px;">Descubre, Comparte, Disfruta</small>
+            </div>
+        </a>
 
-            <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0 align-items-center">
-                <li>
-                    <a href="{% url 'home' %}" class="nav-link px-3 text-dark">
-                        <i class="bi bi-house-door me-1"></i> Inicio
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'posts:event_list' %}" class="nav-link px-3 text-dark">
-                        <i class="bi bi-calendar3 me-1"></i> Eventos
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'profiles:profile_list' %}" class="nav-link px-3 text-dark">
-                        <i class="bi bi-people me-1"></i> Perfiles
-                    </a>
-                </li>
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarHubs" aria-controls="navbarHubs" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarHubs">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0 align-items-lg-center">
+                <li class="nav-item"><a class="nav-link px-3" href="{% url 'home' %}"><i class="bi bi-house-door me-1"></i> Inicio</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="{% url 'posts:event_list' %}"><i class="bi bi-calendar3 me-1"></i> Eventos</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="{% url 'profiles:profile_list' %}"><i class="bi bi-people me-1"></i> Perfiles</a></li>
 
                 {% if not user.is_authenticated %}
-                    <li><a href="{% url 'login' %}" class="nav-link px-3 text-dark">Login</a></li>
-                    <li><a href="{% url 'register' %}" class="btn btn-outline-primary ms-2">Registrarse</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'login' %}">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-outline-primary ms-lg-2 mt-2 mt-lg-0" href="{% url 'register' %}">Registrarse</a></li>
                 {% else %}
-                    <li>
+                    <li class="nav-item">
                         <a href="{% url 'posts:my_events' %}" class="nav-link px-3 text-primary fw-bold">
                             <i class="bi bi-calendar-check me-1"></i> Mis Planes
                         </a>
                     </li>
-                    
-                    <li>
-                        <a href="{% url 'posts:my_participations' %}" class="nav-link px-3 text-dark">
+                    <li class="nav-item">
+                        <a href="{% url 'posts:my_participations' %}" class="nav-link px-3">
                             <i class="bi bi-calendar2-check me-1"></i> Mis Inscripciones
                         </a>
                     </li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'posts:post_create' %}"><i class="bi bi-plus-square me-1"></i> Post</a></li>
 
-                    <li>
-                        <a href="{% url 'posts:post_create' %}" class="nav-link px-3 text-dark">
-                            <i class="bi bi-plus-square me-1"></i> Post
-                        </a>
-                    </li>
-
-                    <li>
+                    <li class="nav-item">
                         {% if user.profile %}
-                            <a href="{% url 'profiles:profile' user.profile.pk %}" class="nav-link px-3 text-dark">
-                                <i class="bi bi-person-circle me-1"></i> Perfil
-                            </a>
+                            <a href="{% url 'profiles:profile' user.profile.pk %}" class="nav-link px-3"><i class="bi bi-person-circle me-1"></i> Perfil</a>
                         {% else %}
-                            <a href="{% url 'profiles:profile_edit' %}" class="nav-link px-3 text-warning">
-                                <i class="bi bi-person-plus-fill me-1"></i> Crear Perfil
-                            </a>
+                            <a href="{% url 'profiles:profile_edit' %}" class="nav-link px-3 text-warning">Crear Perfil</a>
                         {% endif %}
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link px-3" href="{% url 'notifications:list' %}">
-                            <span class="position-relative d-inline-block">
-                                <i class="bi bi-bell-fill {% if unread_notifications_count > 0 %}text-danger{% else %}text-dark{% endif %}" 
-                                   style="font-size: 1.1rem;"></i>
-                                
-                                <span id="notification-badge" 
-                                      hx-get="{% url 'notifications:api_unread_count' %}" 
-                                      hx-trigger="load, every 30s" 
+                            <span class="position-relative">
+                                <i class="bi bi-bell-fill {% if unread_notifications_count > 0 %}text-danger{% else %}text-dark{% endif %}"></i>
+                                <span id="notification-badge" hx-get="{% url 'notifications:api_unread_count' %}" hx-trigger="load, every 30s"
                                       class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white {% if unread_notifications_count == 0 %}d-none{% endif %}" 
-                                      style="font-size: 0.55rem; padding: 0.2rem 0.4rem;">
+                                      style="font-size: 0.5rem; padding: 0.2rem 0.4rem;">
                                     {{ unread_notifications_count }}
                                 </span>
                             </span>
-                        </a>
+                            <span class="d-lg-none ms-2">Notificaciones</span> </a>
                     </li>
 
-                    <li class="ms-2">
+                    <li class="nav-item ms-lg-2">
                         <form method="post" action="{% url 'logout' %}" class="d-inline">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-link nav-link text-muted small px-3 py-0 border-0" style="text-decoration: none;">
+                            <button type="submit" class="btn btn-link nav-link text-muted small px-3 border-0" style="text-decoration: none;">
                                 <i class="bi bi-power"></i> Salir
                             </button>
                         </form>
@@ -87,11 +65,11 @@
                 {% endif %}
             </ul>
 
-            <div class="col-md-3 text-end d-none d-md-block">
+            <div class="d-lg-flex col-lg-3 justify-content-end d-none d-lg-block">
                 <a href="{% url 'contact' %}" class="text-muted small text-decoration-none">
                     <i class="bi bi-envelope me-1"></i> Contacto
                 </a>
             </div>
         </div>
     </div>
-</header>
+</nav>

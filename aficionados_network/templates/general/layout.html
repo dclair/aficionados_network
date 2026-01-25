@@ -15,7 +15,12 @@
       {% endblock head_title %}
     </title>   
   </head>
-  {% include "_includes/_messages.html" %}
+  {% include "_includes/_messages.html" %}<!--Es para que se muestren los mensajes de error, success, warning, info-->
+  <!--Boton para volver arriba-->
+    <button type="button" class="btn btn-primary btn-lg rounded-circle shadow-lg d-none" id="btn-back-to-top" 
+          style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; width: 50px; height: 50px; padding: 0;">
+      <i class="bi bi-arrow-up"></i>
+    </button>
   <body>
     {% include "_includes/_header.html" %}
     
@@ -52,6 +57,27 @@
             localStorage.setItem('cookies-accepted', 'true');
             cookieBanner.style.fadeOut = "slow"; // Efecto visual si tienes jQuery o simple:
             cookieBanner.style.display = 'none';
+        });
+    });
+</script>
+<script>
+    // Seleccionamos el botón
+    const mybutton = document.getElementById("btn-back-to-top");
+
+    // Cuando el usuario hace scroll 20px hacia abajo, el botón aparece
+    window.onscroll = function () {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            mybutton.classList.remove("d-none");
+        } else {
+            mybutton.classList.add("d-none");
+        }
+    };
+
+    // Al hacer clic, sube suavemente al inicio
+    mybutton.addEventListener("click", () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
         });
     });
 </script>

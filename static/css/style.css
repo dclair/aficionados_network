@@ -16,3 +16,15 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     font-weight: bold;
 }
+
+/* Esto asegura que la celda de acciones no corte el contenido */
+.table-responsive {
+    overflow: visible !important;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto !important; /* Mantenemos el scroll horizontal en móvil si es necesario */
+        -webkit-overflow-scrolling: touch;
+    }
+}
