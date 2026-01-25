@@ -29,6 +29,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
 from email.mime.image import MIMEImage
 import os
+from .models import Event, Hobby
 
 
 # --- VISTA PARA CREAR POST ---
@@ -155,42 +156,48 @@ class EventListView(LoginRequiredMixin, ListView):
     template_name = "posts/event_list.html"
     context_object_name = "events"
     login_url = "login"
+    paginate_by = 9
 
     def get_queryset(self):
-        # 1. OPTIMIZACIÓN: usamos select_related para traer los datos del Hobby
-        # y del Organizador en una sola consulta (evita el error N+1)
+        # 1. Con esto traemos los eventos futuros y no cancelados
         queryset = (
             Event.objects.select_related("hobby", "organizer")
             .filter(event_date__gte=timezone.now(), is_canceled=False)
             .order_by("event_date")
         )
 
-        # 2. CAPTURA DE FILTROS
+        # 2. Capturamos los filtros (incluyendo el nuevo de ciudad)
         search_query = self.request.GET.get("q")
+        city_query = self.request.GET.get("city")  # <-- Nueva captura
         hobby_id = self.request.GET.get("hobby")
 
-        # 3. FILTRADO DINÁMICO
+        # 3. Filtrado Dinámico
+        # Texto general (Título, Ubicación o Descripción)
         if search_query:
             queryset = queryset.filter(
                 Q(title__icontains=search_query)
                 | Q(location__icontains=search_query)
-                | Q(
-                    description__icontains=search_query
-                )  # Añadido descripción para mejorar búsqueda
+                | Q(description__icontains=search_query)
             )
 
+        # Filtro específico de Ciudad (si el usuario usa el campo dedicado)
+        if city_query:
+            queryset = queryset.filter(location__icontains=city_query)
+
+        # Filtro por Hobby
         if hobby_id and hobby_id != "all":
             queryset = queryset.filter(hobby_id=hobby_id)
 
-        # Usamos distinct() por si los filtros Q duplican resultados (aunque en este caso es raro)
         return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Cargamos los hobbies para el select
         context["hobbies"] = Hobby.objects.all()
-        # Valores para mantener el estado del formulario en la UI
+
+        # Mantenemos TODOS los valores para que el formulario no se borre al pulsar "Filtrar"
         context["current_q"] = self.request.GET.get("q", "")
+        context["current_city"] = self.request.GET.get("city", "")  # <-- Nuevo
         context["current_hobby"] = self.request.GET.get("hobby", "all")
         return context
 
