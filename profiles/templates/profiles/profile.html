@@ -1,7 +1,7 @@
 {% extends "general/layout.html" %}
 {% load static %}
 
-{# 1. Título de la pestaña #}
+{# 1. TÍTULO DE LA PESTAÑA #}
 {% block head_title %}
     {% if user_profile %}
         {{ user_profile.user.username }} | Hubs&Clicks
@@ -10,10 +10,11 @@
     {% endif %}
 {% endblock head_title %}
 
-{# 2. Contenido principal #}
+{# 2. CONTENIDO PRINCIPAL #}
 {% block content %}
 <div class="container py-4">
     {% if not user_profile %}
+        {# Bloque: Perfil no existente #}
         <div class="text-center py-5">
             <div class="alert alert-info border-0 shadow-sm">
                 <h4>Perfil no encontrado</h4>
@@ -22,21 +23,22 @@
             </div>
         </div>
     {% else %}
-        {# SECCIÓN DE CABECERA #}
+
         <div class="row mb-4">
             {# Foto de Perfil #}
             <div class="col-md-3 text-center mb-3 mb-md-0">
-                <img src="{{ user_profile.image.url|default:'' }}" 
+                <img src="{{ user_profile.profile_picture_url|default:'' }}" 
                      class="rounded-circle img-thumbnail shadow-sm" 
                      style="width: 160px; height: 160px; object-fit: cover;"
                      onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
             </div>
             
-            {# Información del Perfil #}
+            {# Datos del Usuario #}
             <div class="col-md-9">
-                <div class="d-flex align-items-center mb-3 flex-wrap">
+                <div class="d-flex align-items-center mb-1 flex-wrap">
                     <h2 class="mb-0 me-3 fw-bold">{{ user_profile.user.username }}</h2>
                     
+                    {# Botones de Acción (Editar o Seguir) #}
                     {% if user.is_authenticated %}
                         {% if is_own_profile %}
                             <a href="{% url 'profiles:profile_edit' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
@@ -55,8 +57,20 @@
                         {% endif %}
                     {% endif %}
                 </div>
+
+                {# Sistema de Estrellas (Media) #}
+                <div class="mb-3">
+                    {% if average_rating %}
+                        <span class="text-warning fw-bold">
+                            <i class="bi bi-star-fill"></i> {{ average_rating|stringformat:".1f" }}
+                        </span>
+                        <small class="text-muted ms-1">({{ total_reviews }} valoraciones)</small>
+                    {% else %}
+                        <small class="text-muted fst-italic">Sin valoraciones aún</small>
+                    {% endif %}
+                </div>
                 
-                {# ESTADÍSTICAS CON LINKS #}
+                {# Contadores con Enlaces #}
                 <div class="d-flex mb-4 flex-wrap gap-3 gap-md-4">
                     <div><strong>{{ user_profile.user.posts.count }}</strong> <span class="text-muted small">publicaciones</span></div>
                     
@@ -70,31 +84,28 @@
 
                     <div class="border-start ps-3 d-none d-sm-block"></div>
 
-                    {# Link a Mis Planes (Solo si es mi perfil) #}
+                    {# Link a Mis Planes #}
                     <div>
                         {% if is_own_profile %}
                             <a href="{% url 'posts:my_events' %}" class="text-decoration-none text-dark text-primary-hover">
                         {% endif %}
                             <i class="bi bi-megaphone text-primary me-1"></i>
                             <strong>{{ organized_count }}</strong> <span class="text-muted small">organizados</span>
-                        {% if is_own_profile %}
-                            </a>
-                        {% endif %}
+                        {% if is_own_profile %}</a>{% endif %}
                     </div>
 
-                    {# Link a Mis Inscripciones (Solo si es mi perfil) #}
+                    {# Link a Mis Inscripciones #}
                     <div>
                         {% if is_own_profile %}
                             <a href="{% url 'posts:my_participations' %}" class="text-decoration-none text-dark text-primary-hover">
                         {% endif %}
                             <i class="bi bi-check2-circle text-success me-1"></i>
                             <strong>{{ participated_count }}</strong> <span class="text-muted small">participaciones</span>
-                        {% if is_own_profile %}
-                            </a>
-                        {% endif %}
+                        {% if is_own_profile %}</a>{% endif %}
                     </div>
                 </div>
                 
+                {# Bio y Aficiones #}
                 <div class="bg-white p-3 border rounded shadow-sm mb-4">
                     {% if user_profile.bio %}
                         <div class="mb-3">
@@ -103,21 +114,17 @@
                         </div>
                     {% endif %}
 
-                    {# Aficiones #}
+                    {# Lista de Hobbies #}
                     <div class="mb-3">
                         <h6 class="fw-bold small text-uppercase text-muted mb-2">Mis Aficiones</h6>
                         <div class="d-flex flex-wrap gap-2">
                             {% for user_hobby in user_profile.userhobby_set.all %}
                                 <span class="badge border text-dark bg-light fw-normal p-2">
                                     {{ user_hobby.hobby.name }}
-                                    {% if user_hobby.level == 'beginner' %}
-                                        <span class="text-info ms-1">●</span>
-                                    {% elif user_hobby.level == 'intermediate' %}
-                                        <span class="text-success ms-1">●●</span>
-                                    {% elif user_hobby.level == 'advanced' %}
-                                        <span class="text-primary ms-1">●●●</span>
-                                    {% elif user_hobby.level == 'expert' %}
-                                        <span class="text-warning ms-1">★</span>
+                                    {% if user_hobby.level == 'beginner' %}<span class="text-info ms-1">●</span>
+                                    {% elif user_hobby.level == 'intermediate' %}<span class="text-success ms-1">●●</span>
+                                    {% elif user_hobby.level == 'advanced' %}<span class="text-primary ms-1">●●●</span>
+                                    {% elif user_hobby.level == 'expert' %}<span class="text-warning ms-1">★</span>
                                     {% endif %}
                                 </span>
                             {% empty %}
@@ -126,6 +133,7 @@
                         </div>
                     </div>
 
+                    {# Datos de Ubicación/Web #}
                     <div class="row g-2 border-top pt-3">
                         {% if user_profile.location %}
                         <div class="col-sm-6 col-md-4 small text-muted">
@@ -142,7 +150,6 @@
             </div>
         </div>
 
-        {# SECCIÓN DE AGENDA #}
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card border-0 shadow-sm overflow-hidden">
@@ -177,7 +184,55 @@
             </div>
         </div>
 
-        {# SECCIÓN DE PUBLICACIONES #}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-chat-left-quote text-warning me-2"></i>Opiniones de la comunidad
+                        </h5>
+                    </div>
+                    <div class="card-body pt-0">
+                        {% if received_reviews %}
+                            <div class="list-group list-group-flush">
+                                {% for review in received_reviews %}
+                                    <div class="list-group-item px-0 py-3 border-0 border-bottom">
+                                        <div class="d-flex align-items-start">
+                                            <img src="{{ review.author.profile.profile_picture_url|default:'' }}" 
+                                                 class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;"
+                                                 onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
+                                            
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <h6 class="mb-0 fw-bold small text-primary">{{ review.author.username }}</h6>
+                                                    <small class="text-muted" style="font-size: 0.75rem;">{{ review.created_at|date:"d M, Y" }}</small>
+                                                </div>
+                                                
+                                                {# Estrellas de la reseña #}
+                                                <div class="text-warning small mb-2" style="font-size: 0.8rem;">
+                                                    <i class="bi bi-star{% if review.rating >= 1 %}-fill{% endif %}"></i>
+                                                    <i class="bi bi-star{% if review.rating >= 2 %}-fill{% endif %}"></i>
+                                                    <i class="bi bi-star{% if review.rating >= 3 %}-fill{% endif %}"></i>
+                                                    <i class="bi bi-star{% if review.rating >= 4 %}-fill{% endif %}"></i>
+                                                    <i class="bi bi-star{% if review.rating >= 5 %}-fill{% endif %}"></i>
+                                                </div>
+
+                                                <p class="text-dark mb-0 small fst-italic">"{{ review.comment|default:'Sin comentarios.' }}"</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p class="text-muted small mb-0">Todavía nadie ha dejado una opinión sobre este organizador.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <h5 class="fw-bold mb-3"><i class="bi bi-grid-3x3 me-2"></i>Publicaciones</h5>
         <div class="row g-2">
             {% for post in user_profile.user.posts.all %}
@@ -203,19 +258,19 @@
     {% endif %}
 </div>
 
-{# --- MODALES --- #}
+{# Modal Seguidores #}
 <div class="modal fade" id="followersModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom-0">
-                <h5 class="modal-title w-100 text-center fw-bold">Seguidores</h5>
-                <button type="button" class="btn-close" data-bs-modal="modal" aria-label="Close"></button>
+                <h5 class="modal-title w-100 text-center fw-bold small text-uppercase">Seguidores</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <ul class="list-group list-group-flush">
                     {% for follower in user_profile.followers.all %}
                         <li class="list-group-item d-flex align-items-center px-3 border-0">
-                            <img src="{{ follower.image.url|default:'' }}" class="rounded-circle me-3" style="width: 35px; height: 35px; object-fit: cover;" onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
+                            <img src="{{ follower.profile_picture_url|default:'' }}" class="rounded-circle me-3" style="width: 35px; height: 35px; object-fit: cover;" onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
                             <a href="{% url 'profiles:profile' follower.pk %}" class="text-decoration-none text-dark fw-bold small">{{ follower.user.username }}</a>
                         </li>
                     {% endfor %}
@@ -225,18 +280,19 @@
     </div>
 </div>
 
+{# Modal Siguiendo #}
 <div class="modal fade" id="followingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom-0">
-                <h5 class="modal-title w-100 text-center fw-bold">Siguiendo</h5>
+                <h5 class="modal-title w-100 text-center fw-bold small text-uppercase">Siguiendo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <ul class="list-group list-group-flush">
                     {% for followed in user_profile.following.all %}
                         <li class="list-group-item d-flex align-items-center px-3 border-0">
-                            <img src="{{ followed.image.url|default:'' }}" class="rounded-circle me-3" style="width: 35px; height: 35px; object-fit: cover;" onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
+                            <img src="{{ followed.profile_picture_url|default:'' }}" class="rounded-circle me-3" style="width: 35px; height: 35px; object-fit: cover;" onerror="this.onerror=null; this.src='{% static 'img/default-profile.png' %}'">
                             <a href="{% url 'profiles:profile' followed.pk %}" class="text-decoration-none text-dark fw-bold small">{{ followed.user.username }}</a>
                         </li>
                     {% endfor %}

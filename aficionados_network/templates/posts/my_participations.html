@@ -2,16 +2,19 @@
 
 {% block content %}
 <div class="container py-5">
+    
+    {# 1. CABECERA #}
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-0"><i class="bi bi-ticket-perforated me-2 text-info"></i>Mis Citas</h2>
-            <p class="text-muted small d-none d-md-block">Aquí tienes todos los planes a los que te has unido.</p>
+            <p class="text-muted small d-none d-md-block">Gestiona los planes a los que has asistido o asistirás.</p>
         </div>
         <a href="{% url 'posts:event_list' %}" class="btn btn-outline-primary btn-sm shadow-sm">
             <i class="bi bi-search me-1"></i> Explorar más
         </a>
     </div>
 
+    {# 2. TABLA DE PARTICIPACIONES #}
     <div class="card shadow-sm border-0 overflow-hidden">
         <div class="table-responsive border-0">
             <table class="table table-hover align-middle mb-0">
@@ -27,62 +30,51 @@
                     {% for event in participations %}
                     <tr>
                         <td class="ps-4">
-                            <div class="fw-bold text-dark text-truncate" style="max-width: 150px;" title="{{ event.title }}">
+                            <div class="fw-bold text-dark text-truncate" style="max-width: 150px;">
                                 {{ event.title }}
-                            </div>
-                            <div class="d-sm-none small text-muted">
-                                <span><i class="bi bi-clock me-1"></i>{{ event.event_date|date:"d/m H:i" }}</span>
-                                <span class="ms-2"><i class="bi bi-person me-1"></i>{{ event.organizer.username|truncatechars:10 }}</span>
                             </div>
                         </td>
 
                         <td class="d-none d-sm-table-cell">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 28px; height: 28px; font-size: 0.8rem;">
-                                    <i class="bi bi-person"></i>
-                                </div>
-                                <span class="small text-dark">{{ event.organizer.username }}</span>
-                            </div>
+                            <span class="small text-dark">{{ event.organizer.username }}</span>
                         </td>
 
                         <td class="text-center">
                             {% if event.is_canceled %}
-                                <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-2" title="Cancelado">
-                                    <i class="bi bi-x-circle"></i>
-                                    <span class="d-none d-md-inline ms-1 small">Cancelado</span>
-                                </span>
+                                <span class="badge rounded-pill bg-danger-subtle text-danger">Cancelado</span>
                             {% elif event.event_date < now %}
-                                <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-2" title="Finalizado">
-                                    <i class="bi bi-check2-all"></i>
-                                    <span class="d-none d-md-inline ms-1 small">Finalizado</span>
-                                </span>
+                                <span class="badge rounded-pill bg-secondary-subtle text-secondary">Finalizado</span>
                             {% else %}
-                                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2" title="Confirmado">
-                                    <i class="bi bi-calendar-check"></i>
-                                    <span class="d-none d-md-inline ms-1 small">Confirmado</span>
-                                </span>
+                                <span class="badge rounded-pill bg-success-subtle text-success">Confirmado</span>
                             {% endif %}
                         </td>
 
                         <td class="text-end pe-4">
+                            {# Dropdown de Acciones #}
                             <div class="dropdown">
-                                <button class="btn btn-light btn-sm border shadow-sm" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false"
-                                    data-bs-popper-config='{"strategy":"fixed"}'>
+                                <button class="btn btn-light btn-sm border shadow-sm" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                     <li><a class="dropdown-item py-2" href="{% url 'posts:event_detail' event.pk %}"><i class="bi bi-eye me-2 text-muted"></i> Ver detalle</a></li>
                                     
+                                    {# Opción de Valorar si el evento ya pasó #}
+                                    {% if event.event_date < now and not event.is_canceled %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button type="button" class="dropdown-item py-2 text-warning fw-bold" data-bs-toggle="modal" data-bs-target="#reviewModal{{ event.id }}">
+                                                <i class="bi bi-star-fill me-2"></i> Valorar
+                                            </button>
+                                        </li>
+                                    {% endif %}
+
+                                    {# Opción de Desapuntarse si es futuro #}
                                     {% if event.event_date > now and not event.is_canceled %}
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="d-inline">
                                                 {% csrf_token %}
-                                                <button type="submit" class="dropdown-item py-2 text-danger" 
-                                                        onclick="return confirm('¿Quieres dejar de asistir a este plan?')">
+                                                <button type="submit" class="dropdown-item py-2 text-danger" onclick="return confirm('¿Seguro?')">
                                                     <i class="bi bi-box-arrow-right me-2"></i> Desapuntarme
                                                 </button>
                                             </form>
@@ -90,16 +82,49 @@
                                     {% endif %}
                                 </ul>
                             </div>
+
+                            {# 3. MODAL DE VALORACIÓN (Aquí estaba el error) #}
+                            {% if event.event_date < now and not event.is_canceled %}
+                            <div class="modal fade" id="reviewModal{{ event.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fw-bold">Valorar a {{ event.organizer.username }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form action="{% url 'profiles:add_review' event.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold">Estrellas</label>
+                                                    <select name="rating" class="form-select border-warning">
+                                                        <option value="5">⭐⭐⭐⭐⭐</option>
+                                                        <option value="4">⭐⭐⭐⭐</option>
+                                                        <option value="3" selected>⭐⭐⭐</option>
+                                                        <option value="2">⭐⭐</option>
+                                                        <option value="1">⭐</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-0">
+                                                    <label class="form-label small fw-bold">Tu reseña</label>
+                                                    <textarea name="comment" class="form-control" rows="3" placeholder="Opcional..."></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-0">
+                                                <button type="submit" class="btn btn-warning btn-sm px-4 fw-bold shadow-sm">Enviar valoración</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %} {# <-- ESTE ERA EL ENDIF QUE FALTABA #}
+
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center py-5">
-                            <div class="text-muted">
-                                <i class="bi bi-emoji-frown fs-1"></i>
-                                <p class="mt-2">Aún no tienes planes en tu agenda.</p>
-                                <a href="{% url 'posts:event_list' %}" class="btn btn-link btn-sm">Explorar eventos</a>
-                            </div>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <p>No tienes planes registrados.</p>
                         </td>
                     </tr>
                     {% endfor %}

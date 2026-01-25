@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q, Exists, OuterRef, Avg
 from django.contrib import messages
 from django.http import Http404
 from django.views import View
@@ -12,8 +12,9 @@ from django.utils import timezone
 # Importaciones de tu proyecto
 from aficionados_network.forms import UserUpdateForm, ProfileUpdateForm, AddHobbyForm
 from notifications.models import Notification
-from .models import UserProfile, UserHobby, Hobby
+from .models import UserProfile, UserHobby, Hobby, Review
 from posts.models import Event
+from .forms import ReviewForm
 
 
 # --- LISTADO DE PERFILES ---
@@ -109,6 +110,27 @@ class ProfileView(LoginRequiredMixin, DetailView):
                 pk=self.request.user.profile.pk
             ).exists()
 
+        # NUEVO: Calculamos la media de valoraciones recibidas
+        average_rating = Review.objects.filter(recipient=profile.user).aggregate(
+            Avg("rating")
+        )["rating__avg"]
+        context["average_rating"] = round(average_rating, 1) if average_rating else 0
+        context["total_reviews"] = Review.objects.filter(recipient=profile.user).count()
+
+        # 1. Traemos las reseñas recibidas, ordenadas por la más reciente
+        context["received_reviews"] = (
+            Review.objects.filter(recipient=profile.user)
+            .select_related("author")
+            .order_by("-created_at")
+        )
+
+        # 2. El cálculo de la media que ya teníamos
+        average_rating = context["received_reviews"].aggregate(Avg("rating"))[
+            "rating__avg"
+        ]
+        context["average_rating"] = round(average_rating, 1) if average_rating else 0
+        context["total_reviews"] = context["received_reviews"].count()
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -199,9 +221,39 @@ def add_hobby(request):
     return redirect("profiles:profile_edit")
 
 
+# para eliminar una afición
 @login_required
 def delete_hobby(request, hobby_id):
     user_hobby = get_object_or_404(UserHobby, id=hobby_id, profile=request.user.profile)
     user_hobby.delete()
     messages.success(request, "Afición eliminada.")
     return redirect("profiles:profile_edit")
+
+
+# para valorar un evento
+@login_required
+def add_review(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+
+    # Seguridad: Solo si asistió, el evento pasó y no es el organizador
+    if (
+        request.user in event.participants.all()
+        and event.event_date < timezone.now()
+        and request.user != event.organizer
+    ):
+        if request.method == "POST":
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                review = form.save(commit=False)
+                review.event = event
+                review.author = request.user
+                review.recipient = event.organizer
+                review.save()
+                messages.success(
+                    request,
+                    f"¡Gracias! Has valorado el plan de {event.organizer.username}",
+                )
+            else:
+                messages.error(request, "Hubo un error en la valoración.")
+
+    return redirect("posts:my_participations")

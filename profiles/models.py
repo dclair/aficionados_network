@@ -6,6 +6,7 @@ from django.core.files.storage import default_storage as storage
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import date
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 def validate_birth_date(value):
@@ -198,3 +199,33 @@ class Follow(models.Model):
 
     def __str__(self):
         return f"{self.follower} sigue a {self.following}"
+
+
+# con esta clase gestionaremos las valoraciones
+class Review(models.Model):
+    # El evento que se valora
+    event = models.ForeignKey(
+        "posts.Event", on_delete=models.CASCADE, related_name="reviews"
+    )
+    # El que pone la nota (participante)
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="reviews_written"
+    )
+    # El que recibe la nota (el organizador)
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="reviews_received"
+    )
+
+    # Puntuación de 1 a 5
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)], default=5
+    )
+    comment = models.TextField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Un usuario solo puede valorar una vez cada evento
+        unique_together = ("event", "author")
+
+    def __str__(self):
+        return f"{self.author.username} valora a {self.recipient.username} con {self.rating}★"

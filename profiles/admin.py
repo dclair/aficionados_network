@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 
-from .models import UserProfile, Follow, Hobby, UserHobby
+from .models import UserProfile, Follow, Hobby, UserHobby, Review
 
 
 @admin.register(UserProfile)
@@ -126,3 +126,15 @@ class UserHobbyAdmin(admin.ModelAdmin):
     list_display = ("id", "profile", "hobby")
     search_fields = ("profile__user__username", "hobby__name")
     list_filter = ("hobby", "profile")
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    # Campos que verás en la tabla del administrador
+    list_display = ("author", "recipient", "rating", "event", "created_at")
+
+    # Filtros laterales para buscar por nota o por fecha
+    list_filter = ("rating", "created_at")
+
+    # Buscador para encontrar usuarios específicos
+    search_fields = ("author__username", "recipient__username", "comment")
