@@ -65,6 +65,10 @@
                                     <i class="bi bi-eye"></i>
                                 </a>
 
+                                <a href="{% url 'posts:event_duplicate' event.pk %}" class="btn btn-sm btn-outline-primary" title="Duplicar este plan">
+                                    <i class="bi bi-files"></i>
+                                </a>
+
                                 {% if event.is_canceled %}
                                     {% if event.event_date > now %}
                                         <form action="{% url 'posts:event_reactivate' event.pk %}" method="post" class="d-inline m-0">

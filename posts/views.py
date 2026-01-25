@@ -413,6 +413,7 @@ class MyEventsListView(LoginRequiredMixin, ListView):
         return context
 
 
+# la siguiente clase es para reactivar un evento que se ha cancelado
 class EventReactivateView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         event = get_object_or_404(Event, pk=self.kwargs["pk"])
@@ -434,3 +435,29 @@ class EventReactivateView(LoginRequiredMixin, UserPassesTestMixin, View):
             messages.success(request, f"¡El evento '{event.title}' ha sido reactivado!")
 
         return redirect("posts:my_events")
+
+
+# la clase siguiente es para duplicar un evento
+@login_required
+def duplicate_event(request, pk):
+    # 1. Buscamos el evento original (asegurándonos de que sea de el usuario que lo crea)
+    original_event = get_object_or_404(Event, pk=pk, organizer=request.user)
+
+    # 2. Creamos el nuevo evento copiando los campos
+    new_event = Event.objects.create(
+        title=f"COPIA: {original_event.title}",
+        description=original_event.description,
+        hobby=original_event.hobby,
+        max_participants=original_event.max_participants,
+        location=original_event.location,
+        organizer=request.user,
+        # Ponemos la misma fecha de momento, se cambiará en la edición
+        event_date=original_event.event_date,
+    )
+
+    messages.success(
+        request, f"Se ha duplicado el evento. ¡No olvides ajustar la fecha y el título!"
+    )
+
+    # 3. Redirigimos directamente al formulario de editar para los últimos ajustes
+    return redirect("posts:event_update", pk=new_event.pk)

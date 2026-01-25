@@ -31,4 +31,5 @@ urlpatterns = [
         views.EventReactivateView.as_view(),
         name="event_reactivate",
     ),
+    path("event/<int:pk>/duplicate/", views.duplicate_event, name="event_duplicate"),
 ]
