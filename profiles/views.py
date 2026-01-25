@@ -7,11 +7,13 @@ from django.db.models import Q, Exists, OuterRef
 from django.contrib import messages
 from django.http import Http404
 from django.views import View
+from django.utils import timezone
 
 # Importaciones de tu proyecto
 from aficionados_network.forms import UserUpdateForm, ProfileUpdateForm, AddHobbyForm
 from notifications.models import Notification
 from .models import UserProfile, UserHobby, Hobby
+from posts.models import Event
 
 
 # --- LISTADO DE PERFILES ---
@@ -55,7 +57,7 @@ class ProfilesListView(ListView):
         return context
 
 
-# --- VISTA PÚBLICA DEL PERFIL (Solo lectura de aficiones) ---
+# --- VISTA PÚBLICA DEL PERFIL (Vitaminada con Eventos) ---
 class ProfileView(LoginRequiredMixin, DetailView):
     model = UserProfile
     template_name = "profiles/profile.html"
@@ -76,6 +78,24 @@ class ProfileView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         profile = self.get_object()
+
+        # --- NUEVAS ESTADÍSTICAS (VITAMINAS) ---
+        # 1. Eventos que ha organizado (Juan style)
+        context["organized_count"] = Event.objects.filter(
+            organizer=profile.user
+        ).count()
+
+        # 2. Eventos a los que se ha apuntado (Pepe style)
+        context["participated_count"] = Event.objects.filter(
+            participants=profile.user
+        ).count()
+
+        # 3. Próxima actividad (Agenda)
+        context["upcoming_activity"] = Event.objects.filter(
+            participants=profile.user, event_date__gte=timezone.now(), is_canceled=False
+        ).order_by("event_date")[:3]
+
+        # --- Lógica de seguidores existente ---
         context["following_list"] = profile.following.all()
         context["followers_list"] = profile.followers.all()
         context["is_own_profile"] = profile == getattr(
@@ -89,7 +109,6 @@ class ProfileView(LoginRequiredMixin, DetailView):
                 pk=self.request.user.profile.pk
             ).exists()
 
-        # Eliminado context["all_hobbies"] de aquí por seguridad y limpieza
         return context
 
     def post(self, request, *args, **kwargs):
@@ -116,7 +135,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
         return redirect("profiles:profile", pk=target_profile.pk)
 
 
-# --- VISTA DE EDICIÓN (Centro de gestión de Aficiones) ---
+# --- VISTA DE EDICIÓN ---
 class ProfileUpdateView(LoginRequiredMixin, View):
     template_name = "profiles/profile_edit.html"
 
@@ -125,7 +144,6 @@ class ProfileUpdateView(LoginRequiredMixin, View):
         user_form = UserUpdateForm(instance=request.user)
         profile_form = ProfileUpdateForm(instance=profile)
 
-        # Pasamos los datos necesarios para gestionar hobbies en la misma página
         current_hobbies = UserHobby.objects.filter(profile=profile)
         all_hobbies = Hobby.objects.all()
 
@@ -136,8 +154,8 @@ class ProfileUpdateView(LoginRequiredMixin, View):
                 "user_profile": profile,
                 "user_form": user_form,
                 "profile_form": profile_form,
-                "current_hobbies": current_hobbies,  # Listado para borrar
-                "all_hobbies": all_hobbies,  # Listado para añadir
+                "current_hobbies": current_hobbies,
+                "all_hobbies": all_hobbies,
             },
         )
 
@@ -163,7 +181,7 @@ class ProfileUpdateView(LoginRequiredMixin, View):
         )
 
 
-# --- ACCIONES DE AFICIONES (Redirigen siempre a EDITAR) ---
+# --- ACCIONES DE AFICIONES ---
 @login_required
 def add_hobby(request):
     if request.method == "POST":
@@ -178,7 +196,6 @@ def add_hobby(request):
                 messages.success(request, "Afición añadida.")
             else:
                 messages.warning(request, "Ya tienes esta afición en tu lista.")
-    # Redirige a la edición, no al perfil público
     return redirect("profiles:profile_edit")
 
 
@@ -187,5 +204,4 @@ def delete_hobby(request, hobby_id):
     user_hobby = get_object_or_404(UserHobby, id=hobby_id, profile=request.user.profile)
     user_hobby.delete()
     messages.success(request, "Afición eliminada.")
-    # Redirige a la edición
     return redirect("profiles:profile_edit")
