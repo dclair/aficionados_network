@@ -91,6 +91,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["follower_username", "following_username", "created_at"]
+    list_display_links = ["follower_username", "following_username"]
     search_fields = [
         "follower__user__username",
         "following__user__username",
@@ -118,23 +119,27 @@ class FollowAdmin(admin.ModelAdmin):
 @admin.register(Hobby)
 class HobyAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "description")
+    # 2. Definimos cuáles de esas columnas son enlaces para entrar al registro
+    list_display_links = ("id", "name", "description")
     search_fields = ("name", "description")
 
 
 @admin.register(UserHobby)
 class UserHobbyAdmin(admin.ModelAdmin):
     list_display = ("id", "profile", "hobby")
+    # 2. Definimos cuáles de esas columnas son enlaces para entrar al registro
+    list_display_links = ("id", "profile", "hobby")
     search_fields = ("profile__user__username", "hobby__name")
     list_filter = ("hobby", "profile")
 
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    # Campos que verás en la tabla del administrador
-    list_display = ("author", "recipient", "rating", "event", "created_at")
+    # 1. 'id' DEBE estar aquí para que Django pueda mostrarlo
+    list_display = ("id", "author", "recipient", "rating", "event", "created_at")
 
-    # Filtros laterales para buscar por nota o por fecha
+    # 2. Ahora que 'id' está arriba, sí podemos usarlo como enlace aquí
+    list_display_links = ("id", "author", "recipient", "rating")
+
     list_filter = ("rating", "created_at")
-
-    # Buscador para encontrar usuarios específicos
     search_fields = ("author__username", "recipient__username", "comment")

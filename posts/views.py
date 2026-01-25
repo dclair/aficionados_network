@@ -17,6 +17,7 @@ from .models import Posts, Event, Hobby
 from .forms import PostCreateForm, CommentForm, EventForm, EventCommentForm
 from notifications.models import Notification
 from django.db.models import Q  # Importante para el buscador
+from django.db.models import Exists, OuterRef
 from notifications.models import Notification as NotificationModel
 from django.contrib import messages
 from django.core.mail import send_mail
@@ -30,6 +31,7 @@ from django.utils.html import strip_tags
 from email.mime.image import MIMEImage
 import os
 from .models import Event, Hobby
+from profiles.models import Review
 
 
 # --- VISTA PARA CREAR POST ---
@@ -478,11 +480,18 @@ class MyParticipationsListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # Buscamos eventos donde el usuario logueado está en la lista de participantes
-        return (
-            Event.objects.filter(participants=self.request.user)
-            .order_by("event_date")
-            .distinct()
+        # 1. Obtenemos los eventos donde participa el usuario
+        queryset = Event.objects.filter(participants=self.request.user).order_by(
+            "-event_date"
         )
+        # 2. Creamos una "subconsulta" para buscar reviews de Pepe en esos eventos
+        user_reviews = Review.objects.filter(
+            event=OuterRef("pk"),
+            author=self.request.user,
+        )
+
+        # 3. "Anotamos" el queryset: añadimos el campo virtual 'has_reviewed' (True/False)
+        return queryset.annotate(has_reviewed=Exists(user_reviews))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

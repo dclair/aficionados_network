@@ -10,6 +10,7 @@ class Notification(models.Model):
         ("like", "Me gusta"),
         ("comment", "Comentario"),
         ("event", "Quedada"),
+        ("review", "Valoración"),
     )
 
     # Añadimos verbose_name a cada campo
@@ -42,6 +43,14 @@ class Notification(models.Model):
         null=True,
         blank=True,
         verbose_name="Quedada",
+    )
+    # valoraciones
+    review = models.ForeignKey(
+        "profiles.Review",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="Valoración",
     )
 
     is_read = models.BooleanField(default=False, verbose_name="¿Leída?")

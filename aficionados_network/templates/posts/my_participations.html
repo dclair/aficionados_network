@@ -3,7 +3,6 @@
 {% block content %}
 <div class="container py-5">
     
-    {# 1. CABECERA #}
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-0"><i class="bi bi-ticket-perforated me-2 text-info"></i>Mis Citas</h2>
@@ -14,7 +13,6 @@
         </a>
     </div>
 
-    {# 2. TABLA DE PARTICIPACIONES #}
     <div class="card shadow-sm border-0 overflow-hidden">
         <div class="table-responsive border-0">
             <table class="table table-hover align-middle mb-0">
@@ -58,17 +56,26 @@
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                     <li><a class="dropdown-item py-2" href="{% url 'posts:event_detail' event.pk %}"><i class="bi bi-eye me-2 text-muted"></i> Ver detalle</a></li>
                                     
-                                    {# Opción de Valorar si el evento ya pasó #}
+                                    {# --- CAMBIO AQUÍ: LÓGICA DE VALORACIÓN --- #}
                                     {% if event.event_date < now and not event.is_canceled %}
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <button type="button" class="dropdown-item py-2 text-warning fw-bold" data-bs-toggle="modal" data-bs-target="#reviewModal{{ event.id }}">
-                                                <i class="bi bi-star-fill me-2"></i> Valorar
-                                            </button>
+                                            {% if event.has_reviewed %}
+                                                {# Caso: El usuario YA ha valorado este evento #}
+                                                <span class="dropdown-item py-2 text-success small opacity-75">
+                                                    <i class="bi bi-check-circle-fill me-2"></i> Evento valorado
+                                                </span>
+                                            {% else %}
+                                                {# Caso: El usuario NO ha valorado todavía #}
+                                                <button type="button" class="dropdown-item py-2 text-warning fw-bold" 
+                                                        data-bs-toggle="modal" data-bs-target="#reviewModal{{ event.id }}">
+                                                    <i class="bi bi-star-fill me-2"></i> Valorar
+                                                </button>
+                                            {% endif %}
                                         </li>
                                     {% endif %}
 
-                                    {# Opción de Desapuntarse si es futuro #}
+                                    {# Opción de Desapuntarse (solo para futuros) #}
                                     {% if event.event_date > now and not event.is_canceled %}
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
@@ -83,8 +90,8 @@
                                 </ul>
                             </div>
 
-                            {# 3. MODAL DE VALORACIÓN (Aquí estaba el error) #}
-                            {% if event.event_date < now and not event.is_canceled %}
+                            {# Solo renderizamos el modal si el evento es valorable y NO ha sido valorado aún #}
+                            {% if event.event_date < now and not event.is_canceled and not event.has_reviewed %}
                             <div class="modal fade" id="reviewModal{{ event.id }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content border-0 shadow">
@@ -117,7 +124,7 @@
                                     </div>
                                 </div>
                             </div>
-                            {% endif %} {# <-- ESTE ERA EL ENDIF QUE FALTABA #}
+                            {% endif %} 
 
                         </td>
                     </tr>
@@ -133,4 +140,20 @@
         </div>
     </div>
 </div>
+<style>
+    /* Permite que el dropdown se vea fuera de la tabla responsive */
+    .table-responsive {
+        overflow: visible !important;
+    }
+    
+    /* Evita que el card corte el contenido */
+    .card {
+        overflow: visible !important;
+    }
+
+    /* Asegura que el dropdown aparezca por encima de cualquier otro elemento */
+    .dropdown-menu {
+        z-index: 1050; 
+    }
+</style>
 {% endblock %}

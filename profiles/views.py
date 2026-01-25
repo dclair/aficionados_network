@@ -15,6 +15,7 @@ from notifications.models import Notification
 from .models import UserProfile, UserHobby, Hobby, Review
 from posts.models import Event
 from .forms import ReviewForm
+from notifications.models import Notification
 
 
 # --- LISTADO DE PERFILES ---
@@ -235,25 +236,34 @@ def delete_hobby(request, hobby_id):
 def add_review(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
-    # Seguridad: Solo si asistió, el evento pasó y no es el organizador
-    if (
-        request.user in event.participants.all()
-        and event.event_date < timezone.now()
-        and request.user != event.organizer
-    ):
-        if request.method == "POST":
-            form = ReviewForm(request.POST)
-            if form.is_valid():
-                review = form.save(commit=False)
-                review.event = event
-                review.author = request.user
-                review.recipient = event.organizer
-                review.save()
-                messages.success(
-                    request,
-                    f"¡Gracias! Has valorado el plan de {event.organizer.username}",
-                )
-            else:
-                messages.error(request, "Hubo un error en la valoración.")
+    # 1. SEGURIDAD: Evitar que se valore dos veces el mismo evento
+    if Review.objects.filter(author=request.user, event=event).exists():
+        messages.warning(request, "Ya has enviado una valoración para este evento.")
+        return redirect("posts:my_participations")
+
+    if request.method == "POST":
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            # 2. GUARDAR LA VALORACIÓN
+            review = form.save(commit=False)
+            review.event = event
+            review.author = request.user
+            review.recipient = event.organizer
+            review.save()
+
+            # 3. LANZAR NOTIFICACIÓN (Usando tu modelo de la app notifications)
+            Notification.objects.create(
+                recipient=event.organizer,  # Juan recibe
+                sender=request.user,  # Pepe envía
+                notification_type="review",
+                event=event,  # Enlazamos la quedada
+                review=review,  # Enlazamos la reseña
+            )
+
+            messages.success(request, "¡Valoración enviada y notificada con éxito!")
+        else:
+            error_msg = f"Error en el formulario: {form.errors.as_text()}"
+            messages.error(request, error_msg)
+            print(error_msg)
 
     return redirect("posts:my_participations")
