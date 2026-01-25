@@ -29,15 +29,11 @@ from django.core.mail import send_mail
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.db.models import Q
-
-
-# FICHERO DE VIEWS PRINCIPAL/BASE
-from django.db.models import Q  # Importante para la lógica de "O"
-from django.utils import timezone
-
-
-from django.db.models import Q
-from django.utils import timezone
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from email.mime.image import MIMEImage
+import os
 
 
 class HomeView(TemplateView):
@@ -407,33 +403,56 @@ class ProfileUpdateView(LoginRequiredMixin, View):
 
 
 class ContactFormView(FormView):
-    template_name = "general/contact.html"  # La plantilla de contacto
+    template_name = "general/contact.html"
     form_class = ContactForm
-    success_url = reverse_lazy("contact")  # A dónde redirigir tras enviar el formulario
+    success_url = reverse_lazy("contact")
 
     def form_valid(self, form):
-        # Guardar el mensaje en la base de datos
         contact_message = form.save()
 
-        # Enviar correo a la empresa o email que queramos
-        send_mail(
-            subject=f"Nuevo mensaje de contacto: {contact_message.subject}",
-            message=f"De: {contact_message.name} <{contact_message.email}>\n\nAsunto: {contact_message.subject}\n\nMensaje:\n{contact_message.message}",
-            from_email=settings.DEFAULT_FROM_EMAIL,  # Usa el remitente de settings
-            recipient_list=[settings.CONTACT_EMAIL],  # Usa el destinatario de settings
-            fail_silently=False,
+        # 1. Definimos los datos para la plantilla
+        subject = f"📬 Nuevo mensaje: {contact_message.subject}"
+        recipient_email = settings.CONTACT_EMAIL
+
+        # El cuerpo del mensaje que irá dentro de {{ message_body }}
+        full_message = (
+            f"Has recibido un nuevo mensaje de contacto a través de la web.\n\n"
+            f"👤 Nombre: {contact_message.name}\n"
+            f"📧 Email: {contact_message.email}\n"
+            f"📝 Mensaje:\n{contact_message.message}"
         )
+
+        context = {
+            "recipient_name": "Equipo de Hubs&Clicks",  # Quién recibe el mail (tú)
+            "message_body": full_message,
+            "action_url": self.request.build_absolute_uri("/admin/"),  # Link al panel
+        }
+
+        # 2. Renderizamos el HTML
+        html_content = render_to_string("emails/notification_email.html", context)
+        text_content = strip_tags(html_content)
+
+        # 3. Creamos el objeto Email
+        email = EmailMultiAlternatives(
+            subject,
+            text_content,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient_email],
+        )
+        email.attach_alternative(html_content, "text/html")
+
+        # 4. Incrustamos el logo usando el ID exacto de tu plantilla: logo_hubs
+        logo_path = os.path.join(settings.BASE_DIR, "static", "img", "logo_hubs.png")
+        if os.path.exists(logo_path):
+            with open(logo_path, "rb") as f:
+                logo_image = MIMEImage(f.read())
+                logo_image.add_header("Content-ID", "<logo_hubs>")
+                email.attach(logo_image)
+
+        # 5. Enviar
+        email.send(fail_silently=False)
 
         messages.success(
-            self.request,
-            "Gracias por tu mensaje. Nos pondremos en contacto contigo pronto.",
+            self.request, "Gracias por tu mensaje. Nos pondremos en contacto pronto."
         )
         return super().form_valid(form)
-
-    def form_invalid(self, form):
-        # Esto imprimirá los errores exactos en tu terminal negra de VS Code
-        print("EL FORMULARIO ES INVÁLIDO:", form.errors)
-        messages.error(
-            self.request, "Hubo un error al enviar tu mensaje. Revisa los campos."
-        )
-        return super().form_invalid(form)

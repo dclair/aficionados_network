@@ -300,19 +300,26 @@ class EventCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, pk):
         event = get_object_or_404(Event, pk=pk)
 
-        # 1. ESCUDO DE SEGURIDAD: Si ya está cancelado, salimos de aquí inmediatamente
         if event.is_canceled:
             messages.info(request, "Este evento ya ha sido cancelado anteriormente.")
             return redirect("posts:event_detail", pk=event.pk)
 
-        # 2. MARCADO Y GUARDADO
+        # 1. MARCADO
         event.is_canceled = True
         event.save()
 
-        # 3. NOTIFICAR SOLO UNA VEZ
+        # 2. PREPARACIÓN DE EMAIL (LOGO Y URL)
+        action_url = request.build_absolute_uri(
+            reverse("posts:event_detail", args=[event.pk])
+        )
+        logo_path = os.path.join(settings.BASE_DIR, "static", "img", "logo_hubs.png")
+        subject = f"⚠️ Quedada cancelada: {event.title}"
+
+        # 3. NOTIFICAR Y ENVIAR EMAILS
         participants = event.participants.all()
         for p in participants:
             if p != request.user:
+                # Notificación en la campana
                 Notification.objects.create(
                     recipient=p,
                     sender=request.user,
@@ -320,9 +327,37 @@ class EventCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
                     event=event,
                 )
 
+                # Envío de Email Corporativo
+                if p.email:
+                    context = {
+                        "recipient_name": p.username,
+                        "message_body": f"Lamentamos informarte que el plan '{event.title}' ha sido cancelado por el organizador. ¡No te preocupes! Pronto habrá más eventos disponibles.",
+                        "action_url": action_url,
+                    }
+                    html_content = render_to_string(
+                        "emails/notification_email.html", context
+                    )
+                    text_content = strip_tags(html_content)
+
+                    email = EmailMultiAlternatives(
+                        subject,
+                        text_content,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [p.email],
+                    )
+                    email.attach_alternative(html_content, "text/html")
+
+                    if os.path.exists(logo_path):
+                        with open(logo_path, "rb") as f:
+                            logo_image = MIMEImage(f.read())
+                            logo_image.add_header("Content-ID", "<logo_hubs>")
+                            email.attach(logo_image)
+
+                    email.send(fail_silently=True)
+
         messages.success(
             request,
-            "El evento ha sido cancelado y los asistentes han sido notificados.",
+            "El evento ha sido cancelado y los asistentes han sido notificados por email.",
         )
         return redirect("posts:event_detail", pk=event.pk)
 
