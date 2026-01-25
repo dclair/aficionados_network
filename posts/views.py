@@ -461,3 +461,41 @@ def duplicate_event(request, pk):
 
     # 3. Redirigimos directamente al formulario de editar para los últimos ajustes
     return redirect("posts:event_update", pk=new_event.pk)
+
+
+# clase para las vistas de los eventos en los que participo
+class MyParticipationsListView(LoginRequiredMixin, ListView):
+    model = Event
+    template_name = "posts/my_participations.html"
+    context_object_name = "participations"
+
+    def get_queryset(self):
+        # Buscamos eventos donde el usuario logueado está en la lista de participantes
+        return (
+            Event.objects.filter(participants=self.request.user)
+            .order_by("event_date")
+            .distinct()
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["now"] = timezone.now()  # Para saber si el evento ya pasó
+        return context
+
+
+# clase para las vistas de los eventos en los que yo los organizo -Mis planes creados/organizados
+class MyEventsListView(LoginRequiredMixin, ListView):
+    model = Event
+    template_name = "posts/my_events.html"
+    context_object_name = "my_events"
+
+    def get_queryset(self):
+        # Solo los eventos que el organizador (el usuario actual logueado) ha creado
+        return Event.objects.filter(organizer=self.request.user).order_by("-event_date")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["now"] = (
+            timezone.now()
+        )  # Fundamental para saber si el evento es pasado o futuro
+        return context

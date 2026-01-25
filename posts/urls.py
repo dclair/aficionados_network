@@ -32,4 +32,10 @@ urlpatterns = [
         name="event_reactivate",
     ),
     path("event/<int:pk>/duplicate/", views.duplicate_event, name="event_duplicate"),
+    path(
+        "mis-inscripciones/",
+        views.MyParticipationsListView.as_view(),
+        name="my_participations",
+    ),
+    path("mis-planes-organizados/", views.MyEventsListView.as_view(), name="my_events"),
 ]

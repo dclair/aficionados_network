@@ -1,0 +1,89 @@
+{% extends "general/layout.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold"><i class="bi bi-ticket-perforated me-2"></i>Mis Próximas Citas</h2>
+            <p class="text-muted mb-0">Gestiona los planes a los que te has unido.</p>
+        </div>
+        <a href="{% url 'posts:event_list' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-search me-1"></i> Explorar más planes
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary small fw-bold">
+                    <tr>
+                        <th class="ps-4">Evento</th>
+                        <th>Organizador</th>
+                        <th>Fecha y Hora</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in participations %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold text-dark">{{ event.title }}</div>
+                            <small class="badge bg-light text-muted fw-normal">{{ event.hobby.name }}</small>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                    <i class="bi bi-person small"></i>
+                                </div>
+                                <span class="small">{{ event.organizer.username }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-dark">{{ event.event_date|date:"d M, Y" }}</div>
+                            <div class="small text-muted"><i class="bi bi-clock me-1"></i>{{ event.event_date|date:"H:i" }}</div>
+                        </td>
+                        <td>
+                            {% if event.is_canceled %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3">Cancelado</span>
+                            {% elif event.event_date < now %}
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3">Finalizado</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3">Confirmado</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'posts:event_detail' event.pk %}" class="btn btn-sm btn-light border" title="Ir al evento">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                
+                                {% if event.event_date > now and not event.is_canceled %}
+                                <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="d-inline m-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Borrarme de este plan"
+                                            onclick="return confirm('¿Quieres dejar de asistir a este evento?')">
+                                        <i class="bi bi-box-arrow-right"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-emoji-frown fs-1 mb-3 d-block"></i>
+                                <p class="mb-0">Aún no te has apuntado a ningún plan.</p>
+                                <a href="{% url 'posts:event_list' %}" class="btn btn-link">¡Busca tu próxima aventura!</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

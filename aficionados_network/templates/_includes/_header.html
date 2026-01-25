@@ -1,78 +1,97 @@
-<header>
+<header class="py-3 mb-4 border-bottom bg-white shadow-sm">
     <div class="container">
-        <h1>Hubs&Clicks</h1>
-        <h2>Comparte, descubre, disfruta</h2>
-        <nav>
-            <ul>
-                <li><a href="{% url 'home' %}">Inicio</a></li>
-                <li><a href="{% url 'posts:event_list' %}"><i class="bi bi-calendar3"></i> Eventos</a></li>
-                <li><a href="{% url 'profiles:profile_list' %}">Perfiles</a></li>
-                
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between">
+            <a href="{% url 'home' %}" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
+                <div>
+                    <h1 class="h3 mb-0 fw-bold" style="color: #0b5961;">Hubs&Clicks</h1>
+                    <small class="text-muted d-block" style="font-size: 0.75rem; margin-top: -5px;">Descubre, Comparte, Disfruta</small>
+                </div>
+            </a>
+
+            <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0 align-items-center">
+                <li>
+                    <a href="{% url 'home' %}" class="nav-link px-3 text-dark">
+                        <i class="bi bi-house-door me-1"></i> Inicio
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'posts:event_list' %}" class="nav-link px-3 text-dark">
+                        <i class="bi bi-calendar3 me-1"></i> Eventos
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'profiles:profile_list' %}" class="nav-link px-3 text-dark">
+                        <i class="bi bi-people me-1"></i> Perfiles
+                    </a>
+                </li>
+
                 {% if not user.is_authenticated %}
-                    <li><a href="{% url 'login' %}">Login</a></li>
-                    <li><a href="{% url 'register' %}">Register</a></li>
-                {% else %}  
+                    <li><a href="{% url 'login' %}" class="nav-link px-3 text-dark">Login</a></li>
+                    <li><a href="{% url 'register' %}" class="btn btn-outline-primary ms-2">Registrarse</a></li>
+                {% else %}
                     <li>
-                        <a href="{% url 'posts:my_events' %}" class="fw-bold text-primary">
-                            <i class="bi bi-calendar-check"></i> Mis Planes
+                        <a href="{% url 'posts:my_events' %}" class="nav-link px-3 text-primary fw-bold">
+                            <i class="bi bi-calendar-check me-1"></i> Mis Planes
                         </a>
                     </li>
-                    <li><a href="{% url 'posts:post_create' %}">Crear Post</a></li>
+                    
+                    <li>
+                        <a href="{% url 'posts:my_participations' %}" class="nav-link px-3 text-dark">
+                            <i class="bi bi-calendar2-check me-1"></i> Mis Inscripciones
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'posts:post_create' %}" class="nav-link px-3 text-dark">
+                            <i class="bi bi-plus-square me-1"></i> Post
+                        </a>
+                    </li>
+
                     <li>
                         {% if user.profile %}
-                            <a href="{% url 'profiles:profile' user.profile.pk %}">
-                                <i class="bi bi-person"></i> Mi Perfil
+                            <a href="{% url 'profiles:profile' user.profile.pk %}" class="nav-link px-3 text-dark">
+                                <i class="bi bi-person-circle me-1"></i> Perfil
                             </a>
                         {% else %}
-                            <a href="{% url 'profiles:profile_edit' %}">
-                                <i class="bi bi-person-plus"></i> Crear Perfil
+                            <a href="{% url 'profiles:profile_edit' %}" class="nav-link px-3 text-warning">
+                                <i class="bi bi-person-plus-fill me-1"></i> Crear Perfil
                             </a>
                         {% endif %}
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'notifications:list' %}">
+                        <a class="nav-link px-3" href="{% url 'notifications:list' %}">
                             <span class="position-relative d-inline-block">
                                 <i class="bi bi-bell-fill {% if unread_notifications_count > 0 %}text-danger{% else %}text-dark{% endif %}" 
-                                   style="font-size: 1.25rem;"></i>
+                                   style="font-size: 1.1rem;"></i>
                                 
                                 <span id="notification-badge" 
                                       hx-get="{% url 'notifications:api_unread_count' %}" 
-                                      hx-trigger="every 30s"
+                                      hx-trigger="load, every 30s" 
                                       class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white {% if unread_notifications_count == 0 %}d-none{% endif %}" 
-                                      style="font-size: 0.5rem; padding: 0.15rem 0.3rem; border-width: 1.5px !important;">
+                                      style="font-size: 0.55rem; padding: 0.2rem 0.4rem;">
                                     {{ unread_notifications_count }}
                                 </span>
                             </span>
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <li class="ms-2">
                         <form method="post" action="{% url 'logout' %}" class="d-inline">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-link nav-link p-0 border-0 align-baseline shadow-none text-muted small" style="text-decoration: none;">
-                                Cerrar Sesión
+                            <button type="submit" class="btn btn-link nav-link text-muted small px-3 py-0 border-0" style="text-decoration: none;">
+                                <i class="bi bi-power"></i> Salir
                             </button>
                         </form>
                     </li>
                 {% endif %}
-                
-                <li class="ms-3"><a href="{% url 'contact' %}" class="text-muted small">Contacto</a></li>
             </ul>
-        </nav>
+
+            <div class="col-md-3 text-end d-none d-md-block">
+                <a href="{% url 'contact' %}" class="text-muted small text-decoration-none">
+                    <i class="bi bi-envelope me-1"></i> Contacto
+                </a>
+            </div>
+        </div>
     </div>
 </header>
-
-<script src="https://unpkg.com/htmx.org@1.9.10"></script>
-
-<script>
-    // Pequeño truco para que el badge desaparezca si el número es 0
-    document.body.addEventListener('htmx:afterOnLoad', function(evt) {
-        const badge = document.getElementById('notification-badge');
-        if (badge && (badge.innerHTML.trim() === "" || badge.innerHTML.trim() === "0")) {
-            badge.classList.add('d-none');
-        } else {
-            badge.classList.remove('d-none');
-        }
-    });
-</script>
