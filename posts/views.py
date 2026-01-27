@@ -382,7 +382,7 @@ def add_event_comment(request, event_id):
             # --- PREPARACIÓN DEL LOGO ---
             # Ajusta 'img/logo.png' a la ruta real dentro de tu carpeta static
             logo_path = os.path.join(
-                settings.BASE_DIR, "static", "img", "logo_hubs.png"
+                settings.BASE_DIR, "static", "img", "logo_hubs_email.png"
             )
             # TRUCO DE DEPURACIÓN: Añade este print para ver en tu terminal si Django encuentra el logo
             if os.path.exists(logo_path):
@@ -397,7 +397,7 @@ def add_event_comment(request, event_id):
                     "action_url": action_url,
                 }
                 html_content = render_to_string(
-                    "emails/notification_email.html", context
+                    "general/emails/notification_email.html", context
                 )
                 text_content = strip_tags(html_content)
 
@@ -415,7 +415,7 @@ def add_event_comment(request, event_id):
                         logo_data = f.read()
                         logo_image = MIMEImage(logo_data)
                         logo_image.add_header(
-                            "Content-ID", "<logo_hubs>"
+                            "Content-ID", "<logo_hubs_email>"
                         )  # ID que usaremos en el HTML
                         email.attach(logo_image)
 

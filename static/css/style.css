@@ -1,209 +1,239 @@
-/* Animación para que la campana roja 'palpite' */
-    .text-danger.bi-bell-fill {
-        animation: pulse-red 2s infinite;
-        display: inline-block; /* Necesario para que la animación funcione bien */
-    }
-
-    @keyframes pulse-red {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); }
-    }
-    
-/* con este codigo la campana roja se ve mejor */
-
-    .badge.bg-danger {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    font-weight: bold;
-}
-
-/* Esto asegura que la celda de acciones no corte el contenido */
-.table-responsive {
-    overflow: visible !important;
-}
-
-@media (max-width: 768px) {
-    .table-responsive {
-        overflow-x: auto !important; /* Mantenemos el scroll horizontal en móvil si es necesario */
-        -webkit-overflow-scrolling: touch;
-    }
-}
-/* Hubs & Clicks - Brand Identity System */
-
+/* =========================
+   1. VARIABLES GLOBALES
+========================= */
 :root {
-    /* Colores Nucleares */
     --hubs-primary: #0b5961;
     --hubs-primary-hover: #084349;
     --hubs-primary-subtle: #e7eff0;
-    
-    /* Escala de Grises y Neutros */
     --hubs-dark: #333333;
     --hubs-text-muted: #6c757d;
     --hubs-light: #f8f9fa;
     --hubs-border: #e0e0e0;
-    
-    /* Semántica */
     --hubs-success: #198754;
     --hubs-danger: #dc3545;
-    
-    /* Layout y Formas */
-    --hubs-radius: 8px;
-    --hubs-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --hubs-radius: 12px; /* Aumentado un poco para un look más moderno */
+    --hubs-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --navbar-height: 90px;
+    --hubs-text-shadow-depth: 1px 2px 4px rgba(11, 89, 97, 0.15); 
 }
 
-/* --- REGLAS GLOBALES --- */
+/* =========================
+   2. LAYOUT Y TIPOGRAFÍA
+========================= */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     color: var(--hubs-dark);
     background-color: var(--hubs-light);
-    
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    padding-top: calc(var(--navbar-height) + 20px) !important;
 }
-h1, h2, h3, h4, .text-hubs {
+
+h1, h2, h3, h4, h5, h6 {
     color: var(--hubs-primary);
     font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
-/* --- COMPONENTES CORPORATIVOS --- */
+h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
 
-/* Botón Principal Hubs */
-.btn-hubs {
-    background-color: var(--hubs-primary) !important;
-    color: white !important;
-    border: none;
-    padding: 10px 20px;
+.text-hubs { color: var(--hubs-primary) !important; }
+.btn-hubs { background-color: var(--hubs-primary); color: white; border: none; }
+.btn-hubs:hover { background-color: var(--hubs-primary-hover); color: white; }
+
+/* =========================
+   3. HERO BANNER (VISTA DETALLE) - ¡SOLUCIÓN DEFORMACIÓN!
+========================= */
+.detail-banner-wrapper {
+    position: relative;
+    width: 100%;
+    height: 400px; /* Altura ideal del banner */
+    overflow: hidden;
+    background-color: var(--hubs-primary-subtle);
     border-radius: var(--hubs-radius);
-    font-weight: 600;
-    transition: all 0.3s ease;
 }
 
-.btn-hubs:hover {
-    background-color: var(--hubs-primary-hover) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+.detail-banner-img {
+    width: 100% !important;
+    height: 100% !important;
+    /* LA CLAVE: Cover recorta la imagen para llenar el espacio sin deformarla */
+    object-fit: cover !important;
+    object-position: center center !important;
+    display: block;
 }
 
-/* Tarjetas de Eventos/Post */
+/* Ajuste cuando es el icono SVG transparente */
+.detail-banner-img.img-placeholder {
+    object-fit: contain !important;
+    padding: 60px;
+    opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+    .detail-banner-wrapper { height: 250px; }
+}
+
+/* =========================
+   4. CARDS (LISTADO DE EVENTOS)
+========================= */
 .card-hubs {
     border: 1px solid var(--hubs-border);
     border-radius: var(--hubs-radius);
     box-shadow: var(--hubs-shadow);
     background-color: white;
-    transition: transform 0.2s ease;
+    transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .card-hubs:hover {
     border-color: var(--hubs-primary);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
-/* Badges de Aficiones */
+.img-event-wrapper {
+    height: 200px;
+    width: 100%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.img-event-hubs {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.card-hubs:hover .img-event-hubs { transform: scale(1.08); }
+
+/* =========================
+   5. IMAGEN POR DEFECTO (SISTEMA GLOBAL)
+========================= */
+img[src*="default-event"] {
+    background-color: var(--hubs-primary-subtle) !important;
+    object-fit: contain !important; 
+    opacity: 0.8;
+}
+
+/* =========================
+   6. FORMULARIOS Y UI
+========================= */
+form input, form select, form textarea {
+    border-radius: 8px !important;
+    border: 1px solid var(--hubs-border);
+    transition: all 0.2s;
+}
+
+form input:focus {
+    border-color: var(--hubs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(11, 89, 97, 0.15);
+}
+
 .badge-hubs {
     background-color: var(--hubs-primary-subtle);
     color: var(--hubs-primary);
     border: 1px solid var(--hubs-primary);
-    padding: 0.4em 0.8em;
+    padding: 0.5em 1em;
     border-radius: 20px;
 }
 
-/* Lógica de Cancelación */
-.event-canceled {
-    opacity: 0.75;
-    text-decoration: line-through;
-    filter: grayscale(0.5);
-}
-/* --- NAVEGACIÓN CORPORATIVA --- */
-
-/* --- NAVEGACIÓN CORPORATIVA (SOLUCIÓN ESTRUCTURAL) --- */
-
-/* hubs_identity.css */
-
-/* Selector de máxima prioridad: etiqueta + 3 clases + estado */
+/* =========================
+   7. COMPONENTES EXTRA (NAVBAR, FOOTER, COOKIES)
+========================= */
 nav.navbar.navbar-hubs.fixed-top {
-    background-color: #ffffff !important; /* Blanco sólido */
-    background: #ffffff !important;       /* Doble refuerzo */
-    opacity: 1 !important;                 /* Cero transparencias */
-    z-index: 999999 !important;            /* Por encima de todo el universo */
-    
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    border-bottom: 2px solid var(--hubs-primary-subtle) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    background-color: #ffffff;
+    border-bottom: 2px solid var(--hubs-primary-subtle);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.navbar-hubs .nav-link {
-    color: var(--hubs-dark);
-    font-weight: 500;
-    margin: 0 5px;
-    padding: 5px 10px;
-    border-bottom: 2px solid transparent; /* Espacio para el subrayado */
-    transition: all 0.3s ease-in-out;
-}
-
-/* Estado Hover y Activo */
-.navbar-hubs .nav-link:hover,
-.navbar-hubs .nav-link.active {
-    color: var(--hubs-primary) !important;
-    border-bottom: 2px solid var(--hubs-primary);
-}
-
-.navbar-hubs .navbar-brand img {
-    height: 40px; /* Tamaño optimizado según nuestra guía */
-    transition: transform 0.3s ease;
-}
-
-.navbar-hubs .navbar-brand:hover img {
-    transform: scale(1.05); /* Pequeño guiño al pasar el ratón */
-}
-
-
-#btn-back-to-top {
-    background-color: var(--hubs-primary) !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-    transition: transform 0.3s ease, background-color 0.3s ease !important;
-}
-
-#btn-back-to-top:hover {
-    background-color: var(--hubs-primary-hover) !important;
-    transform: scale(1.1); /* Crece al pasar el ratón */
-}
-
-/* Aseguramos que la flecha sea blanca siempre */
-#btn-back-to-top i.bi-arrow-up {
-    color: #ffffff !important;
-}
-/* --- FOOTER CORPORATIVO --- */
-
-.footer-hubs {
-    background-color: var(--hubs-primary); /* Usamos nuestro Teal */
-    border-top: 5px solid var(--hubs-primary-hover);
-}
-
-.footer-link {
-    transition: color 0.3s ease, padding-left 0.3s ease;
-}
-
-.footer-link:hover {
-    color: #ffffff !important;
-    padding-left: 5px; /* Pequeño efecto de desplazamiento */
-}
-
-/* Efecto para los iconos de redes sociales */
-.footer-hubs .btn-outline-light {
-    width: 38px;
-    height: 38px;
+.back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 2100;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--hubs-primary);
+    color: white;
+    border: 2px solid white;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.3s ease, background-color 0.3s ease;
+    transition: all 0.3s;
 }
 
-.footer-hubs .btn-outline-light:hover {
-    transform: translateY(-3px);
-    background-color: white;
-    color: var(--hubs-primary);
+.event-canceled {
+    filter: grayscale(100%);
+    opacity: 0.6;
+}
+/* ============================================================
+   BANNER DE COOKIES (ESTILO HUBS & CLICKS)
+   ============================================================ */
+
+#cookie-banner.cookie-banner-hubs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--hubs-primary); /* Tu Teal corporativo #0b5961 */
+    color: white;
+    z-index: 10000; /* Prioridad máxima sobre cualquier otro elemento */
+    display: none;  /* Se activa mediante static/js/cookies.js */
+    border-top: 3px solid var(--hubs-primary-hover);
+}
+
+/* Icono de la galleta */
+.cookie-icon i {
+    color: #ffca28; /* Un tono dorado/galleta para resaltar */
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+/* Texto y enlaces */
+.cookie-text span.small {
+    line-height: 1.4;
+}
+
+.cookie-text a {
+    color: #ffffff !important;
+    transition: opacity 0.3s;
+}
+
+.cookie-text a:hover {
+    opacity: 0.8;
+}
+
+/* Botón de acción */
+#accept-cookies {
+    color: var(--hubs-primary) !important;
+    border-radius: 50px; /* Estilo píldora */
+    transition: all 0.3s ease;
+    border: none;
+}
+
+#accept-cookies:hover {
+    background-color: var(--hubs-primary-subtle);
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Espaciado para el botón 'Back to Top' */
+/* Esto evita que el botón de subir se pise con el banner */
+#cookie-banner[style*="display: block"] ~ #btn-back-to-top {
+    bottom: 100px;
+}
+
+
+
+.btn-hubs:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* Asegura que el spinner tenga el color correcto si el botón es oscuro */
+.spinner-border-sm {
+    --bs-spinner-width: 0.9rem;
+    --bs-spinner-height: 0.9rem;
 }

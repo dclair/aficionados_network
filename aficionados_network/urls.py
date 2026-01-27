@@ -27,7 +27,7 @@ urlpatterns = [
     path("contact/", ContactFormView.as_view(), name="contact"),
     path("pages/", include("django.contrib.flatpages.urls")),
     path("notifications/", include("notifications.urls")),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Configuración para servir archivos multimedia en desarrollo
 if settings.DEBUG:

@@ -208,6 +208,9 @@ class Event(models.Model):
     description = models.TextField(verbose_name="Descripción del plan")
     location = models.CharField(max_length=255, verbose_name="Lugar de encuentro")
     event_date = models.DateTimeField(verbose_name="Fecha y hora del evento")
+    image = models.ImageField(
+        upload_to="events/", null=True, blank=True, verbose_name="Imagen de la quedada"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     is_canceled = models.BooleanField(default=False, verbose_name="¿Cancelado?")
 

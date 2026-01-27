@@ -82,6 +82,7 @@ class EventForm(forms.ModelForm):
         fields = [
             "title",
             "description",
+            "image",
             "hobby",
             "location",
             "event_date",
@@ -95,6 +96,7 @@ class EventForm(forms.ModelForm):
                 }
             ),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
             "hobby": forms.Select(attrs={"class": "form-select"}),
             "location": forms.TextInput(
                 attrs={

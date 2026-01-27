@@ -1,38 +1,46 @@
 {% extends "general/layout.html" %}
 
+{# 1. TÍTULO DE LA PÁGINA (Ajustado a la estética Teal) #}
 {% block page_title %} 
-<div class="container-fluid px-4 mt-4 text-center">
-    <h1 class="fw-bold h3 text-muted">Proponer una Quedada</h1>
+<div class="container-fluid px-4 mt-2 text-center">
+    <h1 class="fw-bold h3 text-hubs">
+        <i class="bi bi-calendar-plus me-2"></i>Proponer una Quedada
+    </h1>
+    <p class="text-muted small">Organiza un encuentro y comparte vuestra pasión en persona.</p>
 </div>
 {% endblock page_title %}
 
 {% block content %}
-<div class="container mt-4 mb-5">
+<div class="container mb-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm border-0">
+            {# Aplicamos nuestra clase card-hubs #}
+            <div class="card card-hubs border-0 shadow-sm">
                 <div class="card-body p-4 p-md-5">
                     
                     <div class="text-center mb-4">
-                        <div class="bg-primary bg-opacity-10 d-inline-block p-3 rounded-circle mb-3">
-                            <i class="bi bi-calendar-plus text-primary fs-2"></i>
+                        <div class="bg-hubs-subtle d-inline-block p-3 rounded-circle mb-3">
+                            <i class="bi bi-camera-fill text-hubs fs-2"></i>
                         </div>
-                        <p class="text-muted small">Organiza un encuentro con otros aficionados y comparte vuestra pasión en persona.</p>
                     </div>
 
-                    <form method="post" class="needs-validation" novalidate>
+                    {# ¡IMPORTANTE! Añadido el enctype para permitir subir fotos #}
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         {% csrf_token %}
 
                         {% for field in form %}
                         <div class="mb-4">
-                            <label for="{{ field.id_for_label }}" class="form-label fw-bold small">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold small text-hubs">
                                 {{ field.label }}
                             </label>
                             
-                            {{ field }}
+                            {# Añadimos clases de estilo a los campos de forma dinámica #}
+                            <div class="hubs-input-group">
+                                {{ field }}
+                            </div>
                             
                             {% if field.help_text %}
-                                <div class="form-text small">{{ field.help_text }}</div>
+                                <div class="form-text small opacity-75">{{ field.help_text }}</div>
                             {% endif %}
 
                             {% if field.errors %}
@@ -48,11 +56,12 @@
                         <hr class="my-4 opacity-25">
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
-                                <i class="bi bi-send-fill me-2"></i>Publicar Quedada
+                            <button type="submit" class="btn btn-primary shadow-sm" id="submit-btn">
+                                <span class="spinner-border spinner-border-sm d-none" id="btn-spinner" role="status" aria-hidden="true"></span>
+                                <span id="btn-text">Publicar</span>
                             </button>
-                            <a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none text-muted">
-                                Cancelar y volver
+                            <a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none text-muted small">
+                                <i class="bi bi-x-circle me-1"></i>Cancelar y volver
                             </a>
                         </div>
                     </form>
@@ -62,8 +71,9 @@
         </div>
     </div>
 </div>
-
+{% comment %} 
 <script>
+    // Tu script de validación de Bootstrap se mantiene igual
     (() => {
       'use strict'
       const forms = document.querySelectorAll('.needs-validation')
@@ -77,5 +87,5 @@
         }, false)
       })
     })()
-</script>
-{% endblock %}run
+</script> {% endcomment %}
+{% endblock %}
