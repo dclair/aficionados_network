@@ -237,3 +237,53 @@ nav.navbar.navbar-hubs.fixed-top {
     --bs-spinner-width: 0.9rem;
     --bs-spinner-height: 0.9rem;
 }
+
+
+/* 1. Contenedor principal: Obliga a las etiquetas a saltar de línea */
+.post-tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;    /* VITAL: permite el salto de línea */
+    gap: 8px;           /* Espacio uniforme entre etiquetas */
+    width: 100%;        /* No deja que crezca más que la tarjeta */
+    margin-top: 12px;
+}
+
+/* 2. La etiqueta (Badge): La hacemos flexible */
+.badge-hobby-post {
+    display: inline-flex;
+    align-items: center;
+    background-color: #f8f9fa; /* Fondo clarito */
+    border: 1px solid #e0e0e0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    max-width: 100%;           /* No puede ser más ancha que el post */
+    white-space: normal;       /* Permite que el texto se doble si es larguísimo */
+    font-size: 0.8rem;
+    color: #333;
+}
+
+/* 3. Ajuste para que el icono no se deforme */
+.badge-hobby-post i {
+    color: #008080; /* Tu color Teal */
+    margin-right: 6px;
+    flex-shrink: 0; 
+}
+
+/* Efecto de elevación suave para tarjetas */
+.card-hubs {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer; /* Indica que se puede interactuar */
+}
+
+.card-hubs:hover {
+    /* El movimiento: -5px hacia arriba */
+    transform: translateY(-5px);
+    
+    /* Aumentamos la sombra para dar profundidad */
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Opcional: un toque de brillo extra en el borde al pasar el ratón */
+.card-hubs:hover {
+    border-color: rgba(0, 128, 128, 0.3) !important; /* Tu color Teal suave */
+}
