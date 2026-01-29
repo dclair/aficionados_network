@@ -2,50 +2,56 @@ from django import forms
 from .models import Posts, Comment, Event, EventComment
 
 
+from django import forms
+from .models import Posts
+
+
 class PostCreateForm(forms.ModelForm):
+    # Definimos los campos que necesitan una configuración muy específica fuera del Meta
     caption = forms.CharField(
         label="Descripción",
-        required=True,
+        required=False,  # En el modelo era opcional, cámbialo a True si quieres obligar
         widget=forms.Textarea(
             attrs={
                 "class": "form-control",
                 "rows": 3,
-                "placeholder": "Añade una descripción a tu publicación...",
+                "placeholder": "Cuéntanos más sobre esta publicación...",
             }
         ),
-        error_messages={
-            "required": "El campo de descripción es obligatorio.",
-        },
+        help_text="Máximo 2000 caracteres.",
     )
 
     class Meta:
         model = Posts
-        fields = ["image", "title", "caption", "category"]
+        # Añadimos 'location' y organizamos el orden de aparición
+        fields = ["title", "category", "location", "caption", "image"]
+
         widgets = {
-            "image": forms.FileInput(
-                attrs={"class": "form-control", "accept": "image/*"}
-            ),
             "title": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Título llamativo"}
-            ),
-            "caption": forms.Textarea(
                 attrs={
                     "class": "form-control",
-                    "rows": 3,
-                    "placeholder": "Cuéntanos sobre esto...",
+                    "placeholder": "Dale un título (opcional)",
                 }
             ),
             "category": forms.Select(attrs={"class": "form-select"}),
+            "location": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "¿Dónde se tomó esto?"}
+            ),
+            "image": forms.FileInput(
+                attrs={
+                    "class": "form-control d-none",
+                    "accept": "image/*",
+                    "id": "id_image",
+                }
+            ),
         }
+
         error_messages = {
-            "image": {
-                "required": "Por favor, selecciona una imagen para tu publicación.",
-            },
-            "caption": {
-                "max_length": "La descripción es demasiado larga (máximo %(limit_value)d caracteres).",
-            },
             "category": {
-                "required": "Por favor, selecciona una categoría para tu publicación.",
+                "required": "Debes elegir una afición para clasificar tu post.",
+            },
+            "image": {
+                "required": "Una publicación sin imagen no es un 'Click'. ¡Sube una!",
             },
         }
 

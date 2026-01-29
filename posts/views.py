@@ -32,16 +32,56 @@ from email.mime.image import MIMEImage
 import os
 from .models import Event, Hobby
 from profiles.models import Review
+from django.db.models import Count  # Importante para contar los posts
 
 
 # --- VISTA PARA CREAR POST ---
 # Añadimos LoginRequiredMixin para que no puedan crear si no están logueados
+from django.utils import timezone
+from django.contrib.auth.models import User
+from .models import Posts
+
+# ... tus otros imports
+
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Posts
     form_class = PostCreateForm
     template_name = "posts/post_create.html"
     success_url = reverse_lazy("home")
     login_url = "login"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # 1. Posts para el Feed Global (Descubrimiento)
+        context["global_posts"] = (
+            Posts.objects.all()
+            .select_related("user__profile", "category")
+            .order_by("-created_at")[:12]
+        )
+
+        # 2. Estadísticas para el Cuadro de Bienvenida
+        hoy = timezone.now().date()
+        context["stats"] = {
+            "posts_today": Posts.objects.filter(created_at__date=hoy).count(),
+            "total_members": User.objects.count(),
+            "new_this_week": Posts.objects.filter(
+                created_at__gte=timezone.now() - timezone.timedelta(days=7)
+            ).count(),
+        }
+        # 3. Lógica de Tendencias
+        # Contamos cuántos posts tiene cada categoría y traemos las 5 mejores
+        from posts.models import (
+            Hobby,
+        )  # Asegúrate de importar tu modelo de Categoría/Afición
+
+        context["trending_categories"] = (
+            Hobby.objects.annotate(num_posts=Count("posts"))
+            .filter(num_posts__gt=0)
+            .order_by("-num_posts")[:5]
+        )
+        return context
 
     def form_valid(self, form):
         form.instance.user = self.request.user
