@@ -232,29 +232,52 @@
                 </div>
             </div>
         </div>
-
-        <h5 class="fw-bold mb-3"><i class="bi bi-grid-3x3 me-2"></i>Publicaciones</h5>
-        <div class="row g-2">
-            {% for post in user_profile.user.posts.all %}
-                <div class="col-4">
-                    <div class="ratio ratio-1x1 shadow-sm overflow-hidden rounded">
-                        <a href="{% url 'posts:post_detail' post.pk %}">
-                            {% if post.image %}
-                                <img src="{{ post.image.url }}" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="Publicación">
-                            {% else %}
-                                <div class="bg-secondary d-flex align-items-center justify-content-center text-white h-100">
-                                    <i class="bi bi-card-image fs-1"></i>
+        <!-- Aqui va la sección de publicaciones -->
+        <h5 class="fw-bold mb-4 mt-5"><i class="bi bi-grid-3x3 me-2"></i>Publicaciones</h5>
+        <div class="row g-3">
+            {# Ordenamos por fecha para que lo más nuevo salga primero #}
+            {% for post in user_profile.user.posts.all|dictsortreversed:"created_at" %}
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card border-0 shadow-sm profile-post-card h-100">
+                        <a href="{% url 'posts:post_detail' post.pk %}" class="text-decoration-none">
+                            {# Imagen del Post (Cuadrada) #}
+                            <div class="ratio ratio-1x1 overflow-hidden rounded-top">
+                                {% if post.image %}
+                                    <img src="{{ post.image.url }}" class="object-fit-cover w-100 h-100" alt="{{ post.title }}">
+                                {% else %}
+                                    <div class="bg-secondary d-flex align-items-center justify-content-center text-white h-100">
+                                        <i class="bi bi-card-image fs-2"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            {# INFO DEL POST (Aquí es donde aparece el título) #}
+                            <div class="card-body p-2 bg-white rounded-bottom">
+                                <h6 class="text-truncate-custom mb-1" title="{{ post.title }}">
+                                    {{ post.title|default:"Sin título" }}
+                                </h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-primary-subtle text-primary extra-small">
+                                        {{ post.category.name }}
+                                    </span>
+                                    <small class="text-muted extra-small">
+                                        <i class="bi bi-heart-fill text-danger"></i> {{ post.likes.count }}
+                                    </small>
                                 </div>
-                            {% endif %}
+                            </div>
                         </a>
                     </div>
                 </div>
             {% empty %}
                 <div class="col-12 text-center py-5">
-                    <p class="text-muted">Aún no hay publicaciones.</p>
+                    <div class="p-4 bg-light rounded-4">
+                        <i class="bi bi-camera text-muted display-4"></i>
+                        <p class="text-muted mt-2">Aún no hay publicaciones para mostrar.</p>
+                    </div>
                 </div>
             {% endfor %}
         </div>
+
     {% endif %}
 </div>
 

@@ -115,21 +115,34 @@
     </ul>
 
     <div class="tab-content" id="profileTabsContent">
+
+        <!--  Implementar sección de publicaciones -->
         <div class="tab-pane fade show active" id="posts">
             {% if user_profile.user.posts.all %}
                 <div class="row g-3">
                     {% for post in user_profile.user.posts.all|dictsortreversed:"created_at" %}
-                        <div class="col-md-4">
-                            <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                        <div class="col-6 col-md-4">
+                            <div class="card border-0 shadow-sm overflow-hidden profile-post-card">
                                 <a href="{% url 'posts:post_detail' post.pk %}">
                                     <img src="{{ post.image.url }}" class="card-img-top" 
-                                         alt="Post" style="height: 300px; object-fit: cover;">
+                                        alt="{{ post.title }}" style="height: 250px; object-fit: cover;">
                                 </a>
-                                <div class="p-2 text-center bg-white">
-                                    <small class="text-muted">
-                                        <i class="bi bi-heart-fill text-danger"></i> {{ post.likes.count }} 
-                                        &nbsp; <i class="bi bi-chat-fill text-primary"></i> {{ post.comments.count }}
-                                    </small>
+                                
+                                <div class="p-3 bg-white">
+                                    <h6 class="fw-bold mb-1 text-dark text-truncate-custom" title="{{ post.title }}">
+                                        {{ post.title|default:"Sin título" }}
+                                    </h6>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="badge bg-primary-subtle text-primary extra-small">
+                                            {{ post.category.name }}
+                                        </span>
+                                        
+                                        <small class="text-muted extra-small">
+                                            <i class="bi bi-heart-fill text-danger"></i> {{ post.likes.count }}
+                                            <i class="bi bi-chat-left-dots-fill text-primary ms-2"></i> {{ post.comments.count }}
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
