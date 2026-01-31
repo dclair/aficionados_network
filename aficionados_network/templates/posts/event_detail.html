@@ -23,7 +23,7 @@
 </div>
 {% endif %}
 
-{# 3. HERO DEL EVENTO (BANNER E INFO CLAVE) #}
+{# 3. HERO DEL EVENTO #}
 <div class="card border-0 shadow-sm overflow-hidden mb-4 card-hubs {% if event.is_canceled %}opacity-75{% endif %}">
     <div class="row g-0">
         <div class="col-lg-8">
@@ -61,10 +61,10 @@
     </div>
 </div>
 
-{# 4. CUERPO PRINCIPAL (DOS COLUMNAS) #}
+{# 4. CUERPO PRINCIPAL #}
 <div class="row mt-4">
 
-    {# --- COLUMNA IZQUIERDA (Descripción y Comentarios) --- #}
+    {# --- COLUMNA IZQUIERDA --- #}
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm p-4 mb-4 card-hubs">
             <h4 class="fw-bold text-hubs mb-3">
@@ -87,13 +87,18 @@
             {% if not event.is_canceled %}
             <div class="card border-0 shadow-sm mb-4 card-hubs">
                 <div class="card-body">
-                    <form action="{% url 'posts:add_event_comment' event.id %}" method="POST">
+                    {# MODIFICADO: Añadida clase js-form-loading #}
+                    <form action="{% url 'posts:add_event_comment' event.id %}" method="POST" class="js-form-loading">
                         {% csrf_token %}
                         <div class="mb-3">
                             {{ comment_form.content }}
                         </div>
                         <div class="text-end">
-                            <button type="submit" class="btn btn-hubs">Publicar comentario</button>
+                           <button type="submit" class="btn btn-hubs">
+                                {# MODIFICADO: Añadida clase btn-spinner #}
+                                <span class="spinner-border spinner-border-sm btn-spinner d-none" role="status" aria-hidden="true"></span>
+                                <span class="btn-text">Publicar comentario</span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -118,11 +123,10 @@
         </div>
     </div>
 
-    {# --- COLUMNA DERECHA (Asistentes y Acciones) --- #}
+    {# --- COLUMNA DERECHA --- #}
     <div class="col-lg-4">
         <div class="sticky-top pt-3" style="top: 140px;">
             
-            {# BLOQUE DE MENSAJES (Importante para errores de 'Evento Lleno') #}
             {% if messages %}
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 mb-3">
@@ -162,15 +166,20 @@
                             <i class="bi bi-pencil-square me-2"></i>Editar evento
                         </a>
                     {% else %}
-                        <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST">
+                        {# MODIFICADO: Añadida clase js-form-loading #}
+                        <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="js-form-loading">
                             {% csrf_token %}
                             {% if request.user in event.participants.all %}
                                 <button type="submit" class="btn btn-outline-danger w-100">
-                                    <i class="bi bi-person-dash-fill me-2"></i>No podré asistir
+                                    {# MODIFICADO: Añadida clase btn-spinner #}
+                                    <span class="spinner-border spinner-border-sm btn-spinner d-none" role="status" aria-hidden="true"></span>
+                                    <span class="btn-text"><i class="bi bi-person-dash-fill me-2"></i>No podré asistir</span>
                                 </button>
                             {% else %}
                                 <button type="submit" class="btn btn-hubs w-100">
-                                    <i class="bi bi-person-plus-fill me-2"></i>Me apunto
+                                    {# MODIFICADO: Añadida clase btn-spinner #}
+                                    <span class="spinner-border spinner-border-sm btn-spinner d-none" role="status" aria-hidden="true"></span>
+                                    <span class="btn-text"><i class="bi bi-person-plus-fill me-2"></i>Me apunto</span>
                                 </button>
                             {% endif %}
                         </form>
@@ -179,7 +188,9 @@
             </div>
         </div>
     </div>
-
 </div>
+
+{# 5. CARGA DEL SCRIPT DE SPINNER #}
+<script src="{% static 'js/spinner.js' %}"></script>
 
 {% endblock content %}
