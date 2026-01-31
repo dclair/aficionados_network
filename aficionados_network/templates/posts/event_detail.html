@@ -1,186 +1,169 @@
 {% extends "general/layout.html" %}
 {% load static %}
 
+{% block page_title %}
+<h1 class="fw-bold text-hubs mb-0">Detalle del evento</h1>
+{% endblock page_title %}
+
 {% block content %}
-<div class="container py-4">
-    
-    {# 1. BOTÓN VOLVER #}
-    <a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none mb-3 p-0 text-hubs fw-bold">
-        <i class="bi bi-arrow-left"></i> Volver al listado
-    </a>
 
-    {# 2. ALERTA DE CANCELACIÓN #}
-    {% if event.is_canceled %}
-    <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center p-4 mb-4 animate__animated animate__headShake">
-        <i class="bi bi-exclamation-octagon-fill fs-1 me-3"></i>
-        <div>
-            <h4 class="alert-heading fw-bold mb-1">PLAN CANCELADO</h4>
-            <p class="mb-0">Este evento ha sido cancelado por el organizador.</p>
-        </div>
+{# BOTÓN VOLVER #}
+<a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none mb-3 p-0 text-hubs fw-bold">
+    <i class="bi bi-arrow-left"></i> Volver al listado
+</a>
+
+{# ALERTA DE CANCELACIÓN #}
+{% if event.is_canceled %}
+<div class="alert alert-danger border-0 shadow-sm d-flex align-items-center p-4 mb-4">
+    <i class="bi bi-exclamation-octagon-fill fs-1 me-3"></i>
+    <div>
+        <h4 class="alert-heading fw-bold mb-1">PLAN CANCELADO</h4>
+        <p class="mb-0">Este evento ha sido cancelado por el organizador.</p>
     </div>
-    {% endif %}
+</div>
+{% endif %}
 
-    {# 3. HERO SECTION (IMAGEN + TÍTULO) #}
-    <div class="card border-0 shadow-sm overflow-hidden mb-4 card-hubs {% if event.is_canceled %}opacity-75 grayscale{% endif %}">
-        <div class="row g-0">
-            {# Lado de la Imagen #}
-            <div class="col-lg-8">
-                <div class="detail-banner-wrapper">
-                    {% if event.image %}
-                        <img src="{{ event.image.url }}" class="detail-banner-img" alt="{{ event.title }}">
-                    {% else %}
-                        <img src="{% static 'img/default_event.png' %}" class="detail-banner-img img-placeholder" alt="Hubs & Clicks">
-                    {% endif %}
-                </div>
-            </div>
-            
-            {# Lado de Información Rápida #}
-            <div class="col-lg-4 d-flex align-items-center bg-white border-start">
-                <div class="p-4 w-100">
-                    <span class="badge badge-hubs mb-2">{{ event.hobby.name }}</span>
-                    <h1 class="fw-bold h2 text-hubs mb-3 {% if event.is_canceled %}text-decoration-line-through text-muted{% endif %}">
-                        {{ event.title }}
-                    </h1>
-                    
-                    <div class="bg-light p-3 rounded-4 border-start border-hubs border-4">
-                        <div class="mb-2 d-flex align-items-center">
-                            <i class="bi bi-calendar3 me-2 text-hubs"></i>
-                            <span class="fw-bold">{{ event.event_date|date:"l, d F" }}</span>
-                        </div>
-                        <div class="mb-2 d-flex align-items-center">
-                            <i class="bi bi-clock me-2 text-hubs"></i>
-                            <span>{{ event.event_date|date:"H:i" }} hrs</span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
-                            <span class="fw-bold">{{ event.location }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        {# 4. COLUMNA IZQUIERDA: DESCRIPCIÓN Y COMENTARIOS #}
+{# HERO EVENTO #}
+<div class="card border-0 shadow-sm overflow-hidden mb-4 card-hubs {% if event.is_canceled %}opacity-75{% endif %}">
+    <div class="row g-0">
         <div class="col-lg-8">
-            {# Sobre la quedada #}
-            <div class="card border-0 shadow-sm p-4 mb-4 card-hubs">
-                <h4 class="fw-bold mb-3 text-hubs"><i class="bi bi-info-circle me-2"></i>Sobre esta quedada</h4>
-                <div class="text-secondary fs-5" style="white-space: pre-line;">
-                    {{ event.description }}
-                </div>
-                <div class="mt-4 pt-3 border-top d-flex align-items-center text-muted">
-                    <i class="bi bi-person-badge me-2"></i>
-                    <span>Organizado por <strong>@{{ event.organizer.username }}</strong></span>
-                </div>
-            </div>
-
-            {# Comentarios #}
-            <div class="mt-5">
-                <h4 class="fw-bold mb-4 text-hubs"><i class="bi bi-chat-left-text me-2"></i>Comunidad</h4>
-                
-                {% if not event.is_canceled %}
-                    <div class="card border-0 shadow-sm mb-4 card-hubs">
-                        <div class="card-body">
-                            <form action="{% url 'posts:add_event_comment' event.id %}" method="POST">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    {{ comment_form.content }}
-                                </div>
-                                <div class="text-end">
-                                    <button type="submit" id="btn-submit-comment" class="btn btn-hubs d-flex align-items-center">
-                                        <span id="spinner-comment" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-                                        <span id="btn-text-comment">Publicar comentario</span>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+            <div class="detail-banner-wrapper">
+                {% if event.image %}
+                    <img src="{{ event.image.url }}" class="detail-banner-img" alt="{{ event.title }}">
+                {% else %}
+                    <img src="{% static 'img/default_event.png' %}" class="detail-banner-img" alt="Evento">
                 {% endif %}
-
-                <div class="comments-list">
-                    {% for comment in event.comments.all %}
-                        <div class="d-flex mb-3">
-                            <img src="{% if comment.user.profile.profile_picture %}{{ comment.user.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ comment.user.username }}&background=0b5961&color=fff{% endif %}" 
-                                 class="rounded-circle border border-2 shadow-sm" style="width: 45px; height: 45px; object-fit: cover;">
-                            <div class="ms-3 bg-white p-3 rounded-4 flex-grow-1 border shadow-sm">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <h6 class="mb-0 fw-bold text-hubs">@{{ comment.user.username }}</h6>
-                                    <small class="text-muted">{{ comment.created_at|timesince }}</small>
-                                </div>
-                                <p class="mb-0 text-dark small">{{ comment.content|linebreaksbr }}</p>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <p class="text-center text-muted py-4">Nadie ha dicho nada aún. ¡Rompe el hielo!</p>
-                    {% endfor %}
-                </div>
             </div>
         </div>
+        <div class="col-lg-4 bg-white border-start d-flex align-items-center">
+            <div class="p-4 w-100">
+                <span class="badge badge-hubs mb-2">{{ event.hobby.name }}</span>
+                <h2 class="fw-bold text-hubs mb-3 {% if event.is_canceled %}text-decoration-line-through text-muted{% endif %}">
+                    {{ event.title }}
+                </h2>
 
-        {# 5. COLUMNA DERECHA: ASISTENTES Y ACCIONES #}
-        <div class="col-lg-4">
-            <div class="sticky-top" style="top: 110px; z-index: 10;">
-                <div class="card border-0 shadow-sm p-4 card-hubs">
-                    <h5 class="fw-bold mb-4 text-hubs">
-                        <i class="bi bi-people me-2"></i>Asistentes 
-                        <span class="badge bg-light text-hubs border ms-1">{{ event.participants.count }}/{{ event.max_participants }}</span>
-                    </h5>
-
-                    <div class="d-flex flex-wrap gap-2 mb-4">
-                        {% for participant in event.participants.all %}
-                            <div class="position-relative">
-                                <img src="{% if participant.profile.profile_picture %}{{ participant.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ participant.username }}&background=random{% endif %}" 
-                                     class="rounded-circle border border-2 border-white shadow-sm" 
-                                     style="width: 48px; height: 48px; object-fit: cover;" 
-                                     title="{{ participant.username }}">
-                                {% if participant == event.organizer %}
-                                    <span class="position-absolute top-0 start-0 badge rounded-pill bg-warning border border-white" style="font-size: 0.5rem;"><i class="bi bi-star-fill"></i></span>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
+                <div class="bg-light p-3 rounded-4 border-start border-4 border-hubs">
+                    <div class="mb-2 d-flex align-items-center">
+                        <i class="bi bi-calendar3 me-2 text-hubs"></i>
+                        <strong>{{ event.event_date|date:"l, d F" }}</strong>
                     </div>
-
-                    <div class="d-grid gap-2">
-                        {% if not event.is_canceled %}
-                            {% if request.user == event.organizer %}
-                                <a href="{% url 'posts:event_update' event.id %}" class="btn btn-hubs py-2">
-                                    <i class="bi bi-pencil-square me-2"></i>Editar mi plan
-                                </a>
-                                <form action="{% url 'posts:event_cancel' event.id %}" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar este plan?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-outline-danger w-100">
-                                        <i class="bi bi-trash me-2"></i>Cancelar Quedada
-                                    </button>
-                                </form>
-                            {% else %}
-                                <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST">
-                                    {% csrf_token %}
-                                    {% if request.user in event.participants.all %}
-                                        <button type="submit" class="btn btn-outline-danger btn-lg w-100 shadow-sm">
-                                            <i class="bi bi-x-circle me-2"></i>No podré ir
-                                        </button>
-                                    {% else %}
-                                        <button type="submit" class="btn btn-hubs btn-lg w-100 shadow-sm" 
-                                            {% if event.participants.count >= event.max_participants %}disabled{% endif %}>
-                                            {% if event.participants.count >= event.max_participants %}
-                                                <i class="bi bi-lock-fill me-2"></i>Aforo lleno
-                                            {% else %}
-                                                <i class="bi bi-person-plus-fill me-2"></i>¡Me apunto!
-                                            {% endif %}
-                                        </button>
-                                    {% endif %}
-                                </form>
-                            {% endif %}
-                        {% endif %}
+                    <div class="mb-2 d-flex align-items-center">
+                        <i class="bi bi-clock me-2 text-hubs"></i>
+                        {{ event.event_date|date:"H:i" }} h
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
+                        <strong>{{ event.location }}</strong>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% block extra_js %}
-    <script src="{% static 'js/enviarComents.js' %}"></script>
-{% endblock extra_js %}
-{% endblock %}
+
+<div class="row mt-4">
+
+    {# COLUMNA IZQUIERDA #}
+    <div class="col-lg-8">
+
+        <div class="card border-0 shadow-sm p-4 mb-4 card-hubs">
+            <h4 class="fw-bold text-hubs mb-3">
+                <i class="bi bi-info-circle me-2"></i>Sobre esta quedada
+            </h4>
+
+            <div class="text-secondary" style="white-space: pre-line;">
+                {{ event.description }}
+            </div>
+
+            <div class="mt-4 pt-3 border-top text-muted">
+                <i class="bi bi-person-badge me-2"></i>
+                Organizado por <strong>@{{ event.organizer.username }}</strong>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            <h4 class="fw-bold text-hubs mb-4">
+                <i class="bi bi-chat-left-text me-2"></i>Comunidad
+            </h4>
+
+            {% if not event.is_canceled %}
+            <div class="card border-0 shadow-sm mb-4 card-hubs">
+                <div class="card-body">
+                    <form action="{% url 'posts:add_event_comment' event.id %}" method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ comment_form.content }}
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-hubs">
+                                Publicar comentario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% for comment in event.comments.all %}
+            <div class="d-flex mb-3">
+                <img src="{% if comment.user.profile.profile_picture %}{{ comment.user.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ comment.user.username }}&background=0b5961&color=fff{% endif %}"
+                     class="rounded-circle border shadow-sm"
+                     style="width:45px;height:45px;object-fit:cover;">
+                <div class="ms-3 bg-white p-3 rounded-4 shadow-sm flex-grow-1">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong class="text-hubs">@{{ comment.user.username }}</strong>
+                        <small class="text-muted">{{ comment.created_at|timesince }}</small>
+                    </div>
+                    <p class="mb-0">{{ comment.content|linebreaksbr }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center py-4">
+                Nadie ha comentado todavía. ¡Sé el primero!
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# COLUMNA DERECHA #}
+    <div class="col-lg-4">
+        <div class="sticky-top pt-3" style="top: 140px;">
+            <div class="card border-0 shadow-sm p-4 card-hubs">
+
+                <h5 class="fw-bold text-hubs mb-4">
+                    <i class="bi bi-people me-2"></i>Asistentes
+                    <span class="badge bg-light text-hubs border ms-1">
+                        {{ event.participants.count }}/{{ event.max_participants }}
+                    </span>
+                </h5>
+
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    {% for participant in event.participants.all %}
+                    <img src="{% if participant.profile.profile_picture %}{{ participant.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ participant.username }}&background=random{% endif %}"
+                         class="rounded-circle border shadow-sm"
+                         style="width:48px;height:48px;object-fit:cover;"
+                         title="{{ participant.username }}">
+                    {% endfor %}
+                </div>
+
+                {% if not event.is_canceled %}
+                    {% if request.user == event.organizer %}
+                        <a href="{% url 'posts:event_update' event.id %}" class="btn btn-hubs w-100 mb-2">
+                            <i class="bi bi-pencil-square me-2"></i>Editar evento
+                        </a>
+                    {% else %}
+                        <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-hubs w-100">
+                                <i class="bi bi-person-plus-fill me-2"></i>Me apunto
+                            </button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}

@@ -23,8 +23,13 @@ body {
     background-color: var(--hubs-light);
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100vh; /* Asegura que el body ocupe toda la pantalla */
     padding-top: calc(var(--navbar-height) + 20px) !important;
+}
+
+/* FIX: Asegura que el contenido principal empuje al footer hacia abajo */
+main, .container {
+    flex: 1 0 auto;
 }
 
 /* ============================================================
@@ -67,7 +72,6 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
     object-fit: cover !important;
 }
 
-/* Estilo para banners de detalle */
 .detail-banner-wrapper {
     position: relative;
     width: 100%;
@@ -107,7 +111,6 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
     box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
 }
 
-/* Truncado de Título: Clave para mantener el diseño horizontal */
 .text-truncate-custom {
     display: block !important;
     width: 100%;
@@ -119,31 +122,38 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
 }
 
 /* ============================================================
-   6. CARDS DE EVENTOS (RECTÁNGULO HORIZONTAL)
+   6. CARDS DE EVENTOS (MODIFICADO PARA FIX DE DETALLE)
    ============================================================ */
 
+/* Eliminado el !important de flex-direction y height para que las columnas funcionen */
 .card-hubs {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important; 
+    display: flex; 
+    background-color: #fff;
     border-radius: var(--hubs-radius) !important;
-    overflow: hidden !important; /* Corta lo que sobresalga */
+    box-shadow: var(--hubs-shadow);
+    /* Permitimos que la altura sea automática por defecto */
 }
 
-/* FIX: Bloqueamos la altura del contenedor de imagen */
+/* Solo forzamos altura 100% y columna cuando están en el listado general */
+.row-cols-1 .card-hubs, 
+.row-cols-md-2 .card-hubs, 
+.row-cols-lg-3 .card-hubs {
+    height: 100%;
+    flex-direction: column;
+}
+
 .img-event-wrapper {
     width: 100% !important;
-    height: 200px !important; /* Altura fija para mantener el formato horizontal */
+    height: 200px !important;
     overflow: hidden !important;
     background-color: var(--hubs-primary-subtle) !important;
     position: relative !important;
 }
 
-/* FIX: La imagen se adapta al contenedor sin deformarse */
 .img-event-hubs {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover !important; /* Recorta la imagen para llenar el hueco */
+    object-fit: cover !important;
     object-position: center !important;
     transition: transform 0.5s ease;
 }
@@ -153,9 +163,9 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
 }
 
 .card-hubs .card-body {
-    flex-grow: 1 !important; /* Empuja el contenido hacia abajo */
-    display: flex !important;
-    flex-direction: column !important;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ============================================================
@@ -181,6 +191,14 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
 /* ============================================================
    8. FOOTER Y OTROS
    ============================================================ */
+footer {
+    flex-shrink: 0; /* Evita que el footer se aplaste */
+    background-color: white;
+    border-top: 1px solid var(--hubs-border);
+    padding: 2rem 0;
+    margin-top: auto; /* Empuja el footer al final si hay poco contenido */
+}
+
 .back-to-top {
     position: fixed;
     bottom: 20px;
