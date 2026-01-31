@@ -67,6 +67,7 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
     object-fit: cover !important;
 }
 
+/* Estilo para banners de detalle */
 .detail-banner-wrapper {
     position: relative;
     width: 100%;
@@ -88,60 +89,6 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
 }
 
 /* ============================================================
-   4. FORMULARIOS Y CARGA DE ARCHIVOS (POST_UPDATE)
-   ============================================================ */
-form input, form select, form textarea {
-    border-radius: 8px !important;
-    border: 1px solid var(--hubs-border);
-    transition: all 0.2s;
-}
-
-form input:focus {
-    border-color: var(--hubs-primary);
-    box-shadow: 0 0 0 0.25rem rgba(11, 89, 97, 0.15);
-}
-
-/* Zona de carga estilo Hubs */
-.post-update-file-container {
-    background-color: var(--hubs-light);
-    border: 2px dashed var(--hubs-border);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    text-align: center;
-}
-
-.file-upload-label {
-    display: block;
-    cursor: pointer;
-    background-color: #ffffff;
-    border: 1px solid var(--hubs-border);
-    border-radius: 1rem;
-    padding: 2.5rem;
-    position: relative;
-    transition: all 0.2s ease;
-}
-
-.file-upload-label:hover {
-    border-color: var(--hubs-primary);
-    background-color: var(--hubs-primary-subtle);
-}
-
-.file-upload-input-hidden {
-    position: absolute;
-    width: 0.1px;
-    height: 0.1px;
-    opacity: 0;
-    overflow: hidden;
-    z-index: -1;
-}
-
-/* Limpieza Widget Django */
-.django-file-widget br, .django-file-widget a, 
-.django-file-widget input[type="checkbox"], .django-file-widget label {
-    display: none !important;
-}
-
-/* ============================================================
    5. PERFIL DE USUARIO Y TARJETAS DE POSTS
    ============================================================ */
 .profile-post-card {
@@ -150,6 +97,9 @@ form input:focus {
     border-radius: var(--hubs-radius) !important;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .profile-post-card:hover {
@@ -157,15 +107,7 @@ form input:focus {
     box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
 }
 
-.profile-post-card img {
-    transition: filter 0.3s ease;
-}
-
-.profile-post-card:hover img {
-    filter: brightness(0.9);
-}
-
-/* Truncado de Título: LA CLAVE PARA QUE SE VEA SIEMPRE */
+/* Truncado de Título: Clave para mantener el diseño horizontal */
 .text-truncate-custom {
     display: block !important;
     width: 100%;
@@ -176,64 +118,69 @@ form input:focus {
     font-weight: 700;
 }
 
-/* Pestañas de navegación Perfil */
-.nav-tabs .nav-link {
-    color: var(--hubs-text-muted);
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    border: none !important;
-    background: transparent !important;
-}
-
-.nav-tabs .nav-link.active {
-    color: var(--hubs-dark) !important;
-    border-top: 3px solid var(--hubs-primary) !important;
-    border-radius: 0;
-}
-
 /* ============================================================
-   6. CARDS DE EVENTOS Y OTROS
+   6. CARDS DE EVENTOS (RECTÁNGULO HORIZONTAL)
    ============================================================ */
+
 .card-hubs {
-    background-color: white;
-    border: 1px solid var(--hubs-border);
-    border-radius: var(--hubs-radius);
-    box-shadow: var(--hubs-shadow);
-    transition: all 0.3s ease;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important; 
+    border-radius: var(--hubs-radius) !important;
+    overflow: hidden !important; /* Corta lo que sobresalga */
 }
 
-.card-hubs:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+/* FIX: Bloqueamos la altura del contenedor de imagen */
+.img-event-wrapper {
+    width: 100% !important;
+    height: 200px !important; /* Altura fija para mantener el formato horizontal */
+    overflow: hidden !important;
+    background-color: var(--hubs-primary-subtle) !important;
+    position: relative !important;
 }
 
-.badge-hobby-post {
-    display: inline-flex;
-    align-items: center;
-    background-color: var(--hubs-primary-subtle);
-    border: 1px solid var(--hubs-primary);
-    padding: 4px 10px;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    color: var(--hubs-primary);
+/* FIX: La imagen se adapta al contenedor sin deformarse */
+.img-event-hubs {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* Recorta la imagen para llenar el hueco */
+    object-position: center !important;
+    transition: transform 0.5s ease;
+}
+
+.card-hubs:hover .img-event-hubs {
+    transform: scale(1.05);
+}
+
+.card-hubs .card-body {
+    flex-grow: 1 !important; /* Empuja el contenido hacia abajo */
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 /* ============================================================
-   7. COOKIES Y FOOTER
+   7. UTILIDADES Y ANIMACIÓN
    ============================================================ */
-#cookie-banner.cookie-banner-hubs {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: var(--hubs-primary);
-    color: white;
-    z-index: 10000;
-    padding: 1rem 0;
-    border-top: 3px solid var(--hubs-primary-hover);
+.bg-light-hover:hover {
+    background-color: var(--hubs-primary-subtle) !important;
+    border-color: var(--hubs-primary) !important;
 }
 
+.transition-all { transition: all 0.2s ease-in-out; }
+
+@keyframes headShake {
+    0% { transform: translateX(0); }
+    6.5% { transform: translateX(-6px) rotateY(-9deg); }
+    18.5% { transform: translateX(5px) rotateY(7deg); }
+    31.5% { transform: translateX(-3px) rotateY(-5deg); }
+    43.5% { transform: translateX(2px) rotateY(3deg); }
+    50% { transform: translateX(0); }
+}
+.animate__headShake { animation: headShake 1s ease-in-out; }
+
+/* ============================================================
+   8. FOOTER Y OTROS
+   ============================================================ */
 .back-to-top {
     position: fixed;
     bottom: 20px;
@@ -247,5 +194,5 @@ form input:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
+    transition: all 0.3s ease;
 }
