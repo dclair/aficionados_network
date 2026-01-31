@@ -27,7 +27,6 @@
     </div>
 
     <main class="main-content container py-4">
-        
         <div class="row mb-3">
             <div class="col">
                 {% block page_title %}{% endblock page_title %}
@@ -37,15 +36,38 @@
         {% block content %}
             <p>Aquí va el contenido base de las páginas.</p>
         {% endblock content %}
-        
     </main>
 
     {% include "_includes/_footer.html" %}
-    {% include "_includes/_cookies_banner.html" %}
+
+    {# ELIMINADA LA LÍNEA DUPLICADA PARA QUE SOLO QUEDE EL BANNER FLOTANTE #}
 
     <button id="btn-back-to-top" class="back-to-top shadow">
         <i class="bi bi-chevron-up"></i>
     </button>
+
+    <!-- Cookie Banner -->
+    <div id="cookie-banner" class="cookie-banner">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <p class="cookie-text mb-md-0">
+                    <i class="bi bi-cookie text-warning fs-5 me-2"></i>
+                    En <strong>Hubs & Clicks</strong> utilizamos cookies para mejorar tu experiencia. 
+                    Ver <a href="/politica-cookies/" class="cookie-link">política de privacidad</a>.
+                </p>
+            </div>
+            <div class="col-md-5 text-md-end">
+                <div class="cookie-buttons d-flex gap-2 mt-3 mt-md-0 justify-content-md-end">
+                    <button id="accept-cookies" class="btn btn-hubs btn-sm text-nowrap rounded-pill px-3">
+                        Aceptar todas
+                    </button>
+                    <button id="reject-cookies" class="btn btn-light btn-sm text-nowrap rounded-pill border px-3">
+                        Solo necesarias
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     

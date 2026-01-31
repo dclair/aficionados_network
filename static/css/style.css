@@ -23,11 +23,10 @@ body {
     background-color: var(--hubs-light);
     display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Asegura que el body ocupe toda la pantalla */
+    min-height: 100vh;
     padding-top: calc(var(--navbar-height) + 20px) !important;
 }
 
-/* FIX: Asegura que el contenido principal empuje al footer hacia abajo */
 main, .container {
     flex: 1 0 auto;
 }
@@ -122,19 +121,15 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
 }
 
 /* ============================================================
-   6. CARDS DE EVENTOS (MODIFICADO PARA FIX DE DETALLE)
+   6. CARDS DE EVENTOS
    ============================================================ */
-
-/* Eliminado el !important de flex-direction y height para que las columnas funcionen */
 .card-hubs {
     display: flex; 
     background-color: #fff;
     border-radius: var(--hubs-radius) !important;
     box-shadow: var(--hubs-shadow);
-    /* Permitimos que la altura sea automática por defecto */
 }
 
-/* Solo forzamos altura 100% y columna cuando están en el listado general */
 .row-cols-1 .card-hubs, 
 .row-cols-md-2 .card-hubs, 
 .row-cols-lg-3 .card-hubs {
@@ -158,9 +153,7 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
     transition: transform 0.5s ease;
 }
 
-.card-hubs:hover .img-event-hubs {
-    transform: scale(1.05);
-}
+.card-hubs:hover .img-event-hubs { transform: scale(1.05); }
 
 .card-hubs .card-body {
     flex-grow: 1;
@@ -192,11 +185,11 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
    8. FOOTER Y OTROS
    ============================================================ */
 footer {
-    flex-shrink: 0; /* Evita que el footer se aplaste */
+    flex-shrink: 0;
     background-color: white;
     border-top: 1px solid var(--hubs-border);
     padding: 2rem 0;
-    margin-top: auto; /* Empuja el footer al final si hay poco contenido */
+    margin-top: auto;
 }
 
 .back-to-top {
@@ -214,7 +207,7 @@ footer {
     justify-content: center;
     transition: all 0.3s ease;
 }
- /* con esto añadimos una estrella al organizador del evento */
+
 .badge-organizer {
     position: absolute;
     bottom: -2px;
@@ -233,7 +226,6 @@ footer {
     z-index: 10;
 }
 
-/* --- Estilos de Publicaciones --- */
 .comment-highlight:target {
     border: 2px solid #ffda6a;
     border-radius: 10px;
@@ -247,10 +239,58 @@ footer {
     100% { background-color: transparent; }
 }
 
-.like-button { 
-    transition: transform 0.1s ease; 
+.like-button { transition: transform 0.1s ease; }
+.like-button:active { transform: scale(1.2); }
+
+/* ============================================================
+   9. BANNER DE COOKIES (NUEVO)
+   ============================================================ */
+.cookie-banner {
+    position: fixed;
+    bottom: 25px;
+    left: 25px;
+    right: 25px;
+    margin: 0 auto;
+    max-width: 750px;
+    background: #ffffff;
+    border-radius: var(--hubs-radius);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    padding: 1.25rem;
+    border: 1px solid var(--hubs-border);
+    transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-.like-button:active { 
-    transform: scale(1.2); 
+.cookie-banner.hidden {
+    opacity: 0;
+    transform: translateY(100px);
+    pointer-events: none;
+}
+
+.cookie-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.cookie-text {
+    font-size: 0.9rem;
+    color: var(--hubs-dark);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.cookie-text a {
+    color: var(--hubs-primary);
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .cookie-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    .cookie-banner { bottom: 15px; left: 15px; right: 15px; }
 }
