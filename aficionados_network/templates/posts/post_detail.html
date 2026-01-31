@@ -5,13 +5,27 @@
 
 {% block page_title %} 
 <div class="container-fluid px-4 mt-4">
-    <div class="d-flex align-items-center">
-        <h1 class="fw-bold h2 mb-0">Publicación de {{ post.user.username }}</h1>
-        
-        {% if post.category %}
-            <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle ms-3">
-                <i class="bi bi-tag-fill me-1"></i>{{ post.category.name|upper }}
-            </span>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center">
+            <h1 class="fw-bold h2 mb-0">Publicación de {{ post.user.username }}</h1>
+            
+            {% if post.category %}
+                <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle ms-3">
+                    <i class="bi bi-tag-fill me-1"></i>{{ post.category.name|upper }}
+                </span>
+            {% endif %}
+        </div>
+
+        {# ACCIONES RÁPIDAS EN CABECERA #}
+        {% if request.user == post.user %}
+        <div class="d-flex gap-2">
+            <a href="{% url 'posts:post_update' post.pk %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                <i class="bi bi-pencil-square me-1"></i> Editar
+            </a>
+            <a href="{% url 'posts:post_delete' post.pk %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                <i class="bi bi-trash3 me-1"></i> Eliminar
+            </a>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -51,7 +65,31 @@
                             {% endif %}
                             <span class="fw-bold">{{ post.user.username }}</span>
                         </a>
-                        <small class="text-muted ms-auto">{{ post.created_at|date:"d M Y" }}</small>
+                        
+                        <div class="ms-auto d-flex align-items-center gap-3">
+                            <small class="text-muted">{{ post.created_at|date:"d M Y" }}</small>
+                            
+                            {# MENÚ DE TRES PUNTOS DENTRO DE LA CARD #}
+                            {% if request.user == post.user %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical fs-5"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3">
+                                    <li>
+                                        <a class="dropdown-item small" href="{% url 'posts:post_update' post.pk %}">
+                                            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar publicación
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item small text-danger" href="{% url 'posts:post_delete' post.pk %}">
+                                            <i class="bi bi-trash3 me-2"></i>Eliminar permanentemente
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -141,51 +179,23 @@
                 </div>
             </div>
 
-        </div> </div> </div> <script>
-    // 1. Script para responder comentarios (menciones)
+        </div>
+    </div>
+</div>
+
+<script>
     function responderComentario(username) {
         const textarea = document.querySelector('textarea[name="comment"]');
         if (textarea) {
             textarea.value = `@${username} `;
             textarea.focus();
-            // Desplazar suavemente al formulario
             document.querySelector('#comment-form').scrollIntoView({ behavior: 'smooth' });
         }
     }
-
-    // 2. Script para LIKES por AJAX
-    document.addEventListener('DOMContentLoaded', function() {
-        const likeButtons = document.querySelectorAll('.like-button');
-        likeButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const postId = this.dataset.postId;
-                const url = this.dataset.likeUrl;
-                const icon = this.querySelector('i');
-                const countSpan = this.parentElement.querySelector('.like-count');
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-                const formData = new FormData();
-                formData.append('post_id', postId);
-
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrfToken },
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.liked) {
-                        icon.classList.replace('bi-heart', 'bi-heart-fill');
-                        icon.classList.add('text-danger');
-                    } else {
-                        icon.classList.replace('bi-heart-fill', 'bi-heart');
-                        icon.classList.remove('text-danger');
-                    }
-                    countSpan.textContent = data.count;
-                })
-                .catch(error => console.error('Error:', error));
-            });
-        });
-    });
 </script>
+
+{% block extra_js %}
+<script src="{% static 'js/likes.js' %}"></script>
+{% endblock %}
+
 {% endblock content %}

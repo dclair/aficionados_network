@@ -1,6 +1,6 @@
-# InstaDclair
+# Hubs&Clicks
 ## 📝 Descripción
-InstaDclair es una aplicación web inspirada en Instagram, desarrollada con Django, que permite a los usuarios compartir imágenes, seguir a otros usuarios, comentar, crear posts y dar me gusta a las publicaciones. 
+Hubs&Clicks es una aplicación web inspirada en Instagram, desarrollada con Django, que permite a los usuarios compartir imágenes, seguir a otros usuarios, comentar, crear posts y dar me gusta a las publicaciones. 
 Este proyecto forma parte del portafolio de proyectos del Máster Full Stack de Conquer Blocks.
 ## 🚀 Características principales
 - Autenticación de usuarios (registro, inicio de sesión, recuperación de contraseña)

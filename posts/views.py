@@ -34,14 +34,11 @@ from .models import Event, Hobby
 from profiles.models import Review
 from django.db.models import Count  # Importante para contar los posts
 
-
 # --- VISTA PARA CREAR POST ---
 # Añadimos LoginRequiredMixin para que no puedan crear si no están logueados
 from django.utils import timezone
 from django.contrib.auth.models import User
 from .models import Posts
-
-# ... tus otros imports
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
@@ -191,6 +188,41 @@ def add_comment(request, post_id):
             print(f"--- FIN DEBUG ---\n")
 
     return redirect("posts:post_detail", pk=post.pk)
+
+
+# --- VISTA PARA EDITAR POST ---
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Posts
+    form_class = PostCreateForm
+    template_name = "posts/post_update.html"
+
+    def test_func(self):
+        # Solo el autor puede editar
+        post = self.get_object()
+        return self.request.user == post.user
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Obtenemos posts de todos los usuarios para "Descubrir"
+        # Usamos .order_by('?') para que sean aleatorios o '-created_at' para los últimos
+        context["discover_posts"] = Posts.objects.exclude(pk=self.object.pk).order_by(
+            "-created_at"
+        )[:5]
+
+        return context
+
+
+# --- VISTA PARA ELIMINAR POST ---
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Posts
+    template_name = "posts/post_confirm_delete.html"
+    success_url = reverse_lazy("home")  # O 'posts:post_list'
+
+    def test_func(self):
+        # Solo el autor puede borrar
+        post = self.get_object()
+        return self.request.user == post.user
 
 
 # Vista para CREAR la quedada

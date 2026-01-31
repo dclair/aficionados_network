@@ -21,7 +21,6 @@
                                 
                                 <div class="d-flex flex-column">
                                     <span class="fw-bold extra-small lh-1">{{ post.user.username }}</span>
-                                    {# PUNTO DE LOCALIZACIÓN AÑADIDO AQUÍ #}
                                     {% if post.location %}
                                         <small class="text-muted extra-small mt-1" style="font-size: 0.65rem;">
                                             <i class="bi bi-geo-alt-fill text-danger opacity-75"></i> {{ post.location }}
@@ -38,9 +37,32 @@
                             </span>
                         {% endif %}
 
-                        <small class="text-muted ms-auto" style="font-size: 0.7rem;">
-                            {{ post.created_at|date:"d M" }}
-                        </small>
+                        <div class="ms-auto d-flex align-items-center gap-2">
+                            <small class="text-muted" style="font-size: 0.7rem;">
+                                {{ post.created_at|date:"d M" }}
+                            </small>
+
+                            {# MENU CRUD: Solo aparece si el usuario es el autor #}
+                            {% if request.user == post.user %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3 mt-2">
+                                    <li>
+                                        <a class="dropdown-item small" href="{% url 'posts:post_update' post.pk %}">
+                                            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item small text-danger" href="{% url 'posts:post_delete' post.pk %}">
+                                            <i class="bi bi-trash3 me-2"></i>Eliminar
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 

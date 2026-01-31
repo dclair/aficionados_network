@@ -1,0 +1,45 @@
+{% extends 'general/layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-5 text-center">
+                    
+                    <div class="mb-4 text-danger">
+                        <div class="display-1"><i class="bi bi-trash3-fill"></i></div>
+                        <h2 class="fw-bold mt-3">¿Borrar publicación?</h2>
+                    </div>
+
+                    <p class="text-muted mb-4">
+                        Estás a punto de eliminar esta publicación de forma permanente. 
+                        Esta acción no se puede deshacer.
+                    </p>
+
+                    <div class="alert alert-light border-dashed text-start mb-4">
+                        <small class="text-uppercase fw-bold text-muted d-block mb-1">Título del post:</small>
+                        <span class="text-hubs fw-bold">{{ object.title|default:"Sin título" }}</span>
+                        {% if object.content %}
+                            <p class="small text-truncate mb-0 mt-1">{{ object.content|truncatechars:60 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold">
+                                <i class="bi bi-check-lg me-2"></i>Sí, eliminar ahora
+                            </button>
+                            <a href="{% url 'posts:post_detail' object.pk %}" class="btn btn-link text-muted text-decoration-none">
+                                No, prefiero conservarla
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
