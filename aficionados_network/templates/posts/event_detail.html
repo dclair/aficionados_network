@@ -14,12 +14,29 @@
 
 {# 2. ALERTA DE CANCELACIÓN #}
 {% if event.is_canceled %}
-<div class="alert alert-danger border-0 shadow-sm d-flex align-items-center p-4 mb-4">
-    <i class="bi bi-exclamation-octagon-fill fs-1 me-3"></i>
-    <div>
-        <h4 class="alert-heading fw-bold mb-1">PLAN CANCELADO</h4>
-        <p class="mb-0">Este evento ha sido cancelado por el organizador.</p>
+<div class="alert alert-danger border-0 shadow-sm d-flex flex-column p-4 mb-4">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-octagon-fill fs-1 me-3"></i>
+        <div>
+            <h4 class="alert-heading fw-bold mb-1">PLAN CANCELADO</h4>
+            <p class="mb-0">Este evento ha sido cancelado por el organizador.</p>
+        </div>
     </div>
+
+    {# BOTÓN SOLO PARA EL ORGANIZADOR #}
+    {% if request.user == event.organizer %}
+        <hr>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <span class="small text-muted italic">¿Has cambiado de opinión? Puedes volver a activarlo:</span>
+            <form action="{% url 'posts:event_reactivate' event.id %}" method="POST" class="js-form-loading">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-sm px-4 shadow-sm">
+                    <span class="spinner-border spinner-border-sm btn-spinner d-none"></span>
+                    <span class="btn-text"><i class="bi bi-play-circle-fill me-2"></i>Reactivar ahora</span>
+                </button>
+            </form>
+        </div>
+    {% endif %}
 </div>
 {% endif %}
 

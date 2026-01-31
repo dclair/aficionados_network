@@ -547,6 +547,7 @@ class MyEventsListView(LoginRequiredMixin, ListView):
 # la siguiente clase es para reactivar un evento que se ha cancelado
 class EventReactivateView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
+        # Solo el organizador puede reactivar su propio evento
         event = get_object_or_404(Event, pk=self.kwargs["pk"])
         return self.request.user == event.organizer
 
@@ -554,18 +555,47 @@ class EventReactivateView(LoginRequiredMixin, UserPassesTestMixin, View):
         event = get_object_or_404(Event, pk=pk)
         ahora = timezone.now()
 
-        # VALIDACIÓN: ¿Está en el pasado?
+        # 1. VALIDACIÓN: ¿El evento ya pasó?
         if event.event_date <= ahora:
-            messages.error(request, "No puedes reactivar un evento que ya ha pasado.")
-            return redirect("posts:my_events")
+            messages.error(
+                request, "No puedes reactivar un evento cuya fecha ya ha pasado."
+            )
+            return redirect("posts:event_detail", pk=event.pk)
 
+        # 2. PROCESO DE REACTIVACIÓN
         if event.is_canceled:
             event.is_canceled = False
             event.save()
-            # ... lógica de emails y notificaciones que pusimos antes ...
-            messages.success(request, f"¡El evento '{event.title}' ha sido reactivado!")
 
-        return redirect("posts:my_events")
+            # Preparar datos para las notificaciones
+            action_url = request.build_absolute_uri(
+                reverse("posts:event_detail", args=[event.id])
+            )
+            subject = f"✨ ¡Buenas noticias! Evento reactivado: {event.title}"
+            message_body = f"¡El plan '{event.title}' ha sido reactivado por el organizador! Tu plaza sigue reservada. ¡Te esperamos!"
+
+            # 3. NOTIFICAR A LOS PARTICIPANTES
+            participants = event.participants.all()
+            for p in participants:
+                if p != request.user:
+                    # A. Notificación en la web (campanita)
+                    Notification.objects.create(
+                        recipient=p,
+                        sender=request.user,
+                        notification_type="event",
+                        event=event,
+                    )
+
+                    # B. Email Corporativo (Usando tu FUNCIÓN MAESTRA)
+                    send_hubs_email(subject, p, message_body, action_url)
+
+            messages.success(
+                request, f"¡El evento '{event.title}' ha sido reactivado con éxito!"
+            )
+        else:
+            messages.info(request, "El evento ya se encontraba activo.")
+
+        return redirect("posts:event_detail", pk=event.id)
 
 
 # la clase siguiente es para duplicar un evento
