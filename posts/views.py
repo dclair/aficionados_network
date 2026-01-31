@@ -41,6 +41,7 @@ from django.contrib.auth.models import User
 from .models import Posts
 
 
+# Funcion Maestra para enviar correos con el diseño de Hubs&Clicks
 def send_hubs_email(subject, recipient, message_body, action_url):
     """
     Función universal para enviar correos con el diseño de Hubs&Clicks.
@@ -297,7 +298,7 @@ class EventListView(LoginRequiredMixin, ListView):
         # 1. Con esto traemos los eventos futuros y no cancelados
         queryset = (
             Event.objects.select_related("hobby", "organizer")
-            .filter(event_date__gte=timezone.now(), is_canceled=False)
+            .filter(event_date__gte=timezone.now())
             .order_by("event_date")
         )
 
@@ -463,6 +464,7 @@ class EventCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
 @login_required
 def add_event_comment(request, event_id):
     event = get_object_or_404(Event, id=event_id)
+
     if request.method == "POST":
         form = EventCommentForm(request.POST)
         if form.is_valid():
@@ -471,19 +473,56 @@ def add_event_comment(request, event_id):
             comment.user = request.user
             comment.save()
 
+            # URL para el botón del email
             action_url = request.build_absolute_uri(
                 reverse("posts:event_detail", args=[event.id])
             )
 
+            # --- LÓGICA DE NOTIFICACIONES ---
+
             if event.organizer != request.user:
-                # Aviso al organizador usando la FUNCIÓN MAESTRA
+                # CASO 1: Un usuario comenta -> El organizador recibe el aviso
+                recipient = event.organizer
+
+                # 1. Notificación web
+                Notification.objects.create(
+                    recipient=recipient,
+                    sender=request.user,
+                    notification_type="comment",
+                    event=event,
+                )
+
+                # 2. EMAIL (USANDO LA FUNCIÓN MAESTRA)
                 send_hubs_email(
                     f"💬 Nuevo comentario de {request.user.username}",
-                    event.organizer,
+                    recipient,
                     f"{request.user.username} ha comentado en tu plan '{event.title}'.",
                     action_url,
                 )
-            # ... resto de la lógica de notificaciones ...
+
+            else:
+                # CASO 2: El organizador responde -> Todos los participantes reciben aviso
+                participantes = event.participants.exclude(id=request.user.id)
+
+                for pepe in participantes:
+                    # 1. Notificación web para cada uno
+                    Notification.objects.create(
+                        recipient=pepe,
+                        sender=request.user,
+                        notification_type="comment",
+                        event=event,
+                    )
+
+                    # 2. EMAIL (USANDO LA FUNCIÓN MAESTRA)
+                    send_hubs_email(
+                        f"📢 {request.user.username} ha respondido en: {event.title}",
+                        pepe,
+                        f"{request.user.username} (el organizador) ha puesto un comentario en el evento '{event.title}'.",
+                        action_url,
+                    )
+
+            messages.success(request, "Comentario publicado y avisos enviados.")
+
     return redirect("posts:event_detail", pk=event.id)
 
 
