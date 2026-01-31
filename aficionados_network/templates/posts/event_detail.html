@@ -139,10 +139,19 @@
 
                 <div class="d-flex flex-wrap gap-2 mb-4">
                     {% for participant in event.participants.all %}
-                    <img src="{% if participant.profile.profile_picture %}{{ participant.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ participant.username }}&background=random{% endif %}"
-                         class="rounded-circle border shadow-sm"
-                         style="width:48px;height:48px;object-fit:cover;"
-                         title="{{ participant.username }}">
+                    <div class="position-relative">
+                        <img src="{% if participant.profile.profile_picture %}{{ participant.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ participant.username }}&background=random{% endif %}"
+                             class="rounded-circle border shadow-sm"
+                             style="width:48px;height:48px;object-fit:cover;"
+                             title="{{ participant.username }}">
+                        
+                        {# LOGICA DE LA ESTRELLA PARA EL ORGANIZADOR #}
+                        {% if participant == event.organizer %}
+                        <span class="badge-organizer">
+                            <i class="bi bi-star-fill"></i>
+                        </span>
+                        {% endif %}
+                    </div>
                     {% endfor %}
                 </div>
 
