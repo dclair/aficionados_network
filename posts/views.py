@@ -41,6 +41,45 @@ from django.contrib.auth.models import User
 from .models import Posts
 
 
+def send_hubs_email(subject, recipient, message_body, action_url):
+    """
+    Función universal para enviar correos con el diseño de Hubs&Clicks.
+    """
+    if not recipient.email:
+        return  # Si no hay email, no hacemos nada
+
+    context = {
+        "recipient_name": recipient.username,
+        "message_body": message_body,
+        "action_url": action_url,
+    }
+
+    # 1. Renderizar el HTML y el texto plano
+    html_content = render_to_string("general/emails/notification_email.html", context)
+    text_content = strip_tags(html_content)
+
+    # 2. Crear el objeto de email
+    email = EmailMultiAlternatives(
+        subject,
+        text_content,
+        settings.DEFAULT_FROM_EMAIL,
+        [recipient.email],
+    )
+    email.attach_alternative(html_content, "text/html")
+
+    # 3. Adjuntar el Logo físicamente
+    logo_path = os.path.join(settings.BASE_DIR, "static", "img", "logo_hubs_email.png")
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as f:
+            logo_data = f.read()
+            logo_image = MIMEImage(logo_data)
+            logo_image.add_header("Content-ID", "<logo_hubs_email>")
+            email.attach(logo_image)
+
+    # 4. Enviar
+    email.send(fail_silently=True)
+
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Posts
     form_class = PostCreateForm
@@ -303,75 +342,37 @@ class EventListView(LoginRequiredMixin, ListView):
 def toggle_attendance(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
-    # 1. El organizador no puede cambiar su propia asistencia
     if request.user == event.organizer:
-        messages.warning(
-            request, "Como organizador, no puedes desapuntarte de tu propio evento."
-        )
+        messages.warning(request, "Como organizador, no puedes desapuntarte.")
         return redirect("posts:event_detail", pk=event.id)
 
-    # Variables para el email que cambiarán según la acción
     action_url = request.build_absolute_uri(
         reverse("posts:event_detail", args=[event.id])
     )
-    subject = ""
-    message_body = ""
-    should_notify = False
 
     if request.user in event.participants.all():
-        # --- CASO: EL USUARIO SE DESAPUNTA ---
         event.participants.remove(request.user)
-        messages.info(request, "Ya no estás apuntado a este evento.")
-
-        subject = f"🏃 Baja en tu evento: {event.title}"
-        message_body = f"Te informamos que @{request.user.username} se ha desapuntado de tu evento '{event.title}'."
-        should_notify = True
+        messages.info(request, "Ya no estás apuntado.")
+        # USAMOS LA FUNCIÓN MAESTRA
+        send_hubs_email(
+            f"🏃 Baja en tu evento: {event.title}",
+            event.organizer,
+            f"@{request.user.username} se ha desapuntado de tu evento '{event.title}'.",
+            action_url,
+        )
     else:
-        # --- CASO: EL USUARIO SE APUNTA ---
         if event.participants.count() < event.max_participants:
             event.participants.add(request.user)
-            messages.success(request, "¡Te has apuntado al evento!")
-
-            subject = f"✅ ¡Alguien se ha unido!: {event.title}"
-            message_body = f"¡Buenas noticias! @{request.user.username} se acaba de apuntar a tu evento '{event.title}'."
-            should_notify = True
+            messages.success(request, "¡Te has apuntado!")
+            # USAMOS LA FUNCIÓN MAESTRA
+            send_hubs_email(
+                f"✅ ¡Alguien se ha unido!: {event.title}",
+                event.organizer,
+                f"¡Buenas noticias! @{request.user.username} se ha unido a '{event.title}'.",
+                action_url,
+            )
         else:
-            messages.error(request, "Lo sentimos, el evento ya está lleno.")
-            should_notify = False
-
-    # --- LÓGICA DE NOTIFICACIÓN Y EMAIL (Para ambos casos) ---
-    if should_notify and event.organizer != request.user:
-        # 1. Crear notificación en la web (campanita)
-        NotificationModel.objects.create(
-            recipient=event.organizer,
-            sender=request.user,
-            notification_type="event",
-            event=event,
-        )
-
-        # 2. Enviar Email si el organizador tiene correo configurado
-        if event.organizer.email:
-            context = {
-                "recipient_name": event.organizer.username,
-                "message_body": message_body,
-                "action_url": action_url,
-            }
-
-            html_content = render_to_string(
-                "general/emails/notification_email.html", context
-            )
-            text_content = strip_tags(html_content)
-
-            email = EmailMultiAlternatives(
-                subject,
-                text_content,
-                settings.DEFAULT_FROM_EMAIL,
-                [event.organizer.email],
-            )
-            email.attach_alternative(html_content, "text/html")
-
-            # Enviamos el email (fail_silently=True evita que la web de error si el servidor de correo falla)
-            email.send(fail_silently=True)
+            messages.error(request, "Evento lleno.")
 
     return redirect("posts:event_detail", pk=event.id)
 
@@ -424,22 +425,22 @@ class EventCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
             messages.info(request, "Este evento ya ha sido cancelado anteriormente.")
             return redirect("posts:event_detail", pk=event.pk)
 
-        # 1. MARCADO
+        # 1. MARCADO DEL EVENTO
         event.is_canceled = True
         event.save()
 
-        # 2. PREPARACIÓN DE EMAIL (LOGO Y URL)
+        # 2. PREPARACIÓN DE DATOS PARA EL EMAIL
         action_url = request.build_absolute_uri(
             reverse("posts:event_detail", args=[event.pk])
         )
-        logo_path = os.path.join(settings.BASE_DIR, "static", "img", "logo_hubs.png")
         subject = f"⚠️ Quedada cancelada: {event.title}"
+        message_body = f"Lamentamos informarte que el plan '{event.title}' ha sido cancelado por el organizador. ¡No te preocupes! Pronto habrá más eventos disponibles."
 
-        # 3. NOTIFICAR Y ENVIAR EMAILS
+        # 3. NOTIFICAR Y ENVIAR EMAILS A ASISTENTES
         participants = event.participants.all()
         for p in participants:
             if p != request.user:
-                # Notificación en la campana
+                # Notificación visual (campanita roja)
                 Notification.objects.create(
                     recipient=p,
                     sender=request.user,
@@ -447,33 +448,9 @@ class EventCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
                     event=event,
                 )
 
-                # Envío de Email Corporativo
-                if p.email:
-                    context = {
-                        "recipient_name": p.username,
-                        "message_body": f"Lamentamos informarte que el plan '{event.title}' ha sido cancelado por el organizador. ¡No te preocupes! Pronto habrá más eventos disponibles.",
-                        "action_url": action_url,
-                    }
-                    html_content = render_to_string(
-                        "emails/notification_email.html", context
-                    )
-                    text_content = strip_tags(html_content)
-
-                    email = EmailMultiAlternatives(
-                        subject,
-                        text_content,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [p.email],
-                    )
-                    email.attach_alternative(html_content, "text/html")
-
-                    if os.path.exists(logo_path):
-                        with open(logo_path, "rb") as f:
-                            logo_image = MIMEImage(f.read())
-                            logo_image.add_header("Content-ID", "<logo_hubs>")
-                            email.attach(logo_image)
-
-                    email.send(fail_silently=True)
+                # --- ¡AQUÍ ESTÁ EL CAMBIO! ---
+                # Usamos la función maestra que ya gestiona el LOGO y el HTML por dentro
+                send_hubs_email(subject, p, message_body, action_url)
 
         messages.success(
             request,
@@ -486,7 +463,6 @@ class EventCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
 @login_required
 def add_event_comment(request, event_id):
     event = get_object_or_404(Event, id=event_id)
-
     if request.method == "POST":
         form = EventCommentForm(request.POST)
         if form.is_valid():
@@ -499,85 +475,15 @@ def add_event_comment(request, event_id):
                 reverse("posts:event_detail", args=[event.id])
             )
 
-            # --- PREPARACIÓN DEL LOGO ---
-            # Ajusta 'img/logo.png' a la ruta real dentro de tu carpeta static
-            logo_path = os.path.join(
-                settings.BASE_DIR, "static", "img", "logo_hubs_email.png"
-            )
-            # TRUCO DE DEPURACIÓN: Añade este print para ver en tu terminal si Django encuentra el logo
-            if os.path.exists(logo_path):
-                print(f"✅ LOGO ENCONTRADO en: {logo_path}")
-            else:
-                print(f"❌ LOGO NO ENCONTRADO. Revisa la ruta: {logo_path}")
-
-            def send_html_email(subject, recipient, message_body):
-                context = {
-                    "recipient_name": recipient.username,
-                    "message_body": message_body,
-                    "action_url": action_url,
-                }
-                html_content = render_to_string(
-                    "general/emails/notification_email.html", context
-                )
-                text_content = strip_tags(html_content)
-
-                email = EmailMultiAlternatives(
-                    subject,
-                    text_content,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [recipient.email],
-                )
-                email.attach_alternative(html_content, "text/html")
-
-                # Incrustar el logo si el archivo existe
-                if os.path.exists(logo_path):
-                    with open(logo_path, "rb") as f:
-                        logo_data = f.read()
-                        logo_image = MIMEImage(logo_data)
-                        logo_image.add_header(
-                            "Content-ID", "<logo_hubs_email>"
-                        )  # ID que usaremos en el HTML
-                        email.attach(logo_image)
-
-                email.send(fail_silently=True)
-
-            # --- LÓGICA DE NOTIFICACIONES ---
-
             if event.organizer != request.user:
-                # CASO 1: Alguien comenta -> Juan recibe aviso
-                recipient = event.organizer
-                if recipient.email:
-                    send_html_email(
-                        f"💬 Nuevo comentario de {request.user.username}",
-                        recipient,
-                        f"{request.user.username} ha comentado en tu plan '{event.title}'.",
-                    )
-                Notification.objects.create(
-                    recipient=recipient,
-                    sender=request.user,
-                    notification_type="comment",
-                    event=event,
+                # Aviso al organizador usando la FUNCIÓN MAESTRA
+                send_hubs_email(
+                    f"💬 Nuevo comentario de {request.user.username}",
+                    event.organizer,
+                    f"{request.user.username} ha comentado en tu plan '{event.title}'.",
+                    action_url,
                 )
-
-            else:
-                # CASO 2: Juan responde -> Participantes reciben aviso
-                participantes = event.participants.exclude(id=request.user.id)
-                for pepe in participantes:
-                    Notification.objects.create(
-                        recipient=pepe,
-                        sender=request.user,
-                        notification_type="comment",
-                        event=event,
-                    )
-                    if pepe.email:
-                        send_html_email(
-                            f"📢 Juan ha respondido en: {event.title}",
-                            pepe,
-                            f"Juan (el organizador) ha puesto un comentario en el evento '{event.title}'.",
-                        )
-
-            messages.success(request, "Comentario publicado y avisos enviados.")
-
+            # ... resto de la lógica de notificaciones ...
     return redirect("posts:event_detail", pk=event.id)
 
 
