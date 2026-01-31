@@ -18,7 +18,8 @@ from .forms import PostCreateForm, CommentForm, EventForm, EventCommentForm
 from notifications.models import Notification
 from django.db.models import Q  # Importante para el buscador
 from django.db.models import Exists, OuterRef
-from notifications.models import Notification as NotificationModel
+
+# from notifications.models import Notification as NotificationModel
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
@@ -188,44 +189,57 @@ def add_comment(request, post_id):
             comment.user = request.user
             comment.save()
 
-            print(f"\n--- DEBUG COMENTARIOS ---")
-            print(f"Post de: {post.user.username} | Comenta: {request.user.username}")
+            # 1. PREPARAR LA URL PARA EL BOTÓN DEL EMAIL
+            action_url = request.build_absolute_uri(
+                reverse("posts:post_detail", args=[post.pk])
+            )
 
-            # CASO A: Alguien externo comenta el post de Pepe
+            # --- LÓGICA DE NOTIFICACIONES POR EMAIL ---
+
+            # CASO A: Alguien externo comenta el post de otro usuario
             if post.user != request.user:
+                # Notificación en la web (Campana)
                 Notification.objects.create(
                     sender=request.user,
                     recipient=post.user,
                     notification_type="comment",
                     post=post,
                 )
-                print(
-                    f"ACCION: Notificación enviada al dueño del post ({post.user.username})"
+
+                # ENVÍO DE EMAIL (Usando la Función Maestra)
+                send_hubs_email(
+                    subject=f"💬 Nuevo comentario de @{request.user.username}",
+                    recipient=post.user,
+                    message_body=f'¡Hola! @{request.user.username} ha comentado en tu publicación: "{post.caption[:50]}..."',
+                    action_url=action_url,
                 )
 
-            # CASO B: El dueño (Pepe) responde en su propio post
+            # CASO B: El dueño responde en su propio post
             else:
-                # Buscamos quién más ha comentado aquí (excluyendo a Pepe)
-                # Usamos set() para asegurar que sean únicos sin líos de Django
-                todos_los_comentarios = post.comments.exclude(user=post.user)
-                ids_a_notificar = set(
-                    todos_los_comentarios.values_list("user_id", flat=True)
+                # Buscamos quién más ha comentado aquí (excluyendo al dueño)
+                participantes_ids = (
+                    post.comments.exclude(user=post.user)
+                    .values_list("user_id", flat=True)
+                    .distinct()
                 )
+                usuarios_a_notificar = User.objects.filter(id__in=participantes_ids)
 
-                print(f"Usuarios a notificar encontrados: {list(ids_a_notificar)}")
-
-                for u_id in ids_a_notificar:
+                for usuario in usuarios_a_notificar:
+                    # Notificación en la web
                     Notification.objects.create(
                         sender=request.user,
-                        recipient_id=u_id,
+                        recipient=usuario,
                         notification_type="comment",
                         post=post,
                     )
-                    print(
-                        f"ACCION: Notificación de respuesta enviada al usuario ID {u_id}"
-                    )
 
-            print(f"--- FIN DEBUG ---\n")
+                    # ENVÍO DE EMAIL (Usando la Función Maestra)
+                    send_hubs_email(
+                        subject=f"📢 @{request.user.username} respondió en un post",
+                        recipient=usuario,
+                        message_body=f"El autor del post ha respondido en una conversación donde participaste.",
+                        action_url=action_url,
+                    )
 
     return redirect("posts:post_detail", pk=post.pk)
 
@@ -652,18 +666,3 @@ class MyParticipationsListView(LoginRequiredMixin, ListView):
 
 
 # clase para las vistas de los eventos en los que yo los organizo -Mis planes creados/organizados
-class MyEventsListView(LoginRequiredMixin, ListView):
-    model = Event
-    template_name = "posts/my_events.html"
-    context_object_name = "my_events"
-
-    def get_queryset(self):
-        # Solo los eventos que el organizador (el usuario actual logueado) ha creado
-        return Event.objects.filter(organizer=self.request.user).order_by("-event_date")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["now"] = (
-            timezone.now()
-        )  # Fundamental para saber si el evento es pasado o futuro
-        return context

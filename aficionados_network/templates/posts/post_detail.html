@@ -16,7 +16,6 @@
             {% endif %}
         </div>
 
-        {# ACCIONES RÁPIDAS EN CABECERA #}
         {% if request.user == post.user %}
         <div class="d-flex gap-2">
             <a href="{% url 'posts:post_update' post.pk %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
@@ -32,22 +31,6 @@
 {% endblock page_title %}
 
 {% block content %}
-<style>
-    .comment-highlight:target {
-        border: 2px solid #ffda6a;
-        border-radius: 10px;
-        transition: all 0.5s ease;
-        padding: 10px;
-        animation: highlight-fade 4s ease-in-out;
-    }
-    @keyframes highlight-fade {
-        0% { background-color: #fff3cd; }
-        100% { background-color: transparent; }
-    }
-    .like-button { transition: transform 0.1s ease; }
-    .like-button:active { transform: scale(1.2); }
-</style>
-
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-9 col-lg-8">
@@ -69,23 +52,14 @@
                         <div class="ms-auto d-flex align-items-center gap-3">
                             <small class="text-muted">{{ post.created_at|date:"d M Y" }}</small>
                             
-                            {# MENÚ DE TRES PUNTOS DENTRO DE LA CARD #}
                             {% if request.user == post.user %}
                             <div class="dropdown">
                                 <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical fs-5"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3">
-                                    <li>
-                                        <a class="dropdown-item small" href="{% url 'posts:post_update' post.pk %}">
-                                            <i class="bi bi-pencil-square me-2 text-primary"></i>Editar publicación
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item small text-danger" href="{% url 'posts:post_delete' post.pk %}">
-                                            <i class="bi bi-trash3 me-2"></i>Eliminar permanentemente
-                                        </a>
-                                    </li>
+                                    <li><a class="dropdown-item small" href="{% url 'posts:post_update' post.pk %}"><i class="bi bi-pencil-square me-2 text-primary"></i>Editar publicación</a></li>
+                                    <li><a class="dropdown-item small text-danger" href="{% url 'posts:post_delete' post.pk %}"><i class="bi bi-trash3 me-2"></i>Eliminar permanentemente</a></li>
                                 </ul>
                             </div>
                             {% endif %}
@@ -105,12 +79,6 @@
                     {% endif %}
                     
                     <p class="fs-5 mb-4">{{ post.caption|linebreaksbr }}</p>
-
-                    {% if post.category.description %}
-                        <div class="alert alert-secondary border-0 small">
-                            <strong>Acerca de {{ post.category.name }}:</strong> {{ post.category.description }}
-                        </div>
-                    {% endif %}
 
                     <hr>
 
@@ -137,11 +105,16 @@
                     <h5 class="fw-bold mb-4">Comentarios</h5>
                     
                     {% if request.user.is_authenticated %}
-                    <form method="post" action="{% url 'posts:add_comment' post.pk %}" id="comment-form" class="mb-4">
+                    {# FORMULARIO: Añadida clase js-form-loading #}
+                    <form method="post" action="{% url 'posts:add_comment' post.pk %}" id="comment-form" class="mb-4 js-form-loading">
                         {% csrf_token %}
                         <div class="input-group shadow-sm">
                             {{ comment_form.comment }} 
-                            <button type="submit" class="btn btn-primary px-4">Comentar</button>
+                            {# BOTÓN: Spinner y Texto preparados #}
+                            <button type="submit" class="btn btn-primary px-4">
+                                <span class="spinner-border spinner-border-sm btn-spinner d-none" role="status" aria-hidden="true"></span>
+                                <span class="btn-text">Comentar</span>
+                            </button>
                         </div>
                     </form>
                     {% endif %}
@@ -149,6 +122,7 @@
                     <div id="comments-list">
                         {% for comment in post.comments.all %}
                         <div class="d-flex mb-3 comment-highlight" id="comment-{{ comment.id }}">
+                            {# ... Resto del listado de comentarios igual a la original ... #}
                             <div class="flex-shrink-0">
                                 {% if comment.user.profile.profile_picture %}
                                     <img src="{{ comment.user.profile.profile_picture.url }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
@@ -196,6 +170,7 @@
 
 {% block extra_js %}
 <script src="{% static 'js/likes.js' %}"></script>
+<script src="{% static 'js/spinner.js' %}"></script>
 {% endblock %}
 
 {% endblock content %}
