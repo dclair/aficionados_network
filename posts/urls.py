@@ -28,7 +28,7 @@ urlpatterns = [
         name="add_event_comment",
     ),
     # rutas para los eventos del usuario
-    path("my-events/", views.MyEventsListView.as_view(), name="my_events"),
+    # path("my-events/", views.MyEventsListView.as_view(), name="my_events"),
     path(
         "event/<int:pk>/reactivate/",
         views.EventReactivateView.as_view(),
