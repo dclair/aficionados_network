@@ -303,27 +303,75 @@ class EventListView(LoginRequiredMixin, ListView):
 def toggle_attendance(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
-    # Si el que intenta cambiar su asistencia es el organizador, no le dejamos
+    # 1. El organizador no puede cambiar su propia asistencia
     if request.user == event.organizer:
         messages.warning(
             request, "Como organizador, no puedes desapuntarte de tu propio evento."
         )
         return redirect("posts:event_detail", pk=event.id)
 
+    # Variables para el email que cambiarán según la acción
+    action_url = request.build_absolute_uri(
+        reverse("posts:event_detail", args=[event.id])
+    )
+    subject = ""
+    message_body = ""
+    should_notify = False
+
     if request.user in event.participants.all():
+        # --- CASO: EL USUARIO SE DESAPUNTA ---
         event.participants.remove(request.user)
+        messages.info(request, "Ya no estás apuntado a este evento.")
+
+        subject = f"🏃 Baja en tu evento: {event.title}"
+        message_body = f"Te informamos que @{request.user.username} se ha desapuntado de tu evento '{event.title}'."
+        should_notify = True
     else:
+        # --- CASO: EL USUARIO SE APUNTA ---
         if event.participants.count() < event.max_participants:
             event.participants.add(request.user)
+            messages.success(request, "¡Te has apuntado al evento!")
 
-            # --- Lógica de Notificación ---
-            if event.organizer != request.user:
-                NotificationModel.objects.create(
-                    recipient=event.organizer,
-                    sender=request.user,
-                    notification_type="event",
-                    event=event,  # Enlazamos la notificación a este evento
-                )
+            subject = f"✅ ¡Alguien se ha unido!: {event.title}"
+            message_body = f"¡Buenas noticias! @{request.user.username} se acaba de apuntar a tu evento '{event.title}'."
+            should_notify = True
+        else:
+            messages.error(request, "Lo sentimos, el evento ya está lleno.")
+            should_notify = False
+
+    # --- LÓGICA DE NOTIFICACIÓN Y EMAIL (Para ambos casos) ---
+    if should_notify and event.organizer != request.user:
+        # 1. Crear notificación en la web (campanita)
+        NotificationModel.objects.create(
+            recipient=event.organizer,
+            sender=request.user,
+            notification_type="event",
+            event=event,
+        )
+
+        # 2. Enviar Email si el organizador tiene correo configurado
+        if event.organizer.email:
+            context = {
+                "recipient_name": event.organizer.username,
+                "message_body": message_body,
+                "action_url": action_url,
+            }
+
+            html_content = render_to_string(
+                "general/emails/notification_email.html", context
+            )
+            text_content = strip_tags(html_content)
+
+            email = EmailMultiAlternatives(
+                subject,
+                text_content,
+                settings.DEFAULT_FROM_EMAIL,
+                [event.organizer.email],
+            )
+            email.attach_alternative(html_content, "text/html")
+
+            # Enviamos el email (fail_silently=True evita que la web de error si el servidor de correo falla)
+            email.send(fail_silently=True)
 
     return redirect("posts:event_detail", pk=event.id)
 

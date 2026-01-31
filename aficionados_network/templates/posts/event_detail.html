@@ -7,12 +7,12 @@
 
 {% block content %}
 
-{# BOTÓN VOLVER #}
+{# 1. BOTÓN VOLVER #}
 <a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none mb-3 p-0 text-hubs fw-bold">
     <i class="bi bi-arrow-left"></i> Volver al listado
 </a>
 
-{# ALERTA DE CANCELACIÓN #}
+{# 2. ALERTA DE CANCELACIÓN #}
 {% if event.is_canceled %}
 <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center p-4 mb-4">
     <i class="bi bi-exclamation-octagon-fill fs-1 me-3"></i>
@@ -23,7 +23,7 @@
 </div>
 {% endif %}
 
-{# HERO EVENTO #}
+{# 3. HERO DEL EVENTO (BANNER E INFO CLAVE) #}
 <div class="card border-0 shadow-sm overflow-hidden mb-4 card-hubs {% if event.is_canceled %}opacity-75{% endif %}">
     <div class="row g-0">
         <div class="col-lg-8">
@@ -61,20 +61,18 @@
     </div>
 </div>
 
+{# 4. CUERPO PRINCIPAL (DOS COLUMNAS) #}
 <div class="row mt-4">
 
-    {# COLUMNA IZQUIERDA #}
+    {# --- COLUMNA IZQUIERDA (Descripción y Comentarios) --- #}
     <div class="col-lg-8">
-
         <div class="card border-0 shadow-sm p-4 mb-4 card-hubs">
             <h4 class="fw-bold text-hubs mb-3">
                 <i class="bi bi-info-circle me-2"></i>Sobre esta quedada
             </h4>
-
             <div class="text-secondary" style="white-space: pre-line;">
                 {{ event.description }}
             </div>
-
             <div class="mt-4 pt-3 border-top text-muted">
                 <i class="bi bi-person-badge me-2"></i>
                 Organizado por <strong>@{{ event.organizer.username }}</strong>
@@ -95,9 +93,7 @@
                             {{ comment_form.content }}
                         </div>
                         <div class="text-end">
-                            <button type="submit" class="btn btn-hubs">
-                                Publicar comentario
-                            </button>
+                            <button type="submit" class="btn btn-hubs">Publicar comentario</button>
                         </div>
                     </form>
                 </div>
@@ -107,8 +103,7 @@
             {% for comment in event.comments.all %}
             <div class="d-flex mb-3">
                 <img src="{% if comment.user.profile.profile_picture %}{{ comment.user.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ comment.user.username }}&background=0b5961&color=fff{% endif %}"
-                     class="rounded-circle border shadow-sm"
-                     style="width:45px;height:45px;object-fit:cover;">
+                     class="rounded-circle border shadow-sm" style="width:45px;height:45px;object-fit:cover;">
                 <div class="ms-3 bg-white p-3 rounded-4 shadow-sm flex-grow-1">
                     <div class="d-flex justify-content-between mb-1">
                         <strong class="text-hubs">@{{ comment.user.username }}</strong>
@@ -118,18 +113,26 @@
                 </div>
             </div>
             {% empty %}
-            <p class="text-muted text-center py-4">
-                Nadie ha comentado todavía. ¡Sé el primero!
-            </p>
+            <p class="text-muted text-center py-4">Nadie ha comentado todavía. ¡Sé el primero!</p>
             {% endfor %}
         </div>
     </div>
 
-    {# COLUMNA DERECHA #}
+    {# --- COLUMNA DERECHA (Asistentes y Acciones) --- #}
     <div class="col-lg-4">
         <div class="sticky-top pt-3" style="top: 140px;">
-            <div class="card border-0 shadow-sm p-4 card-hubs">
+            
+            {# BLOQUE DE MENSAJES (Importante para errores de 'Evento Lleno') #}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 mb-3">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
 
+            <div class="card border-0 shadow-sm p-4 card-hubs">
                 <h5 class="fw-bold text-hubs mb-4">
                     <i class="bi bi-people me-2"></i>Asistentes
                     <span class="badge bg-light text-hubs border ms-1">
@@ -145,16 +148,14 @@
                              style="width:48px;height:48px;object-fit:cover;"
                              title="{{ participant.username }}">
                         
-                        {# LOGICA DE LA ESTRELLA PARA EL ORGANIZADOR #}
                         {% if participant == event.organizer %}
-                        <span class="badge-organizer">
-                            <i class="bi bi-star-fill"></i>
-                        </span>
+                        <span class="badge-organizer"><i class="bi bi-star-fill"></i></span>
                         {% endif %}
                     </div>
                     {% endfor %}
                 </div>
 
+                {# LOGICA DINÁMICA DE BOTONES #}
                 {% if not event.is_canceled %}
                     {% if request.user == event.organizer %}
                         <a href="{% url 'posts:event_update' event.id %}" class="btn btn-hubs w-100 mb-2">
@@ -163,9 +164,15 @@
                     {% else %}
                         <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-hubs w-100">
-                                <i class="bi bi-person-plus-fill me-2"></i>Me apunto
-                            </button>
+                            {% if request.user in event.participants.all %}
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="bi bi-person-dash-fill me-2"></i>No podré asistir
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-hubs w-100">
+                                    <i class="bi bi-person-plus-fill me-2"></i>Me apunto
+                                </button>
+                            {% endif %}
                         </form>
                     {% endif %}
                 {% endif %}
