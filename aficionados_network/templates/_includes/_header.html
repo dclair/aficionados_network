@@ -1,5 +1,5 @@
 {% load static %}
-<nav class="navbar navbar-expand-lg navbar-hubs fixed-top shadow-sm bg-white navbar-light">
+<nav class="navbar navbar-expand-xl navbar-hubs fixed-top shadow-sm bg-white navbar-light">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
             <img src="{% if logo_url %}{{ logo_url }}{% else %}{% static 'img/logo_hubs.png' %}{% endif %}" alt="Hubs&Clicks" class="me-2" style="height: 45px;">
@@ -15,7 +15,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarHubs">
-            <ul class="navbar-nav mx-auto align-items-lg-center">
+            <ul class="navbar-nav mx-auto align-items-xl-center">
                 
                 <li class="nav-item">
                     <a class="nav-link px-2 d-flex align-items-center text-nowrap {% if request.resolver_match.url_name == 'home' %}active fw-bold text-hubs{% endif %}" href="{% url 'home' %}">
@@ -37,9 +37,9 @@
 
                 {% if not user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link px-3 text-nowrap" href="{% url 'login' %}">Login</a></li>
-                    <li class="nav-item"><a class="btn btn-hubs ms-lg-2 mt-2 mt-lg-0 px-4 rounded-pill text-white text-nowrap" href="{% url 'register' %}">Registrarse</a></li>
+                    <li class="nav-item"><a class="btn btn-hubs ms-xl-2 mt-2 mt-xl-0 px-4 rounded-pill text-white text-nowrap" href="{% url 'register' %}">Registrarse</a></li>
                 {% else %}
-                    <hr class="d-lg-none my-2 text-muted opacity-25">
+                    <hr class="d-xl-none my-2 text-muted opacity-25">
 
                     <li class="nav-item">
                         <a href="{% url 'posts:my_participations' %}" class="nav-link px-2 d-flex align-items-center text-nowrap {% if request.resolver_match.url_name == 'my_participations' %}active fw-bold text-hubs{% endif %}">
@@ -77,7 +77,7 @@
                                   style="font-size: 0.5rem; padding: 0.2rem 0.4rem;">
                                 {{ unread_notifications_count }}
                             </span>
-                            <span class="d-lg-none ms-2">Notificaciones</span>
+                            <span class="d-xl-none ms-2">Notificaciones</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-0 overflow-hidden" style="min-width: 320px; border-radius: 12px;">
                             <li class="bg-light p-3 border-bottom"><span class="small fw-bold text-uppercase text-muted">Avisos Recientes</span></li>
@@ -104,7 +104,7 @@
                         </ul>
                     </li>
 
-                    <li class="nav-item d-lg-none mt-2">
+                    <li class="nav-item d-xl-none mt-2">
                         <form method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-outline-danger w-100 btn-sm rounded-pill"><i class="bi bi-power me-1"></i> Salir</button>
@@ -120,7 +120,7 @@
             </ul>
 
             {% if user.is_authenticated %}
-            <div class="d-none d-lg-flex ms-2">
+            <div class="d-none d-xl-flex ms-2">
                 <form method="post" action="{% url 'logout' %}" class="d-inline">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-link nav-link text-muted small px-2 border-0 text-decoration-none text-nowrap">
