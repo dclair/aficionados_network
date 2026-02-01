@@ -143,4 +143,69 @@ mybutton.addEventListener("click", () => {
         });
     });
 })();
-   
+
+
+// CON ESTO SE INICIALIZA EL MASONRY galeria de imagenes,
+// Usamos una función autoejecutable para proteger las variables
+(function() {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Community Hub JS: Cargado y listo.');
+
+        // ==============================================
+        // 1. INICIALIZACIÓN DE LA GALERÍA MASONRY
+        // ==============================================
+        const gridContainer = document.querySelector('.clicks-grid');
+        let msnry; // Variable "global" dentro de este ámbito para acceder luego
+
+        // Solo ejecutamos si estamos en la página de la galería
+        if (gridContainer) {
+            console.log('Galería detectada. Iniciando Masonry...');
+
+            // Esperamos a que las imágenes de la carga inicial estén listas
+            imagesLoaded(gridContainer, function() {
+                msnry = new Masonry(gridContainer, {
+                    itemSelector: '.grid-item',
+                    columnWidth: '.grid-item', // Usa el ancho del ítem como base
+                    percentPosition: true,     // Importante para diseño responsivo
+                    transitionDuration: '0.4s' // Animación suave al reordenar
+                });
+
+                // Inicializamos el Lightbox para las primeras fotos
+                GLightbox({ selector: '.glightbox', loop: true });
+                console.log('Masonry inicializado correctamente.');
+            });
+        }
+
+        // ==============================================
+        // 2. ESCUCHA DE HTMX (EL SCROLL INFINITO) - ¡LA CLAVE AQUÍ!
+        // ==============================================
+        document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+            // Verificamos si la petición que acaba de terminar es la de la galería
+            // Buscamos si la URL de la petición contiene "page=" (indicador de paginación)
+            // Y nos aseguramos de que el grid existe en esta página.
+            if (gridContainer && msnry && evt.detail.xhr.responseURL.includes('page=')) {
+                console.log('HTMX ha traído nuevas fotos. Reordenando Masonry...');
+
+                // ¡IMPORTANTE! Esperar a que las NUEVAS imágenes se descarguen
+                imagesLoaded(gridContainer, function() {
+                    // 1. Dile a Masonry que busque los elementos nuevos en el DOM
+                    msnry.reloadItems();
+                    // 2. Dile a Masonry que recalcule todas las posiciones
+                    msnry.layout();
+
+                    // 3. Reinicializa GLightbox para que las fotos nuevas se puedan ampliar
+                    GLightbox({ selector: '.glightbox', loop: true });
+
+                    console.log('Masonry reordenado y Lightbox actualizado.');
+                });
+            }
+        });
+
+        // ==============================================
+        // 3. OTRAS FUNCIONALIDADES DEL HUB (Ej: Botón volver arriba)
+        // ==============================================
+        // ... el resto de tu código para el botón, si lo tienes ...
+    });
+})();

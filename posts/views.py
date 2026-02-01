@@ -21,7 +21,7 @@ from django.db.models import Exists, OuterRef
 from itertools import chain
 from operator import attrgetter
 
-# from notifications.models import Notification as NotificationModel
+from django.core.paginator import Paginator
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
@@ -669,20 +669,34 @@ class MyParticipationsListView(LoginRequiredMixin, ListView):
         return context
 
 
-# con esta funcion mostramos la galeria de clicks
+# aqui esta la funcion que muestra la galeria de clicks y scroll infinito
 def clicks_gallery(request):
-    # 1. Extraemos Posts con imagen (no nula y no vacía)
-    posts_with_img = Posts.objects.filter(image__isnull=False).exclude(image="")
-
-    # 2. Extraemos Eventos con imagen (asumiendo que el campo se llama 'image')
-    events_with_img = Event.objects.filter(image__isnull=False).exclude(image="")
-
-    # 3. Los combinamos en una sola lista
-    # Usamos chain para unirlos y sorted para ordenarlos por fecha de creación
-    clicks = sorted(
-        chain(posts_with_img, events_with_img),
-        key=attrgetter("created_at"),  # Ordenamos por fecha
-        reverse=True,  # Los más nuevos primero
+    # 1. Posts usa 'user'
+    posts_qs = (
+        Posts.objects.filter(image__isnull=False)
+        .exclude(image="")
+        .select_related("user")
     )
 
-    return render(request, "posts/clicks_list.html", {"clicks": clicks})
+    # 2. Event usa 'organizer' (Cambiado de 'user' o 'author')
+    events_qs = (
+        Event.objects.filter(image__isnull=False)
+        .exclude(image="")
+        .select_related("organizer")
+    )
+
+    all_clicks = sorted(
+        chain(posts_qs, events_qs), key=attrgetter("created_at"), reverse=True
+    )
+
+    # El resto del código de paginación e HTMX se mantiene igual
+    paginator = Paginator(all_clicks, 12)
+    page_number = request.GET.get("page")
+    clicks_page = paginator.get_page(page_number)
+
+    if request.headers.get("HX-Request"):
+        return render(
+            request, "posts/partials/click_items.html", {"clicks": clicks_page}
+        )
+
+    return render(request, "posts/clicks_list.html", {"clicks": clicks_page})

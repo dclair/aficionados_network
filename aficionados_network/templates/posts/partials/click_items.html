@@ -1,0 +1,57 @@
+{% for item in clicks %}
+    <div class="grid-item mb-4" 
+         {% if forloop.last and clicks.has_next %}
+            hx-get="{% url 'posts:clicks_list' %}?page={{ clicks.next_page_number }}"
+            hx-trigger="revealed"
+            hx-swap="afterend"
+            hx-indicator="#loading-spinner"
+         {% endif %}>
+        
+        <div class="card card-click shadow-sm">
+            <a href="{{ item.image.url }}" class="glightbox" 
+               data-glightbox="title: {{ item.title }}; description: .desc-{{ forloop.counter }}-p{{ clicks.number }}">
+                <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}" loading="lazy">
+            </a>
+
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge rounded-pill click-badge px-3 py-2">
+                        @{% firstof item.user.username item.organizer.username "Aficionado" %}
+                    </span>
+                    <small class="text-muted">{{ item.created_at|date:"d M" }}</small>
+                </div>
+            </div>
+
+            <div class="glightbox-desc d-none desc-{{ forloop.counter }}-p{{ clicks.number }}">
+                <div class="p-4 text-center">
+                    <h3 class="text-hubs">{{ item.title }}</h3>
+                    <p class="text-muted">
+                        {% if item.caption %}
+                            {# Si es un Post, usamos caption #}
+                            {{ item.caption|truncatewords:30 }}
+                        {% elif item.description %}
+                            {# Si es un Evento, usamos description #}
+                            {{ item.description|truncatewords:30 }}
+                        {% else %}
+                            {# Fallback por si acaso #}
+                            Sin descripción disponible.
+                        {% endif %}
+                    </p>
+                    <hr>
+                    {% if item.caption is not None %}
+                        <a href="{% url 'posts:post_detail' item.id %}" class="btn btn-outline-hubs px-4">Ver Publicación</a>
+                    {% else %}
+                        <a href="{{ item.get_absolute_url }}" class="btn btn-hubs text-white px-4">Ver Plan</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% empty %}
+    {% if not clicks.has_previous %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-camera2 display-1 text-muted"></i>
+            <p class="mt-3 lead text-muted">Aún no hay fotos en la galería.</p>
+        </div>
+    {% endif %}
+{% endfor %}

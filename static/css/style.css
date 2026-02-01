@@ -354,26 +354,43 @@ footer {
     padding-top: 0;
     padding-bottom: 1.5rem;
 }
-/* --- Galería de Clicks --- */
-/* --- Galería de Clicks --- */
+
+/* ============================================================
+   9. GALERÍA DE CLICKS (MASONRY FIX)
+   ============================================================ */
 .clicks-grid {
     width: 100%;
+    margin: 0 auto;
+    display: block; /* Masonry se encarga del resto */
 }
 
+/* Base para móviles: 1 columna completa */
 .grid-item {
     width: 100%;
-    padding: 0 10px; /* Espaciado entre columnas */
+    padding: 10px;
+    float: left;
+    box-sizing: border-box;
 }
 
-/* Ajuste de columnas según pantalla */
-@media (min-width: 576px) { .grid-item { width: 50%; } }
-@media (min-width: 992px) { .grid-item { width: 33.33%; } }
+/* Tablets: 2 columnas */
+@media (min-width: 768px) {
+    .grid-item {
+        width: 50%;
+    }
+}
+
+/* Desktop: 3 columnas */
+@media (min-width: 1100px) {
+    .grid-item {
+        width: 33.333%;
+    }
+}
 
 .card-click {
     border: none;
     border-radius: 15px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     background: #fff;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
@@ -388,28 +405,12 @@ footer {
     width: 100%;
     height: auto;
     display: block;
+    border-radius: 15px 15px 0 0;
 }
 
-/* --- Mejora de la etiqueta de autor --- */
 .click-badge {
-    background-color: rgba(11, 89, 97, 0.9); /* Más opaco para que se lea siempre */
-    color: #ffffff !important;               /* Texto blanco para máximo contraste */
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 0.85rem;                      /* Tamaño equilibrado */
-    letter-spacing: 0.5px;                   /* Un poco de espacio entre letras */
-    backdrop-filter: blur(4px);              /* Efecto cristal traslúcido elegante */
-}
-
-/* Personalización del Lightbox */
-.glightbox-container .gslide-description {
-    background: #fff;
-    border-radius: 0 0 12px 12px;
-}
-
-.header-line {
-    width: 60px;
-    height: 4px;
-    background: #0b5961;
-    border-radius: 2px;
-    margin: 0 auto;
+    background-color: var(--hubs-primary);
+    color: #ffffff !important;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
 }
