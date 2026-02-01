@@ -413,6 +413,7 @@ class EventDetailView(LoginRequiredMixin, DetailView):
 class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Event
     fields = [
+        "image",
         "title",
         "description",
         "location",

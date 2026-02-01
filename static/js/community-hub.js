@@ -1,7 +1,7 @@
 // static/js/community-hub.js
 
 const CommunityHub = {
-    // 1. Previsualización de Imagen + Validación de Tamaño (ACTUALIZADO)
+    // 1. Previsualización de Imagen + Validación de Tamaño 
     initImagePreview: function() {
         const input = document.getElementById('id_image');
         const container = document.getElementById('imageUploadContainer');

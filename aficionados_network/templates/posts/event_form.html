@@ -1,10 +1,11 @@
 {% extends "general/layout.html" %}
+{% load static %}
 
-{# 1. TÍTULO DE LA PÁGINA (Ajustado a la estética Teal) #}
 {% block page_title %} 
 <div class="container-fluid px-4 mt-2 text-center">
     <h1 class="fw-bold h3 text-hubs">
-        <i class="bi bi-calendar-plus me-2"></i>Proponer una Quedada
+        <i class="bi bi-calendar-plus me-2"></i>
+        {% if form.instance.pk %}Editar Quedada{% else %}Proponer una Quedada{% endif %}
     </h1>
     <p class="text-muted small">Organiza un encuentro y comparte vuestra pasión en persona.</p>
 </div>
@@ -14,7 +15,6 @@
 <div class="container mb-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            {# Aplicamos nuestra clase card-hubs #}
             <div class="card card-hubs border-0 shadow-sm">
                 <div class="card-body p-4 p-md-5">
                     
@@ -24,7 +24,6 @@
                         </div>
                     </div>
 
-                    {# ¡IMPORTANTE! Añadido el enctype para permitir subir fotos #}
                     <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         {% csrf_token %}
 
@@ -34,20 +33,40 @@
                                 {{ field.label }}
                             </label>
                             
-                            {# Añadimos clases de estilo a los campos de forma dinámica #}
-                            <div class="hubs-input-group">
-                                {{ field }}
-                            </div>
-                            
-                            {% if field.help_text %}
-                                <div class="form-text small opacity-75">{{ field.help_text }}</div>
-                            {% endif %}
+                            {% if field.name == 'image' %}
+                                {# --- SECCIÓN DE IMAGEN --- #}
+                                <div class="mb-2">
+                                    {% if form.instance.image %}
+                                        <div class="text-center mb-3">
+                                            <img src="{{ form.instance.image.url }}" 
+                                                 class="rounded-4 shadow-sm border" 
+                                                 style="width: 100%; max-height: 200px; object-fit: cover; border: 2px solid #0b5961 !important;">
+                                            <p class="extra-small text-muted mt-2">Imagen actual del evento</p>
+                                        </div>
+                                    {% endif %}
 
+                                    <div id="imageUploadContainer" class="border border-dashed rounded-3 p-3 text-center" 
+                                         style="cursor:pointer; background:#f8f9fa; border: 2px dashed #0b5961 !important;">
+                                        
+                                        <div id="uploadPlaceholder">
+                                            <i class="bi bi-camera fs-2 text-muted"></i>
+                                            <p class="small text-muted mb-0 d-block">
+                                                {% if form.instance.image %}Haz clic para cambiar la foto{% else %}Haz clic para añadir foto{% endif %}
+                                            </p>
+                                        </div>
+                                        <div id="imagePreview" class="d-none w-100"></div>
+                                        <div class="d-none">{{ field }}</div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="hubs-input-group">
+                                    {{ field }}
+                                </div>
+                            {% endif %}
+                            
                             {% if field.errors %}
                                 {% for error in field.errors %}
-                                    <div class="text-danger small mt-1">
-                                        <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
-                                    </div>
+                                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
                                 {% endfor %}
                             {% endif %}
                         </div>
@@ -55,10 +74,14 @@
 
                         <hr class="my-4 opacity-25">
 
+                        {# --- BOTONES RESTAURADOS --- #}
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary shadow-sm" id="submit-btn">
+                            <button type="submit" class="btn btn-primary shadow-sm py-2 fw-bold" id="submit-btn">
                                 <span class="spinner-border spinner-border-sm d-none" id="btn-spinner" role="status" aria-hidden="true"></span>
-                                <span id="btn-text">Publicar</span>
+                                <i class="bi bi-check-circle me-1"></i>
+                                <span id="btn-text">
+                                    {% if form.instance.pk %}Guardar cambios{% else %}Publicar{% endif %}
+                                </span>
                             </button>
                             <a href="{% url 'posts:event_list' %}" class="btn btn-link text-decoration-none text-muted small">
                                 <i class="bi bi-x-circle me-1"></i>Cancelar y volver
@@ -71,5 +94,4 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
