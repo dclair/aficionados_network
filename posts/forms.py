@@ -39,7 +39,8 @@ class PostCreateForm(forms.ModelForm):
             ),
             "image": forms.FileInput(
                 attrs={
-                    "class": "form-control d-none",
+                    # Mantenemos 'form-control d-none' y AÑADIMOS 'validate-image'
+                    "class": "form-control d-none validate-image",
                     "accept": "image/*",
                     "id": "id_image",
                 }

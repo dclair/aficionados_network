@@ -50,20 +50,21 @@
                                 </div>
                             {% endif %}
 
-                            <label for="{{ form.image.id_for_label }}" class="file-upload-label shadow-sm">
-                                <div id="preview-container" class="d-none mb-3">
-                                    <img id="image-preview" src="#" class="rounded-3 border shadow-sm" style="width: 130px; height: 130px; object-fit: cover;">
-                                </div>
+                            <div id="imageUploadContainer" class="file-upload-label shadow-sm text-center p-4 border rounded-4" style="cursor: pointer;">
+                                
+                                <div id="imagePreview" class="d-none mb-3">
+                                    </div>
 
-                                <i class="bi bi-cloud-arrow-up fs-1 text-primary" id="upload-icon"></i>
+                                <div id="uploadPlaceholder">
+                                    <i class="bi bi-cloud-arrow-up fs-1 text-primary" id="upload-icon"></i>
+                                    <span class="d-block fw-bold text-dark mb-1" id="file-status">Haz clic aquí para cambiar la imagen</span>
+                                    <span class="extra-small text-muted d-block" id="file-name-text">O arrastra un nuevo archivo</span>
+                                </div>
                                 
-                                <span class="d-block fw-bold text-dark mb-1" id="file-status">Haz clic aquí para cambiar la imagen</span>
-                                <span class="extra-small text-muted d-block" id="file-name-text">O arrastra un nuevo archivo</span>
-                                
-                                <div class="file-upload-input-hidden django-file-widget">
+                                <div class="file-upload-input-hidden django-file-widget d-none">
                                     {{ form.image }}
                                 </div>
-                            </label>
+                            </div>
                         </div>
 
                         <div class="d-flex gap-2 mt-4 pt-3 border-top">
@@ -119,5 +120,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/image-preview.js' %}"></script>
+    <script src="{% static 'js/community-hub.js' %}"></script>
 {% endblock %}

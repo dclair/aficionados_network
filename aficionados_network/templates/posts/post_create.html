@@ -82,16 +82,26 @@
                                 </div>
                             </div>
                             
-                            <label class="form-label small fw-bold text-muted">Imagen del post</label>
+                           <label class="form-label small fw-bold text-muted">Imagen del post</label>
                             <div class="image-upload-container border border-dashed rounded-3 p-3 mb-3 text-center" 
-                                 id="imageUploadContainer" 
-                                 style="cursor:pointer; background:#f8f9fa; border: 2px dashed #008080 !important;">
+                                id="imageUploadContainer" 
+                                style="cursor:pointer; background:#f8f9fa; border: 2px dashed var(--hubs-primary) !important;">
+                                
                                 <div id="uploadPlaceholder">
                                     <i class="bi bi-camera fs-2 text-muted"></i>
                                     <p class="small text-muted mb-0 d-block">Haz clic para añadir foto</p>
                                 </div>
-                                <div id="imagePreview" class="d-none"></div>
-                                <div class="d-none">{{ form.image }}</div>
+
+                                <div id="imagePreview" class="d-none">
+                                    <img id="image-preview" src="#" alt="Previsualización" 
+                                        class="img-fluid rounded-3 shadow-sm mx-auto" 
+                                        style="max-height: 250px; object-fit: cover; width: 100%;">
+                                    <p class="extra-small text-hubs mt-2 mb-0 fw-bold">Click para cambiar imagen</p>
+                                </div>
+
+                                <div class="d-none">
+                                    {{ form.image }}
+                                </div>
                             </div>
 
                             <button type="submit" class="btn btn-hubs w-100 fw-bold py-2 shadow-sm" id="submitBtn">
