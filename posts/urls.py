@@ -35,6 +35,7 @@ urlpatterns = [
         name="event_reactivate",
     ),
     path("event/<int:pk>/duplicate/", views.duplicate_event, name="event_duplicate"),
+    path("hub/<slug:hobby_slug>/", views.hobby_hub, name="hobby_hub"),
     # rutas para las inscripciones del usuario
     path(
         "mis-inscripciones/",
@@ -43,6 +44,6 @@ urlpatterns = [
     ),
     # rutas para los planes organizados por el usuario
     path("mis-planes-organizados/", views.MyEventsListView.as_view(), name="my_events"),
-    # ruta para la galeria de clicks
+    # ruta para los clicks
     path("clicks/", views.clicks_gallery, name="clicks_list"),
 ]

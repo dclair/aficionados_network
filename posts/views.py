@@ -700,3 +700,21 @@ def clicks_gallery(request):
         )
 
     return render(request, "posts/clicks_list.html", {"clicks": clicks_page})
+
+
+# CON ESTO SE MUESTRA LA GALERIA DE LOS EVENTOS DE UNA AFICION O HOBBY
+def hobby_hub(request, hobby_slug):
+    from posts.models import Posts  # Importación local para evitar errores
+
+    hobby = get_object_or_404(Hobby, slug=hobby_slug)
+
+    context = {
+        "hobby": hobby,
+        # Si Event también usa 'category' en lugar de 'hobby', cámbialo aquí también
+        "events": Event.objects.filter(hobby=hobby, is_canceled=False).order_by(
+            "event_date"
+        ),
+        # CAMBIO AQUÍ: Usamos 'category' porque es el nombre real en tu modelo Posts
+        "clicks": Posts.objects.filter(category=hobby).order_by("-created_at")[:12],
+    }
+    return render(request, "posts/hobby_hub.html", context)

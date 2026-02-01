@@ -75,7 +75,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "notifications.context_processors.unread_notifications",  # <--- AÑADE ESTO para notificaciones
+                "notifications.context_processors.unread_notifications",  # <---ESTO para notificaciones
+                "profiles.context_processors.user_hobbies_processor",  # <---ESTO para aficiones
             ],
         },
     },
