@@ -41,6 +41,14 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a class="nav-link px-2 d-flex align-items-center text-nowrap {% if request.resolver_match.url_name == 'clicks_list' %}active fw-bold text-hubs{% endif %}" 
+                    href="{% url 'posts:clicks_list' %}"
+                    title="Galería visual de los mejores momentos y fotos de la comunidad">
+                        <i class="bi bi-camera-fill me-1"></i> Clicks
+                    </a>
+                </li>
+
                 {% if not user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link px-3 text-nowrap" href="{% url 'login' %}">Login</a></li>
                     <li class="nav-item">

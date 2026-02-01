@@ -43,4 +43,6 @@ urlpatterns = [
     ),
     # rutas para los planes organizados por el usuario
     path("mis-planes-organizados/", views.MyEventsListView.as_view(), name="my_events"),
+    # ruta para la galeria de clicks
+    path("clicks/", views.clicks_gallery, name="clicks_list"),
 ]

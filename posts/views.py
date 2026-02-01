@@ -18,6 +18,8 @@ from .forms import PostCreateForm, CommentForm, EventForm, EventCommentForm
 from notifications.models import Notification
 from django.db.models import Q  # Importante para el buscador
 from django.db.models import Exists, OuterRef
+from itertools import chain
+from operator import attrgetter
 
 # from notifications.models import Notification as NotificationModel
 from django.contrib import messages
@@ -40,6 +42,7 @@ from django.db.models import Count  # Importante para contar los posts
 from django.utils import timezone
 from django.contrib.auth.models import User
 from .models import Posts
+from django.shortcuts import render
 
 
 # Funcion Maestra para enviar correos con el diseño de Hubs&Clicks
@@ -666,4 +669,20 @@ class MyParticipationsListView(LoginRequiredMixin, ListView):
         return context
 
 
-# clase para las vistas de los eventos en los que yo los organizo -Mis planes creados/organizados
+# con esta funcion mostramos la galeria de clicks
+def clicks_gallery(request):
+    # 1. Extraemos Posts con imagen (no nula y no vacía)
+    posts_with_img = Posts.objects.filter(image__isnull=False).exclude(image="")
+
+    # 2. Extraemos Eventos con imagen (asumiendo que el campo se llama 'image')
+    events_with_img = Event.objects.filter(image__isnull=False).exclude(image="")
+
+    # 3. Los combinamos en una sola lista
+    # Usamos chain para unirlos y sorted para ordenarlos por fecha de creación
+    clicks = sorted(
+        chain(posts_with_img, events_with_img),
+        key=attrgetter("created_at"),  # Ordenamos por fecha
+        reverse=True,  # Los más nuevos primero
+    )
+
+    return render(request, "posts/clicks_list.html", {"clicks": clicks})
