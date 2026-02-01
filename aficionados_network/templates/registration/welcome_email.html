@@ -1,0 +1,66 @@
+{% autoescape off %}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+        .button {
+            background-color: #0b5961;
+            color: white !important;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="cid:logo_id" alt="Hubs & Clicks Logo" class="logo">
+        </div>
+
+        <div class="content">
+            <h2 style="color: #0b5961; text-align: center;">¡Todo listo, {{ user.username }}!</h2>
+            <p>Tu cuenta ha sido activada correctamente. Ya eres parte oficial de <strong>Hubs & Clicks</strong>.</p>
+            
+            <p>¿No sabes por dónde empezar? Aquí tienes un par de ideas:</p>
+            
+            <ul>
+                <li><strong>Explora tus recomendaciones:</strong> Gracias a tus intereses, ya tienes una sección de <strong>"quedadas para ti"</strong> esperándote en tu panel.</li>
+                <li><strong>Completa tu perfil:</strong> Cuanto más detalles tus aficiones, mejores compañeros de aventuras te sugeriremos.</li>
+            </ul>
+
+            <div style="text-align: center;">
+                <a href="http://{{ domain }}/login/" class="button">Entrar a mi cuenta</a>
+            </div>
+
+            <p style="margin-top: 40px; font-size: 0.9em; color: #777; text-align: center;">
+                Nos vemos en la próxima quedada,<br>
+                <strong>El equipo de Hubs & Clicks.</strong>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+{% endautoescape %}
