@@ -1,26 +1,26 @@
-// static/js/cookies.js
-
 document.addEventListener("DOMContentLoaded", function() {
-    const cookieBanner = document.getElementById('cookie-banner');
+    const banner = document.getElementById('cookie-banner');
     const acceptBtn = document.getElementById('accept-cookies');
+    const rejectBtn = document.getElementById('reject-cookies'); // <--- Añadimos esta referencia
 
-    // 1. Verificamos si ya existe la decisión en el navegador
-    if (cookieBanner && !localStorage.getItem('cookies-accepted')) {
-        cookieBanner.style.display = 'block';
+    // 1. Verificar si ya se tomó una decisión previa
+    if (localStorage.getItem('hubs-cookies-accepted')) {
+        banner.style.display = 'none';
     }
 
-    // 2. Lógica del botón de aceptar
+    // 2. Lógica para ACEPTAR TODO
     if (acceptBtn) {
-        acceptBtn.addEventListener('click', function() {
-            localStorage.setItem('cookies-accepted', 'true');
-            
-            // Efecto de salida suave
-            cookieBanner.style.transition = "opacity 0.5s ease";
-            cookieBanner.style.opacity = "0";
-            
-            setTimeout(() => {
-                cookieBanner.style.display = 'none';
-            }, 500);
+        acceptBtn.addEventListener('click', () => {
+            localStorage.setItem('hubs-cookies-accepted', 'all');
+            banner.classList.add('hidden'); // Activa la animación de bajada del CSS
+        });
+    }
+
+    // 3. Lógica para RECHAZAR / SOLO NECESARIAS
+    if (rejectBtn) {
+        rejectBtn.addEventListener('click', () => {
+            localStorage.setItem('hubs-cookies-accepted', 'essential');
+            banner.classList.add('hidden'); // También lo ocultamos
         });
     }
 });
