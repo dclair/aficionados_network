@@ -1,7 +1,5 @@
-// static/js/community-hub.js
-
 const CommunityHub = {
-    // 1. Previsualización de Imagen + Validación de Tamaño 
+    // 1. Previsualización de Imagen + Validación de Tamaño
     initImagePreview: function() {
         const input = document.getElementById('id_image');
         const container = document.getElementById('imageUploadContainer');
@@ -16,23 +14,19 @@ const CommunityHub = {
             
             input.addEventListener('change', function() {
                 const file = this.files[0];
-                
                 if (file) {
-                    // --- NUEVA VALIDACIÓN DE TAMAÑO ---
                     if (file.size > MAX_SIZE_BYTES) {
                         alert(`¡Imagen demasiado pesada! El límite es de ${MAX_SIZE_MB}MB.`);
-                        this.value = ""; // Vaciamos el input
+                        this.value = "";
                         placeholder.classList.remove('d-none');
                         preview.classList.add('d-none');
                         preview.innerHTML = "";
                         return;
                     }
 
-                    // --- LÓGICA DE PREVISUALIZACIÓN ---
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         placeholder.classList.add('d-none');
-                        // Mantenemos tu estilo de imagen, pero añadimos el id "image-preview" por si acaso
                         preview.innerHTML = `
                             <img id="image-preview" src="${e.target.result}" class="img-fluid rounded shadow-sm mb-2" style="max-height: 250px; width: 100%; object-fit: cover;">
                             <p class="small text-danger mb-0" style="cursor:pointer;"><i class="bi bi-arrow-repeat me-1"></i>Cambiar foto</p>
@@ -45,7 +39,7 @@ const CommunityHub = {
         }
     },
 
-    // 2. Contador de Caracteres (MANTENIDO)
+    // 2. Contador de Caracteres
     initCharCounter: function() {
         const textarea = document.getElementById('id_caption');
         const counter = document.getElementById('charCounter');
@@ -56,7 +50,7 @@ const CommunityHub = {
         }
     },
 
-    // 3. Smart Scroll (Solo Móvil - MANTENIDO)
+    // 3. Smart Scroll (Solo Móvil)
     initSmartScroll: function() {
         const buttons = document.querySelectorAll('.btn-trending-view');
         buttons.forEach(btn => {
@@ -69,24 +63,43 @@ const CommunityHub = {
         });
     },
 
-    // 4. Estado de Carga (Spinner - MANTENIDO)
+    // 4. Estado de Carga (Spinner) - ¡ESTA ES LA VERSIÓN UNIFICADA!
     initLoadingState: function() {
-        const form = document.getElementById('postForm');
-        const btn = document.getElementById('submitBtn');
-        if (form && btn) {
-            form.addEventListener('submit', () => {
-                btn.disabled = true;
-                document.getElementById('btnText').classList.add('d-none');
-                document.getElementById('btnSpinner').classList.remove('d-none');
-            });
+        // Buscamos el botón con el ID exacto de tu HTML
+        const submitBtn = document.getElementById('submit-btn');
+        
+        if (submitBtn) {
+            // Buscamos el formulario al que pertenece el botón
+            const form = submitBtn.closest('form');
+            const spinner = document.getElementById('btn-spinner');
+            const icon = document.getElementById('btn-icon');
+            const text = document.getElementById('btn-text');
+
+            if (form) {
+                form.addEventListener('submit', function() {
+                    // 1. Desactivar botón para evitar doble envío
+                    submitBtn.disabled = true;
+                    
+                    // 2. Mostrar Spinner
+                    if (spinner) spinner.classList.remove('d-none');
+                    
+                    // 3. Ocultar Icono
+                    if (icon) icon.classList.add('d-none');
+                    
+                    // 4. Cambiar Texto
+                    if (text) {
+                        text.innerText = "Procesando...";
+                    }
+                });
+            }
         }
     }
 };
 
-// Arrancar todas las funciones al cargar el DOM
+// Arrancar todas las funciones cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     CommunityHub.initImagePreview();
     CommunityHub.initCharCounter();
     CommunityHub.initSmartScroll();
-    CommunityHub.initLoadingState();
+    CommunityHub.initLoadingState(); // Se encarga de todo ahora
 });
