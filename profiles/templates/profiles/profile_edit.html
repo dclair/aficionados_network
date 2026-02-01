@@ -6,33 +6,42 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="row g-4"> <div class="col-lg-7">
+    <div class="row g-4"> 
+        <div class="col-lg-7">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white">
                     <h1 class="h4 mb-0"><i class="bi bi-pencil-square me-2"></i>Información básica</h1>
                 </div>
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
+                    <form method="post" enctype="multipart/form-data" id="postForm">
                         {% csrf_token %}
 
                         <div class="text-center mb-4">
-                            <div class="position-relative d-inline-block">
-                                {% if user_profile.profile_picture %}
-                                    <img src="{{ user_profile.profile_picture.url }}" 
-                                         class="rounded-circle shadow"
-                                         style="width:130px;height:130px;object-fit:cover;"
-                                         id="profile-preview">
-                                {% else %}
-                                    <div class="rounded-circle shadow bg-light d-flex align-items-center justify-content-center" 
-                                         style="width:130px;height:130px;">
-                                        <i class="bi bi-person-fill text-muted" style="font-size: 3rem;"></i>
+                            <div class="position-relative d-inline-block" id="imageUploadContainer" style="cursor: pointer;">
+                                
+                                <div id="uploadPlaceholder">
+                                    {% if user_profile.profile_picture %}
+                                        <img src="{{ user_profile.profile_picture.url }}" 
+                                             class="rounded-circle shadow"
+                                             style="width:130px;height:130px;object-fit:cover;">
+                                    {% else %}
+                                        <div class="rounded-circle shadow bg-light d-flex align-items-center justify-content-center" 
+                                             style="width:130px;height:130px;">
+                                            <i class="bi bi-person-fill text-muted" style="font-size: 3rem;"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0">
+                                        <i class="bi bi-camera"></i>
                                     </div>
-                                {% endif %}
-                                <label for="id_profile_picture"
-                                       class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0">
-                                    <i class="bi bi-camera"></i>
-                                </label>
-                                <div class="d-none">{{ profile_form.profile_picture }}</div>
+                                </div>
+
+                                <div id="imagePreview" class="d-none" style="width:130px;height:130px;">
+                                    <style>#imagePreview img { border-radius: 50% !important; width: 130px; height: 130px; object-fit: cover; }</style>
+                                </div>
+
+                                <div class="d-none">
+                                    <input type="file" name="profile_picture" accept="image/*" id="id_image">
+                                </div>
                             </div>
                         </div>
 
@@ -51,8 +60,10 @@
                             <a href="{% url 'profiles:profile' user.profile.pk %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Volver
                             </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-lg"></i> Actualizar Perfil
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
+                                <span class="spinner-border spinner-border-sm d-none" id="btn-spinner" role="status" aria-hidden="true"></span>
+                                <i class="bi bi-check-lg" id="btn-icon"></i> 
+                                <span id="btn-text">Actualizar Perfil</span>
                             </button>
                         </div>
                     </form>
@@ -81,9 +92,7 @@
                             <p class="text-muted small text-center my-3">No has añadido aficiones todavía.</p>
                         {% endfor %}
                     </div>
-
                     <hr>
-
                     <p class="small fw-bold text-muted mb-2">Añadir nueva afición</p>
                     <form action="{% url 'profiles:add_hobby' %}" method="post" class="p-3 bg-light rounded border border-warning">
                         {% csrf_token %}
@@ -111,37 +120,14 @@
                     </form>
                 </div>
             </div>
-
             <div class="alert alert-info border-0 shadow-sm small">
                 <i class="bi bi-info-circle-fill me-2"></i> 
                 Añadir aficiones te ayuda a conectar con otros aficionados cercanos.
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const profilePictureInput = document.getElementById('id_profile_picture');
-    const profilePreview = document.getElementById('profile-preview');
-    
-    if (profilePictureInput) {
-        profilePictureInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    if (profilePreview) {
-                        profilePreview.src = e.target.result;
-                    }
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-});
-</script>
-{% endblock %}
+    {% endblock %}

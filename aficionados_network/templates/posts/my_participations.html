@@ -13,12 +13,12 @@
         </a>
     </div>
 
-    <div class="card shadow-sm border-0 overflow-hidden">
-        <div class="table-responsive border-0">
+    <div class="card shadow-sm border-0 card-visible">
+        <div class="table-responsive border-0 table-responsive-visible">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-secondary small fw-bold">
                     <tr>
-                        <th class="ps-4" style="min-width: 140px;">Evento</th>
+                        <th class="ps-4 col-event-width">Evento</th>
                         <th class="d-none d-sm-table-cell">Organizador</th>
                         <th class="text-center">Estado</th>
                         <th class="text-end pe-4">Acciones</th>
@@ -28,7 +28,7 @@
                     {% for event in participations %}
                     <tr>
                         <td class="ps-4">
-                            <div class="fw-bold text-dark text-truncate" style="max-width: 150px;">
+                            <div class="fw-bold text-dark text-truncate event-title-truncate">
                                 {{ event.title }}
                             </div>
                         </td>
@@ -48,25 +48,21 @@
                         </td>
 
                         <td class="text-end pe-4">
-                            {# Dropdown de Acciones #}
                             <div class="dropdown">
                                 <button class="btn btn-light btn-sm border shadow-sm" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 dropdown-menu-top">
                                     <li><a class="dropdown-item py-2" href="{% url 'posts:event_detail' event.pk %}"><i class="bi bi-eye me-2 text-muted"></i> Ver detalle</a></li>
                                     
-                                    {# --- CAMBIO AQUÍ: LÓGICA DE VALORACIÓN --- #}
                                     {% if event.event_date < now and not event.is_canceled %}
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             {% if event.has_reviewed %}
-                                                {# Caso: El usuario YA ha valorado este evento #}
                                                 <span class="dropdown-item py-2 text-success small opacity-75">
                                                     <i class="bi bi-check-circle-fill me-2"></i> Evento valorado
                                                 </span>
                                             {% else %}
-                                                {# Caso: El usuario NO ha valorado todavía #}
                                                 <button type="button" class="dropdown-item py-2 text-warning fw-bold" 
                                                         data-bs-toggle="modal" data-bs-target="#reviewModal{{ event.id }}">
                                                     <i class="bi bi-star-fill me-2"></i> Valorar
@@ -75,26 +71,23 @@
                                         </li>
                                     {% endif %}
 
-                                    {# Opción de Desapuntarse (solo para futuros) #}
                                     {% if event.event_date > now and not event.is_canceled %}
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="d-inline">
-                                                {% csrf_token %}
-                                                <button type="submit" class="dropdown-item py-2 text-danger" onclick="return confirm('¿Seguro?')">
-                                                    <i class="bi bi-box-arrow-right me-2"></i> Desapuntarme
-                                                </button>
-                                            </form>
+                                            <button type="button" class="dropdown-item py-2 text-danger" 
+                                                    data-bs-toggle="modal" data-bs-target="#confirmCancelModal{{ event.id }}">
+                                                <i class="bi bi-box-arrow-right me-2"></i> Desapuntarme
+                                            </button>
                                         </li>
                                     {% endif %}
                                 </ul>
                             </div>
 
-                            {# Solo renderizamos el modal si el evento es valorable y NO ha sido valorado aún #}
+                            {# Modal de Valoración #}
                             {% if event.event_date < now and not event.is_canceled and not event.has_reviewed %}
                             <div class="modal fade" id="reviewModal{{ event.id }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow">
+                                    <div class="modal-content modal-content-custom">
                                         <div class="modal-header">
                                             <h5 class="modal-title fw-bold">Valorar a {{ event.organizer.username }}</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -126,6 +119,30 @@
                             </div>
                             {% endif %} 
 
+                            {# Modal de Confirmación para Desapuntarse #}
+                            {% if event.event_date > now and not event.is_canceled %}
+                            <div class="modal fade" id="confirmCancelModal{{ event.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content modal-content-custom">
+                                        <div class="modal-body text-center py-4">
+                                            <div class="modal-confirm-icon">
+                                                <i class="bi bi-info-circle-fill"></i>
+                                            </div>
+                                            <h6 class="fw-bold mb-2">¿Quieres desapuntarte?</h6>
+                                            <p class="text-muted small mb-0">Vas a cancelar tu asistencia a <strong>{{ event.title }}</strong>.</p>
+                                        </div>
+                                        <div class="modal-footer modal-footer-confirm justify-content-center">
+                                            <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">No, volver</button>
+                                            <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm px-3 fw-bold shadow-sm">Sí, desapuntarme</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
                         </td>
                     </tr>
                     {% empty %}
@@ -140,20 +157,4 @@
         </div>
     </div>
 </div>
-<style>
-    /* Permite que el dropdown se vea fuera de la tabla responsive */
-    .table-responsive {
-        overflow: visible !important;
-    }
-    
-    /* Evita que el card corte el contenido */
-    .card {
-        overflow: visible !important;
-    }
-
-    /* Asegura que el dropdown aparezca por encima de cualquier otro elemento */
-    .dropdown-menu {
-        z-index: 1050; 
-    }
-</style>
 {% endblock %}
