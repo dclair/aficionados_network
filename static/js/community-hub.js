@@ -119,4 +119,28 @@ window.onscroll = function () {
 mybutton.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
 });
+
+/**
+ * Validación de Formularios de Bootstrap 5
+ * Busca cualquier formulario con la clase .needs-validation y detiene el envío
+ * si los campos no son válidos, mostrando los errores visuales.
+ */
+(function () {
+    'use strict'
+    
+    // Escuchamos el evento de carga del DOM para asegurar que los elementos existen
+    document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
+})();
    

@@ -1,5 +1,4 @@
 {% extends "general/layout.html" %}
-{
 
 {% load crispy_forms_tags %}
 
@@ -50,8 +49,10 @@
                             
                             <div class="col-12 mt-3">
                                 <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-person-plus me-2"></i>Registrarse
+                                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                                        <span class="spinner-border spinner-border-sm d-none" id="btn-spinner" role="status" aria-hidden="true"></span>
+                                        <i class="bi bi-person-plus me-2" id="btn-icon"></i>
+                                        <span id="btn-text">Registrarse</span>
                                     </button>
                                 </div>
                             </div>
@@ -72,24 +73,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-// Bootstrap 5 form validation
-(function () {
-    'use strict'
-    
-    // Fetch all the forms we want to apply custom Bootstrap validation styles to
-    const forms = document.querySelectorAll('.needs-validation')
-    
-    // Loop over them and prevent submission
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-        }, false)
-    })
-})()
-</script>
+
 {% endblock %}

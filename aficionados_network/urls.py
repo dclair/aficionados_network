@@ -11,6 +11,8 @@ from .views import (
     RegisterView,
     LogoutView,
     ContactFormView,
+    RegisterView,
+    activate,
 )
 
 urlpatterns = [
@@ -25,6 +27,8 @@ urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("register/", RegisterView.as_view(), name="register"),
+    # Esta es la URL que el usuario pincha en su correo:
+    path("activate/<uidb64>/<token>/", activate, name="activate"),
     path("contact/", ContactFormView.as_view(), name="contact"),
     path("pages/", include("django.contrib.flatpages.urls")),
     path("notifications/", include("notifications.urls")),
