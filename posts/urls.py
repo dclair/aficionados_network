@@ -46,4 +46,9 @@ urlpatterns = [
     path("mis-planes-organizados/", views.MyEventsListView.as_view(), name="my_events"),
     # ruta para los clicks
     path("clicks/", views.clicks_gallery, name="clicks_list"),
+    path(
+        "hobby/toggle/<slug:hobby_slug>/",
+        views.toggle_hobby_membership,
+        name="toggle_hobby_membership",
+    ),
 ]

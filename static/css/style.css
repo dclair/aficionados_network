@@ -563,3 +563,28 @@ footer {
 .bg-hubs {
     background-color: #0b5961 !important;
 }
+
+/* Ajustes para el Modal de Clicks */
+#post-modal-content {
+    overflow: hidden; /* Evita scrolls dobles */
+}
+
+#modal-comments-container {
+    scrollbar-width: thin; /* Para Firefox */
+}
+
+#modal-comments-container::-webkit-scrollbar {
+    width: 6px; /* Para Chrome/Safari */
+}
+
+#modal-comments-container::-webkit-scrollbar-thumb {
+    background-color: #e9ecef;
+    border-radius: 10px;
+}
+
+/* Forzar que el modal sea ancho en PC */
+@media (min-width: 992px) {
+    .modal-xl {
+        max-width: 1100px;
+    }
+}

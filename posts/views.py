@@ -134,10 +134,17 @@ class PostDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "post"
     login_url = "login"
 
+    # --- LO ÚNICO NECESARIO PARA EL MODAL ---
+    def get_template_names(self):
+        if self.request.GET.get("modal"):
+            return ["posts/partials/_post_modal_body.html"]
+        return [self.template_name]
+
+    # ----------------------------------------
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["comment_form"] = CommentForm()
-        # Aprovechamos para pasar las aficiones si quisiéramos filtrar algo
         return context
 
 
@@ -242,6 +249,32 @@ def add_comment(request, post_id):
                     )
 
     return redirect("posts:post_detail", pk=post.pk)
+
+
+@login_required
+def toggle_hobby_membership(request, hobby_slug):
+    hobby = get_object_or_404(Hobby, slug=hobby_slug)
+    profile = request.user.profile  # Asumo que tu relación es User -> Profile
+
+    if hobby in profile.hobbies.all():
+        profile.hobbies.remove(hobby)
+        is_member = False
+    else:
+        profile.hobbies.add(hobby)
+        is_member = True
+
+    # Calculamos el total de miembros (ajusta 'profiles' según tu related_name)
+    member_count = hobby.profiles.count()
+
+    # Si es una petición HTMX, devolvemos solo el trozo del botón y el contador
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "posts/partials/_hobby_status.html",
+            {"hobby": hobby, "is_member": is_member, "member_count": member_count},
+        )
+
+    return redirect("posts:hobby_hub", hobby_slug=hobby_slug)
 
 
 # --- VISTA PARA EDITAR POST ---
@@ -714,8 +747,15 @@ def hobby_hub(request, hobby_slug):
 
     hobby = get_object_or_404(Hobby, slug=hobby_slug)
 
+    # Comprobamos si el usuario ya es miembro
+    is_member = False
+    if request.user.is_authenticated:
+        is_member = hobby in request.user.profile.hobbies.all()
+
     context = {
         "hobby": hobby,
+        "is_member": is_member,
+        "member_count": hobby.profiles.count(),  # Contador de miembros
         # Si Event también usa 'category' en lugar de 'hobby', cámbialo aquí también
         "events": Event.objects.filter(hobby=hobby, is_canceled=False).order_by(
             "event_date"

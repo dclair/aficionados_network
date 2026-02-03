@@ -11,7 +11,12 @@
     
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    
+    <script>
+    document.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    });
+    </script>
+
     <title>{% block head_title %}Hubs & Clicks{% endblock head_title %}</title>
     {% block extra_css %}{% endblock extra_css %}
 </head>

@@ -1,0 +1,18 @@
+<div id="hobby-status-wrapper" class="d-flex align-items-center gap-3">
+    <div class="text-center">
+        <h4 class="fw-bold mb-0 text-hubs">{{ member_count }}</h4>
+        <small class="text-muted text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Miembros</small>
+    </div>
+
+    <button hx-post="{% url 'posts:toggle_hobby_membership' hobby.slug %}"
+            hx-target="#hobby-status-wrapper"
+            hx-swap="outerHTML"
+            class="btn {% if is_member %}btn-outline-secondary{% else %}btn-hubs{% endif %} rounded-pill px-4 btn-sm fw-bold">
+        {# Ya no necesitas el {% csrf_token %} aquí, el script global lo envía por ti #}
+        {% if is_member %}
+            <i class="bi bi-check2-circle me-1"></i> Siguiendo
+        {% else %}
+            <i class="bi bi-plus-lg me-1"></i> Seguir
+        {% endif %}
+    </button>
+</div>

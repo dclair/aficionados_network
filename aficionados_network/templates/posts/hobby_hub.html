@@ -1,20 +1,43 @@
 {% extends "general/layout.html" %}
+{% load static %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="d-flex align-items-center mb-4">
-        <div class="bg-hubs text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" 
-             style="width: 60px; height: 60px; font-size: 24px; font-weight: bold;">
-            {{ hobby.name|slice:":1"|upper }}
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center">
+            <div class="bg-hubs text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" 
+                 style="width: 60px; height: 60px; font-size: 24px; font-weight: bold;">
+                {{ hobby.name|slice:":1"|upper }}
+            </div>
+            <div>
+                <h1 class="mb-0 fw-bold">{{ hobby.name }}</h1>
+                <p class="text-muted mb-0">Comunidad de aficionados</p>
+            </div>
         </div>
-        <div>
-            <h1 class="mb-0 fw-bold">{{ hobby.name }}</h1>
-            <p class="text-muted mb-0">Comunidad de aficionados</p>
+
+        {# 1. CONTADOR Y SISTEMA DE SEGUIMIENTO (HTMX) #}
+        <div id="hobby-status-wrapper" class="d-flex align-items-center gap-3 bg-light p-2 px-3 rounded-pill border">
+            <div class="text-center border-end pe-3">
+                <h5 class="fw-bold mb-0 text-hubs">{{ member_count }}</h5>
+                <small class="text-muted text-uppercase" style="font-size: 0.6rem; letter-spacing: 1px;">Miembros</small>
+            </div>
+            <button hx-post="{% url 'posts:toggle_hobby_membership' hobby.slug %}" 
+                    hx-target="#hobby-status-wrapper" 
+                    hx-swap="outerHTML"
+                    class="btn {% if is_member %}btn-outline-secondary{% else %}btn-hubs{% endif %} btn-sm rounded-pill px-3 fw-bold">
+                {% csrf_token %}
+                {% if is_member %}
+                    <i class="bi bi-check2-circle me-1"></i> Siguiendo
+                {% else %}
+                    <i class="bi bi-plus-lg me-1"></i> Seguir
+                {% endif %}
+            </button>
         </div>
     </div>
 
     <hr class="mb-5">
 
+    {# SECCIÓN QUEDADAS (Sin cambios necesarios) #}
     <div class="section-header d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold"><i class="bi bi-calendar-event me-2"></i>Próximas Quedadas</h3>
         <a href="{% url 'posts:event_create' %}" class="btn btn-sm btn-outline-hubs rounded-pill">Proponer algo</a>
@@ -49,7 +72,12 @@
         {% for post in clicks %}
             <div class="col">
                 <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden post-card-hover">
-                    <a href="{% url 'posts:post_detail' post.pk %}">
+                    {# 2. INTERACCIÓN GALERÍA: Disparador del Modal #}
+                    <a href="javascript:void(0)" 
+                       hx-get="{% url 'posts:post_detail' post.pk %}?modal=1" 
+                       hx-target="#post-modal-content" 
+                       data-bs-toggle="modal" 
+                       data-bs-target="#postModal">
                         {% if post.image %}
                             <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}" 
                                 style="object-fit: cover; height: 180px; width: 100%;">
@@ -61,21 +89,20 @@
                     </a>
 
                     <div class="card-body p-3">
-                        <h6 class="fw-bold mb-1 text-dark text-truncate">
-                            {{ post.title|default:"Sin título" }}
-                        </h6>
-                        
-                        <p class="small text-muted mb-2 card-description">
-                            {{ post.caption|truncatechars:60 }}
-                        </p>
+                        <h6 class="fw-bold mb-1 text-dark text-truncate">{{ post.title|default:"Sin título" }}</h6>
+                        <p class="small text-muted mb-2 card-description">{{ post.caption|truncatechars:60 }}</p>
 
                         <div class="d-flex justify-content-between align-items-center mt-auto">
                             <span class="badge bg-light text-dark fw-normal border">
                                 <i class="bi bi-heart-fill text-danger me-1"></i>{{ post.likes.count }}
                             </span>
-                            <a href="{% url 'posts:post_detail' post.pk %}" class="btn btn-link btn-sm text-hubs p-0 fw-bold text-decoration-none">
+                            <button hx-get="{% url 'posts:post_detail' post.pk %}?modal=1" 
+                                    hx-target="#post-modal-content" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#postModal"
+                                    class="btn btn-link btn-sm text-hubs p-0 fw-bold text-decoration-none">
                                 Ver más
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -85,6 +112,19 @@
                 <p class="text-muted px-3">Aún no hay fotos en esta comunidad.</p>
             </div>
         {% endfor %}
+    </div>
+</div>
+
+{# 3. ESTRUCTURA DEL MODAL (Fuera del flujo principal) #}
+<div class="modal fade" id="postModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 overflow-hidden" id="post-modal-content">
+            <div class="p-5 text-center">
+                <div class="spinner-border text-hubs" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
