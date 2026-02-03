@@ -233,6 +233,11 @@ class Event(models.Model):
         default=10, verbose_name="Número máximo de asistentes"
     )
 
+    @property
+    def is_past(self):
+        """Devuelve True si el evento ya ha pasado"""
+        return self.event_date < timezone.now()
+
     def get_absolute_url(self):
         # Esto le dice a Django que la página "maestra" de un evento es su detalle
         return reverse("posts:event_detail", kwargs={"pk": self.pk})

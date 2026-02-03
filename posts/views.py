@@ -27,21 +27,18 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.views import View
 from django.urls import reverse
-from django.utils import timezone
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
 from email.mime.image import MIMEImage
 import os
-from .models import Event, Hobby
+
 from profiles.models import Review
 from django.db.models import Count  # Importante para contar los posts
 
 # --- VISTA PARA CREAR POST ---
 # Añadimos LoginRequiredMixin para que no puedan crear si no están logueados
-from django.utils import timezone
 from django.contrib.auth.models import User
-from .models import Posts
 from django.shortcuts import render
 
 
@@ -359,6 +356,15 @@ class EventListView(LoginRequiredMixin, ListView):
 @login_required
 def toggle_attendance(request, event_id):
     event = get_object_or_404(Event, id=event_id)
+
+    # 🚨 VALIDACIÓN CRÍTICA: Bloqueo por fecha pasada
+    # Comparamos la fecha del evento con el momento actual
+    if event.event_date < timezone.now():
+        messages.error(
+            request,
+            "Este evento ya ha finalizado y no permite cambios en la asistencia.",
+        )
+        return redirect("posts:event_detail", pk=event.id)
 
     if request.user == event.organizer:
         messages.warning(request, "Como organizador, no puedes desapuntarte.")

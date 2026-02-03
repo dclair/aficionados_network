@@ -12,9 +12,9 @@
     <i class="bi bi-arrow-left"></i> Volver al listado
 </a>
 
-{# 2. ALERTA DE CANCELACIÓN #}
+{# 2. ALERTA DE CANCELACIÓN O FINALIZACIÓN #}
 {% if event.is_canceled %}
-<div class="alert alert-danger border-0 shadow-sm d-flex flex-column p-4 mb-4">
+<div class="alert alert-danger border-0 shadow-sm d-flex flex-column p-4 mb-4 rounded-4">
     <div class="d-flex align-items-center">
         <i class="bi bi-exclamation-octagon-fill fs-1 me-3"></i>
         <div>
@@ -22,8 +22,6 @@
             <p class="mb-0">Este evento ha sido cancelado por el organizador.</p>
         </div>
     </div>
-
-    {# BOTÓN SOLO PARA EL ORGANIZADOR #}
     {% if request.user == event.organizer %}
         <hr>
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -38,10 +36,16 @@
         </div>
     {% endif %}
 </div>
+{% elif event.is_past %} {# <--- CAMBIO: Usamos is_past #}
+<div class="alert alert-secondary border-0 shadow-sm d-flex align-items-center p-3 mb-4 rounded-4">
+    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+    <p class="mb-0 fw-bold">Este evento ya se celebró el {{ event.event_date|date:"d/m/Y" }}.</p>
+</div>
 {% endif %}
 
 {# 3. HERO DEL EVENTO #}
-<div class="card border-0 shadow-sm overflow-hidden mb-4 card-hubs {% if event.is_canceled %}opacity-75{% endif %}">
+{# CAMBIO: Usamos is_past para la opacidad #}
+<div class="card border-0 shadow-sm overflow-hidden mb-4 card-hubs {% if event.is_canceled or event.is_past %}opacity-75{% endif %}">
     <div class="row g-0">
         <div class="col-lg-8">
             <div class="detail-banner-wrapper">
@@ -80,8 +84,6 @@
 
 {# 4. CUERPO PRINCIPAL #}
 <div class="row mt-4">
-
-    {# --- COLUMNA IZQUIERDA --- #}
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm p-4 mb-4 card-hubs">
             <h4 class="fw-bold text-hubs mb-3">
@@ -101,10 +103,10 @@
                 <i class="bi bi-chat-left-text me-2"></i>Comunidad
             </h4>
 
-            {% if not event.is_canceled %}
+            {# CAMBIO: Comprobamos que no haya pasado para dejar comentar #}
+            {% if not event.is_canceled and not event.is_past %}
             <div class="card border-0 shadow-sm mb-4 card-hubs">
                 <div class="card-body">
-                    {# MODIFICADO: Añadida clase js-form-loading #}
                     <form action="{% url 'posts:add_event_comment' event.id %}" method="POST" class="js-form-loading">
                         {% csrf_token %}
                         <div class="mb-3">
@@ -112,7 +114,6 @@
                         </div>
                         <div class="text-end">
                            <button type="submit" class="btn btn-hubs">
-                                {# MODIFICADO: Añadida clase btn-spinner #}
                                 <span class="spinner-border spinner-border-sm btn-spinner d-none" role="status" aria-hidden="true"></span>
                                 <span class="btn-text">Publicar comentario</span>
                             </button>
@@ -135,15 +136,13 @@
                 </div>
             </div>
             {% empty %}
-            <p class="text-muted text-center py-4">Nadie ha comentado todavía. ¡Sé el primero!</p>
+            <p class="text-muted text-center py-4">Nadie ha comentado todavía.</p>
             {% endfor %}
         </div>
     </div>
 
-    {# --- COLUMNA DERECHA --- #}
     <div class="col-lg-4">
         <div class="sticky-top pt-3" style="top: 140px;">
-            
             {% if messages %}
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 mb-3">
@@ -168,7 +167,6 @@
                              class="rounded-circle border shadow-sm"
                              style="width:48px;height:48px;object-fit:cover;"
                              title="{{ participant.username }}">
-                        
                         {% if participant == event.organizer %}
                         <span class="badge-organizer"><i class="bi bi-star-fill"></i></span>
                         {% endif %}
@@ -176,25 +174,27 @@
                     {% endfor %}
                 </div>
 
-                {# LOGICA DINÁMICA DE BOTONES #}
-                {% if not event.is_canceled %}
+                {# LOGICA DINÁMICA DE BOTONES CORREGIDA #}
+                {% if event.is_past %} {# <--- CAMBIO: Usamos is_past #}
+                    <div class="text-center p-3 bg-light rounded-4 text-muted border shadow-sm">
+                        <i class="bi bi-calendar-check-fill me-2 text-secondary"></i>
+                        <span class="fw-bold">Evento finalizado</span>
+                    </div>
+                {% elif not event.is_canceled %}
                     {% if request.user == event.organizer %}
                         <a href="{% url 'posts:event_update' event.id %}" class="btn btn-hubs w-100 mb-2">
                             <i class="bi bi-pencil-square me-2"></i>Editar evento
                         </a>
                     {% else %}
-                        {# MODIFICADO: Añadida clase js-form-loading #}
                         <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="js-form-loading">
                             {% csrf_token %}
                             {% if request.user in event.participants.all %}
                                 <button type="submit" class="btn btn-outline-danger w-100">
-                                    {# MODIFICADO: Añadida clase btn-spinner #}
                                     <span class="spinner-border spinner-border-sm btn-spinner d-none" role="status" aria-hidden="true"></span>
                                     <span class="btn-text"><i class="bi bi-person-dash-fill me-2"></i>No podré asistir</span>
                                 </button>
                             {% else %}
                                 <button type="submit" class="btn btn-hubs w-100">
-                                    {# MODIFICADO: Añadida clase btn-spinner #}
                                     <span class="spinner-border spinner-border-sm btn-spinner d-none" role="status" aria-hidden="true"></span>
                                     <span class="btn-text"><i class="bi bi-person-plus-fill me-2"></i>Me apunto</span>
                                 </button>
@@ -207,7 +207,5 @@
     </div>
 </div>
 
-{# 5. CARGA DEL SCRIPT DE SPINNER #}
 <script src="{% static 'js/spinner.js' %}"></script>
-
 {% endblock content %}
