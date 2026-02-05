@@ -415,31 +415,49 @@ footer {
 .htmx-request .htmx-indicator-hide { display: none; }
 
 /* ============================================================
-   10. MODAL DE POST RESPONSIVO (NUEVO)
+/* ============================================================
+   10. MODAL DE POST RESPONSIVO (FIX PARA IPHONE)
    ============================================================ */
-.post-modal-container {
-    min-height: 80vh;
-    max-height: 90vh;
+
+/* En PC el modal es horizontal y fijo */
+@media (min-width: 992px) {
+    .post-modal-container { height: 80vh; flex-direction: row; }
+    .post-modal-image-col { flex: 0 0 70%; height: 100%; }
+    .post-modal-content-col { flex: 0 0 30%; height: 100%; }
 }
+
+/* En MÓVIL (iPhone/Smartphone) el modal se apila verticalmente */
+@media (max-width: 991.98px) {
+    .post-modal-container {
+        display: flex;
+        flex-direction: column;
+        height: 85vh; /* Altura total del modal en móvil */
+        overflow: hidden; /* Evita que el modal entero haga scroll */
+    }
+
+    .post-modal-image-col {
+        height: 30vh; /* La imagen solo ocupa el 30% arriba */
+        min-height: 200px;
+        flex-shrink: 0;
+    }
+
+    .post-modal-content-col {
+        flex: 1; /* El resto del espacio es para comentarios y form */
+        display: flex;
+        flex-direction: column;
+        min-height: 0; /* Fix para flexbox en Safari */
+    }
+}
+
+/* Soporte para el gesto de scroll con el dedo en iPhone */
+.post-comments-scroll {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* ESTO ES LO QUE ACTIVA EL DEDO EN IPHONE */
+    background-color: #f8f9fa;
+}
+
 .post-main-img {
     max-height: 100%;
     width: 100%;
     object-fit: contain;
-}
-.post-comments-scroll {
-    overflow-y: auto;
-    background-color: #f8f9fa;
-    scrollbar-width: thin;
-}
-
-@media (max-width: 991.98px) {
-    .post-modal-container { flex-direction: column; height: 90vh; }
-    .post-modal-image-col { height: 35vh; min-height: 250px; width: 100%; background: black; }
-    .post-modal-content-col { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-}
-
-@media (min-width: 992px) {
-    .post-modal-container { flex-direction: row; }
-    .post-modal-image-col { flex: 0 0 70%; height: 80vh; background: black; }
-    .post-modal-content-col { flex: 0 0 30%; height: 80vh; }
 }

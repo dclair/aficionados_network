@@ -1,11 +1,16 @@
-<div class="row g-0" style="height: 80vh;">
-    <div class="col-lg-7 bg-black d-flex align-items-center justify-content-center h-100">
+{# 1. Cambiamos style="height: 80vh" por la clase que ya tiene el Media Query en el CSS #}
+<div class="row g-0 post-modal-container">
+    
+    {# 2. Quitamos h-100 y usamos post-modal-image-col para controlar el alto en móvil #}
+    <div class="col-lg-7 bg-black d-flex align-items-center justify-content-center post-modal-image-col">
         {% if post.image %}
-            <img src="{{ post.image.url }}" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+            <img src="{{ post.image.url }}" class="img-fluid post-main-img" style="max-height: 100%; object-fit: contain;">
         {% endif %}
     </div>
 
-    <div class="col-lg-5 d-flex flex-column bg-white h-100">
+    {# 3. Quitamos h-100 y usamos post-modal-content-col para repartir el espacio restante #}
+    <div class="col-lg-5 d-flex flex-column bg-white post-modal-content-col">
+        
         <div class="p-3 border-bottom d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
                 <img src="{% if post.user.profile.profile_picture %}{{ post.user.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ post.user.username }}{% endif %}" 
@@ -15,14 +20,14 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
-        <div class="flex-grow-1 overflow-y-auto p-3" id="scroll-container-{{ post.id }}" style="background-color: #f8f9fa;">
+        {# 4. Usamos la clase post-comments-scroll que tiene el fix para el dedo del iPhone #}
+        <div class="flex-grow-1 p-3 post-comments-scroll" id="scroll-container-{{ post.id }}" style="background-color: #f8f9fa;">
             <div class="mb-3">
                 <p class="small mb-0"><strong>{{ post.title }}</strong></p>
                 <p class="text-muted small">{{ post.caption }}</p>
                 <hr>
             </div>
 
-            {# Contenedor de comentarios #}
             <div id="comments-list-{{ post.id }}"> 
                 {% for comment_obj in post.comments.all reversed %}
                     {% include 'posts/partials/_comment_single.html' %}
@@ -35,7 +40,6 @@
         </div>
 
         <div class="p-3 border-top bg-white">
-            {# CAMBIO CLAVE: hx-swap='afterbegin' para insertar arriba y eliminamos el JS de scroll #}
             <form hx-post="{% url 'posts:add_comment' post.id %}" 
                 hx-target="#comments-list-{{ post.id }}" 
                 hx-swap="afterbegin" 
