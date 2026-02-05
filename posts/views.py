@@ -9,6 +9,7 @@ from django.views.generic import (
     UpdateView,
     DeleteView,
 )
+from django.http import HttpResponse, HttpResponseForbidden
 from django.views import View
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
@@ -32,7 +33,6 @@ from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
 from email.mime.image import MIMEImage
 import os
-
 from profiles.models import Review
 from django.db.models import Count  # Importante para contar los posts
 
@@ -40,6 +40,7 @@ from django.db.models import Count  # Importante para contar los posts
 # Añadimos LoginRequiredMixin para que no puedan crear si no están logueados
 from django.contrib.auth.models import User
 from django.shortcuts import render
+from django.utils.safestring import mark_safe
 
 
 # Funcion Maestra para enviar correos con el diseño de Hubs&Clicks
@@ -201,29 +202,21 @@ def add_comment(request, post_id):
                 reverse("posts:post_detail", args=[post.pk])
             )
 
-            # --- LÓGICA DE NOTIFICACIONES POR EMAIL ---
-
-            # CASO A: Alguien externo comenta el post de otro usuario
+            # --- LÓGICA DE NOTIFICACIONES (Mantener exactamente igual) ---
             if post.user != request.user:
-                # Notificación en la web (Campana)
                 Notification.objects.create(
                     sender=request.user,
                     recipient=post.user,
                     notification_type="comment",
                     post=post,
                 )
-
-                # ENVÍO DE EMAIL (Usando la Función Maestra)
                 send_hubs_email(
                     subject=f"💬 Nuevo comentario de @{request.user.username}",
                     recipient=post.user,
                     message_body=f'¡Hola! @{request.user.username} ha comentado en tu publicación: "{post.caption[:50]}..."',
                     action_url=action_url,
                 )
-
-            # CASO B: El dueño responde en su propio post
             else:
-                # Buscamos quién más ha comentado aquí (excluyendo al dueño)
                 participantes_ids = (
                     post.comments.exclude(user=post.user)
                     .values_list("user_id", flat=True)
@@ -232,15 +225,12 @@ def add_comment(request, post_id):
                 usuarios_a_notificar = User.objects.filter(id__in=participantes_ids)
 
                 for usuario in usuarios_a_notificar:
-                    # Notificación en la web
                     Notification.objects.create(
                         sender=request.user,
                         recipient=usuario,
                         notification_type="comment",
                         post=post,
                     )
-
-                    # ENVÍO DE EMAIL (Usando la Función Maestra)
                     send_hubs_email(
                         subject=f"📢 @{request.user.username} respondió en un post",
                         recipient=usuario,
@@ -248,6 +238,16 @@ def add_comment(request, post_id):
                         action_url=action_url,
                     )
 
+            # --- LA CLAVE PARA EL MODAL ---
+            # Si la petición es HTMX, devolvemos SOLO el fragmento del nuevo comentario
+            if request.headers.get("HX-Request"):
+                return render(
+                    request,
+                    "posts/partials/_comment_single.html",
+                    {"comment_obj": comment},
+                )
+
+    # Si no es HTMX o el formulario falló, redirigimos como siempre
     return redirect("posts:post_detail", pk=post.pk)
 
 
@@ -581,6 +581,28 @@ def add_event_comment(request, event_id):
             messages.success(request, "Comentario publicado y avisos enviados.")
 
     return redirect("posts:event_detail", pk=event.id)
+
+
+# -- VISTA PARA AGREGAR COMENTARIOS A POSTS (NO EVENTOS)
+# views.py
+@login_required
+def add_post_comment(request, post_id):
+    post = get_object_or_404(Posts, id=post_id)
+    if request.method == "POST":
+        texto = request.POST.get("comment")
+        if texto:
+            nuevo = Comment.objects.create(post=post, user=request.user, comment=texto)
+
+            # Si es HTMX, devolvemos SOLO el comentario nuevo
+            if request.headers.get("HX-Request"):
+                return render(
+                    request,
+                    "posts/partials/_comment_single.html",
+                    {"comment_obj": nuevo},
+                )
+
+    # Si algo falla, devolvemos un 204 (No Content) para que HTMX no haga nada
+    return HttpResponse(status=204)
 
 
 # --- VISTA PARA VER MIS EVENTOS, los que uno mismo ha creado ---

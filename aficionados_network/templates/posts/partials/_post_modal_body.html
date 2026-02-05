@@ -1,62 +1,58 @@
-<div class="row g-0" style="min-height: 80vh;">
-    <div class="col-lg-7 bg-black d-flex align-items-center justify-content-center">
+<div class="row g-0" style="height: 80vh;">
+    <div class="col-lg-7 bg-black d-flex align-items-center justify-content-center h-100">
         {% if post.image %}
-            <img src="{{ post.image.url }}" class="img-fluid w-100" style="max-height: 80vh; object-fit: contain;" alt="{{ post.title }}">
-        {% else %}
-            <div class="text-white text-center p-5">
-                <i class="bi bi-image fs-1 opacity-25"></i>
-                <p>Sin imagen disponible</p>
-            </div>
+            <img src="{{ post.image.url }}" class="img-fluid" style="max-height: 100%; object-fit: contain;">
         {% endif %}
     </div>
 
-    <div class="col-lg-5 d-flex flex-column bg-white">
+    <div class="col-lg-5 d-flex flex-column bg-white h-100">
         <div class="p-3 border-bottom d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
-                <img src="{% if post.user.profile.profile_picture %}{{ post.user.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ post.user.username }}&background=0b5961&color=fff{% endif %}" 
-                     class="rounded-circle border me-2" style="width: 35px; height: 35px; object-fit: cover;">
-                <span class="fw-bold text-dark">@{{ post.user.username }}</span>
+                <img src="{% if post.user.profile.profile_picture %}{{ post.user.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ post.user.username }}{% endif %}" 
+                     class="rounded-circle border me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                <span class="fw-bold small">@{{ post.user.username }}</span>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
-        <div class="p-3 flex-grow-1 overflow-auto" id="modal-comments-container" style="max-height: 50vh;">
-            <div class="mb-4">
-                <h5 class="fw-bold text-hubs mb-1">{{ post.title }}</h5>
-                <p class="text-secondary small">{{ post.caption }}</p>
+        <div class="flex-grow-1 overflow-y-auto p-3" id="scroll-container-{{ post.id }}" style="background-color: #f8f9fa;">
+            <div class="mb-3">
+                <p class="small mb-0"><strong>{{ post.title }}</strong></p>
+                <p class="text-muted small">{{ post.caption }}</p>
                 <hr>
             </div>
 
-            <div id="comments-list">
-                {% for comment in post.comments.all %}
-                    <div class="d-flex mb-3">
-                        <img src="{% if comment.user.profile.profile_picture %}{{ comment.user.profile.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ comment.user.username }}&background=random{% endif %}" 
-                             class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
-                        <div class="bg-light p-2 rounded-4 flex-grow-1" style="font-size: 0.9rem;">
-                            <span class="fw-bold d-block">@{{ comment.user.username }}</span>
-                            {{ comment.content }}
-                        </div>
-                    </div>
+            {# Contenedor de comentarios #}
+            <div id="comments-list-{{ post.id }}"> 
+                {% for comment_obj in post.comments.all reversed %}
+                    {% include 'posts/partials/_comment_single.html' %}
                 {% empty %}
-                    <div class="text-center py-4 text-muted small" id="no-comments-msg">
-                        Aún no hay comentarios. ¡Sé el primero!
-                    </div>
+                    <p class="text-muted small text-center py-3" id="no-comments-{{ post.id }}">
+                        No hay comentarios aún.
+                    </p>
                 {% endfor %}
             </div>
         </div>
 
-        <div class="p-3 border-top mt-auto">
-            <form hx-post="{% url 'posts:add_event_comment' post.id %}" 
-                  hx-target="#comments-list" 
-                  hx-swap="beforeend"
-                  onsubmit="this.reset(); document.getElementById('no-comments-msg')?.remove();"
-                  class="d-flex gap-2">
+        <div class="p-3 border-top bg-white">
+            {# CAMBIO CLAVE: hx-swap='afterbegin' para insertar arriba y eliminamos el JS de scroll #}
+            <form hx-post="{% url 'posts:add_comment' post.id %}" 
+                hx-target="#comments-list-{{ post.id }}" 
+                hx-swap="afterbegin" 
+                hx-on::after-request="if(event.detail.successful) { 
+                    this.reset(); 
+                    var noComments = document.getElementById('no-comments-{{ post.id }}');
+                    if(noComments) noComments.remove();
+                }"
+                class="d-flex gap-2">
                 {% csrf_token %}
-                <div class="flex-grow-1">
-                    {{ comment_form.content }}
-                </div>
-                <button type="submit" class="btn btn-hubs btn-sm">
-                    <i class="bi bi-send"></i>
+                <input type="text" name="comment" 
+                    class="form-control form-control-sm rounded-pill px-3" 
+                    placeholder="Escribe un comentario..." 
+                    required>
+                <button type="submit" class="btn btn-hubs btn-sm rounded-circle shadow-sm">
+                    <i class="bi bi-send-fill htmx-indicator-hide"></i>
+                    <div class="spinner-border spinner-border-sm htmx-indicator" role="status"></div>
                 </button>
             </form>
         </div>
