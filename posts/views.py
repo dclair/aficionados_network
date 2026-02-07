@@ -42,7 +42,7 @@ from django.db.models import Count  # Importante para contar los posts
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
-from profiles.models import UserHobby
+from profiles.models import UserHobby, Hobby
 
 
 # Funcion Maestra para enviar correos con el diseño de Hubs&Clicks
@@ -816,25 +816,67 @@ def clicks_gallery(request):
 
 
 # CON ESTO SE MUESTRA LA GALERIA DE LOS EVENTOS DE UNA AFICION O HOBBY
+# aficionados_network/views.py (o donde tengas hobby_hub)
+from django.utils import timezone
+from django.db.models import Q
+from profiles.models import UserHobby, Hobby  # Asegúrate de estas importaciones
+
+
 def hobby_hub(request, hobby_slug):
     from posts.models import Posts  # Importación local para evitar errores
 
     hobby = get_object_or_404(Hobby, slug=hobby_slug)
+    now = timezone.now()
 
     # Comprobamos si el usuario ya es miembro
     is_member = False
-    if request.user.is_authenticated:
-        is_member = hobby in request.user.profile.hobbies.all()
+    user = request.user
+    if user.is_authenticated:
+        is_member = hobby in user.profile.hobbies.all()
+
+        # --- 1. PERSISTENCIA DE LA SIDEBAR ---
+        # Calculamos los contadores para que no desaparezcan al navegar
+        my_hobbies = user.profile.hobbies.all()
+        user_levels = UserHobby.objects.filter(profile=user.profile).values(
+            "hobby_id", "level"
+        )
+        levels_map = {item["hobby_id"]: item["level"] for item in user_levels}
+
+        for h in my_hobbies:
+            u_level = levels_map.get(h.id)
+            h.match_count = (
+                Event.objects.filter(hobby=h, event_date__gte=now, is_canceled=False)
+                .filter(
+                    Q(level="all") | Q(level=u_level) if u_level else Q(level="all")
+                )
+                .count()
+            )
+    else:
+        my_hobbies = None
+
+    # --- 2. LÓGICA DE TAGS PARA LOS EVENTOS DEL HUB ---
+    events = Event.objects.filter(hobby=hobby, is_canceled=False).order_by("event_date")
+
+    if user.is_authenticated:
+        level_order = {"beginner": 0, "intermediate": 1, "advanced": 2, "expert": 3}
+        # Nivel del usuario para este hobby específico
+        u_level_code = levels_map.get(hobby.id)
+
+        for event in events:
+            # Match: mismo nivel o 'all'
+            event.is_match = (event.level == "all") or (event.level == u_level_code)
+            # Mentor: nivel usuario > nivel evento (y no es 'all')
+            if event.level != "all" and u_level_code:
+                event.is_mentor = level_order.get(u_level_code, 0) > level_order.get(
+                    event.level, -1
+                )
 
     context = {
         "hobby": hobby,
         "is_member": is_member,
-        "member_count": hobby.profiles.count(),  # Contador de miembros
-        # Si Event también usa 'category' en lugar de 'hobby', cámbialo aquí también
-        "events": Event.objects.filter(hobby=hobby, is_canceled=False).order_by(
-            "event_date"
-        ),
-        # CAMBIO AQUÍ: Usamos 'category' porque es el nombre real en tu modelo Posts
+        "member_count": hobby.profiles.count(),
+        "my_hobbies": my_hobbies,  # Añadimos esto para la sidebar
+        "events": events,
         "clicks": Posts.objects.filter(category=hobby).order_by("-created_at")[:12],
     }
     return render(request, "posts/hobby_hub.html", context)
