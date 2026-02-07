@@ -14,22 +14,6 @@
 {% endblock %}
 
 {% block content %}
-<style>
-    /* Estilos para eventos cancelados */
-    .grayscale-filter {
-        filter: grayscale(100%);
-        transition: filter 0.3s ease;
-    }
-    .card-canceled {
-        background-color: #f8f9fa !important;
-        border: 1px solid #dee2e6 !important;
-    }
-    .img-event-wrapper {
-        position: relative;
-        overflow: hidden;
-    }
-</style>
-
 <div class="container py-2">
     
     {# SECCIÓN: BARRA DE FILTROS #}
@@ -82,7 +66,6 @@
     <div class="row g-4">
         {% for event in events %}
         <div class="col-md-6 col-lg-4">
-            {# AÑADIDO: Clase card-canceled y opacidad si está cancelado #}
             <div class="card h-100 card-hubs border-0 {% if event.is_canceled %}opacity-75 card-canceled{% endif %}">
                 
                 {# IMAGEN DEL EVENTO #}
@@ -110,7 +93,6 @@
                         <small class="text-muted"><i class="bi bi-person-circle me-1 text-hubs"></i>{{ event.organizer.username }}</small>
                     </div>
                     
-                    {# AÑADIDO: Título tachado si está cancelado #}
                     <h5 class="card-title fw-bold text-hubs {% if event.is_canceled %}text-decoration-line-through text-muted{% endif %}">
                         {{ event.title }}
                     </h5>
@@ -125,13 +107,27 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
-                        <span class="small fw-bold {% if event.participants.count >= event.max_participants %}text-danger{% else %}text-muted{% endif %}">
-                            <i class="bi bi-people-fill me-1"></i>{{ event.participants.count }}/{{ event.max_participants }}
-                        </span>
+                    {# MODIFICADO: Pie de tarjeta con barra de progreso #}
+                    <div class="mt-auto pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="extra-small fw-bold {% if event.participants.count >= event.max_participants %}text-danger{% else %}text-muted{% endif %}">
+                                <i class="bi bi-people-fill me-1"></i>{{ event.participants.count }}/{{ event.max_participants }}
+                            </span>
+                            {% if event.participants.count >= event.max_participants %}
+                                <span class="badge bg-danger-subtle text-danger extra-small">Completo</span>
+                            {% endif %}
+                        </div>
                         
+                        {# Barra de progreso visual #}
+                        <div class="progress mb-3" style="height: 6px; background-color: var(--hubs-primary-subtle);">
+                            <div class="progress-bar {% if event.participants.count >= event.max_participants %}bg-danger{% else %}bg-hubs{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {% widthratio event.participants.count event.max_participants 100 %}%">
+                            </div>
+                        </div>
+
                         <div class="d-flex gap-2">
-                            <a href="{% url 'posts:event_detail' event.id %}" class="btn btn-sm btn-outline-hubs px-3">Ver</a>
+                            <a href="{% url 'posts:event_detail' event.id %}" class="btn btn-sm btn-outline-hubs flex-grow-1 px-3">Ver</a>
                             
                             {% if event.is_canceled %}
                                 <span class="badge bg-light text-danger border d-flex align-items-center px-3 small">Cancelado</span>
@@ -140,7 +136,6 @@
                                     <i class="bi bi-star-fill text-warning me-1"></i> Mío
                                 </span>
                             {% else %}
-                                {# AÑADIDO: Clase js-form-loading para el spinner #}
                                 <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="js-form-loading m-0">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm {% if request.user in event.participants.all %}btn-danger{% else %}btn-success{% endif %} px-3 shadow-sm">
@@ -183,7 +178,6 @@
     {% endif %}
 </div>
 
-{# CARGA DEL SCRIPT DE SPINNER #}
 <script src="{% static 'js/community.js' %}"></script>
 
 {% endblock %}
