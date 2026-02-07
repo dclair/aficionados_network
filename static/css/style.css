@@ -274,6 +274,32 @@ footer {
     background-color: #fce8e8 !important;
 }
 
+/* Badges de Nivel Estilizados */
+.bg-success-subtle { background-color: #e8f5e9 !important; color: #2e7d32 !important; }
+.bg-warning-subtle { background-color: #fff8e1 !important; color: #f57f17 !important; }
+.bg-danger-subtle { background-color: #ffebee !important; color: #c62828 !important; }
+
+.badge.small {
+    padding: 0.35em 0.5em;
+    font-size: 0.7rem;
+    border-radius: 6px;
+}
+
+/* Estilos para el Match de Nivel */
+.card-match-level {
+    border: 2px solid #0dcaf0 !important; /* Azul cian para resaltar el match */
+    box-shadow: 0 4px 15px rgba(13, 202, 240, 0.1) !important;
+}
+
+.bg-info {
+    background-color: #0dcaf0 !important;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+.extra-small {
+    font-size: 0.7rem;
+}
 /* ============================================================
    8. DISTINTIVOS DE USUARIO (ORGANIZADOR)
    ============================================================ */
@@ -549,4 +575,74 @@ footer {
         -ms-overflow-style: none;  /* IE y Edge */
         scrollbar-width: none;     /* Firefox */
     }
+}
+/* ============================================================
+   SISTEMA DE NIVELES Y MATCH (LISTADO DE EVENTOS)
+   ============================================================ */
+
+/* Estilo base para los badges de nivel con texto */
+.badge-level-text {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.6rem !important;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 6px;
+    gap: 4px; /* Espacio entre icono y texto */
+}
+/* Colores de los estados */
+.bg-all-levels { background-color: #e0f7fa !important; color: #006064 !important; border: 1px solid #b2ebf2; }
+.bg-success-subtle { background-color: #d1f2d5 !important; color: #0f5132 !important; border: 1px solid #badbcc !important; }
+.bg-warning-subtle { background-color: #fff3cd !important; color: #664d03 !important; border: 1px solid #ffecb5 !important; }
+.bg-danger-subtle { background-color: #f8d7da !important; color: #842029 !important; border: 1px solid #f5c2c7 !important; }
+
+/* Iconos dentro de los badges */
+.badge-level-text i {
+    font-size: 0.85rem;
+    margin-right: 4px;
+}
+
+/* Resaltado de la tarjeta cuando el nivel coincide (Match) */
+.card-match-level {
+    border: 2px solid #0dcaf0 !important;
+    box-shadow: 0 4px 15px rgba(13, 202, 240, 0.15) !important;
+}
+
+/* Efecto al pasar el ratón por una tarjeta con match */
+.card-match-level:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(13, 202, 240, 0.25) !important;
+}
+
+/* Badge específico de "Tu nivel" */
+.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000 !important;
+    font-weight: 700;
+}
+
+/* Colores de fondo para los niveles (Refinados para lectura) */
+.bg-success-subtle { 
+    background-color: #d1f2d5 !important; 
+    color: #0f5132 !important; 
+}
+.bg-warning-subtle { 
+    background-color: #fff3cd !important; 
+    color: #664d03 !important; 
+}
+.bg-danger-subtle { 
+    background-color: #f8d7da !important; 
+    color: #842029 !important; 
+}
+/* Nivel Experto: Fondo oscuro y texto blanco para máximo impacto */
+.bg-dark {
+    background-color: #212529 !important;
+    color: #ffffff !important;
+    border: 1px solid #000 !important;
+}
+
+/* Opcional: Si quieres que el "Match" de Experto brille más */
+.card-match-level[data-level="expert"] {
+    border-color: #6f42c1 !important; /* Un tono púrpura */
+    box-shadow: 0 4px 20px rgba(111, 66, 193, 0.2) !important;
 }

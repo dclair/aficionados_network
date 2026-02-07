@@ -41,6 +41,7 @@ from django.db.models import Count  # Importante para contar los posts
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
+from profiles.models import UserHobby
 
 
 # Funcion Maestra para enviar correos con el diseño de Hubs&Clicks
@@ -333,58 +334,6 @@ class EventCreateView(LoginRequiredMixin, CreateView):
         return response
 
 
-# Vista para VER la lista de quedadas
-class EventListView(LoginRequiredMixin, ListView):
-    model = Event
-    template_name = "posts/event_list.html"
-    context_object_name = "events"
-    login_url = "login"
-    paginate_by = 9
-
-    def get_queryset(self):
-        # 1. Con esto traemos los eventos futuros y no cancelados
-        queryset = (
-            Event.objects.select_related("hobby", "organizer")
-            .filter(event_date__gte=timezone.now())
-            .order_by("event_date")
-        )
-
-        # 2. Capturamos los filtros (incluyendo el nuevo de ciudad)
-        search_query = self.request.GET.get("q")
-        city_query = self.request.GET.get("city")  # <-- Nueva captura
-        hobby_id = self.request.GET.get("hobby")
-
-        # 3. Filtrado Dinámico
-        # Texto general (Título, Ubicación o Descripción)
-        if search_query:
-            queryset = queryset.filter(
-                Q(title__icontains=search_query)
-                | Q(location__icontains=search_query)
-                | Q(description__icontains=search_query)
-            )
-
-        # Filtro específico de Ciudad (si el usuario usa el campo dedicado)
-        if city_query:
-            queryset = queryset.filter(location__icontains=city_query)
-
-        # Filtro por Hobby
-        if hobby_id and hobby_id != "all":
-            queryset = queryset.filter(hobby_id=hobby_id)
-
-        return queryset.distinct()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Cargamos los hobbies para el select
-        context["hobbies"] = Hobby.objects.all()
-
-        # Mantenemos TODOS los valores para que el formulario no se borre al pulsar "Filtrar"
-        context["current_q"] = self.request.GET.get("q", "")
-        context["current_city"] = self.request.GET.get("city", "")  # <-- Nuevo
-        context["current_hobby"] = self.request.GET.get("hobby", "all")
-        return context
-
-
 # Función para APUNTARSE o DESAPUNTARSE
 @login_required
 def toggle_attendance(request, event_id):
@@ -434,6 +383,79 @@ def toggle_attendance(request, event_id):
     return redirect("posts:event_detail", pk=event.id)
 
 
+# Vista para VER la lista de quedadas
+class EventListView(LoginRequiredMixin, ListView):
+    model = Event
+    template_name = "posts/event_list.html"
+    context_object_name = "events"
+    login_url = "login"
+    paginate_by = 9
+
+    def get_queryset(self):
+        # 1. Base del queryset (añadimos .distinct() aquí al principio)
+        queryset = (
+            Event.objects.select_related("hobby", "organizer")
+            .filter(event_date__gte=timezone.now())
+            .distinct()  # <--- Lo movemos aquí
+            .order_by("event_date")
+        )
+
+        # 2. Captura de filtros
+        search_query = self.request.GET.get("q")
+        city_query = self.request.GET.get("city")
+        hobby_id = self.request.GET.get("hobby")
+        level_query = self.request.GET.get("level")
+
+        # 3. Aplicación de filtros
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query)
+                | Q(location__icontains=search_query)
+                | Q(description__icontains=search_query)
+            )
+        if city_query:
+            queryset = queryset.filter(location__icontains=city_query)
+        if hobby_id and hobby_id != "all":
+            queryset = queryset.filter(hobby_id=hobby_id)
+        if level_query and level_query != "all":
+            queryset = queryset.filter(level=level_query)
+
+        # 4. LÓGICA DE MATCH DE NIVEL
+        # Solo ejecutamos si el usuario está logueado para evitar errores
+        if self.request.user.is_authenticated:
+            # Filtramos a través de profile__user porque UserHobby apunta al Profile
+            user_levels_qs = UserHobby.objects.filter(
+                profile__user=self.request.user  # <--- CAMBIO AQUÍ
+            ).values("hobby_id", "level")
+
+            # Creamos el mapa: {id_del_hobby: 'nivel'}
+            levels_map = {item["hobby_id"]: item["level"] for item in user_levels_qs}
+
+            # Marcamos los eventos que coinciden
+            for event in queryset:
+                user_level_in_this_hobby = levels_map.get(event.hobby.id)
+
+                # Comparamos el nivel del evento con el del usuario
+                # También es match si el evento es para "todos" (all)
+                event.is_match = (event.level == "all") or (
+                    event.level == user_level_in_this_hobby
+                )
+        else:
+            for event in queryset:
+                event.is_match = False
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["hobbies"] = Hobby.objects.all()
+        context["current_q"] = self.request.GET.get("q", "")
+        context["current_city"] = self.request.GET.get("city", "")
+        context["current_hobby"] = self.request.GET.get("hobby", "all")
+        context["current_level"] = self.request.GET.get("level", "all")
+        return context
+
+
 class EventDetailView(LoginRequiredMixin, DetailView):
     model = Event
     template_name = "posts/event_detail.html"
@@ -454,15 +476,7 @@ class EventDetailView(LoginRequiredMixin, DetailView):
 # VISTA PARA EDITAR
 class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Event
-    fields = [
-        "image",
-        "title",
-        "description",
-        "location",
-        "event_date",
-        "max_participants",
-        "hobby",
-    ]
+    form_class = EventForm  # Usamos el formulario con el que creamos el evento
     template_name = "posts/event_form.html"  # Reutilizamos el mismo de crear
 
     def test_func(self):
@@ -584,7 +598,6 @@ def add_event_comment(request, event_id):
 
 
 # -- VISTA PARA AGREGAR COMENTARIOS A POSTS (NO EVENTOS)
-# views.py
 @login_required
 def add_post_comment(request, post_id):
     post = get_object_or_404(Posts, id=post_id)

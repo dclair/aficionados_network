@@ -94,7 +94,11 @@ class EventForm(forms.ModelForm):
             "location",
             "event_date",
             "max_participants",
+            "level",
         ]
+        help_texts = {
+            "level": "Explica la dificultad: Principiante (sin experiencia), Intermedio (conoces las bases),Avanzado (nivel técnico/competitivo), Experto (nivel profesional o muy experimentado).",
+        }
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -120,6 +124,7 @@ class EventForm(forms.ModelForm):
             "max_participants": forms.NumberInput(
                 attrs={"class": "form-control", "min": 1}
             ),
+            "level": forms.Select(attrs={"class": "form-select"}),
         }
 
 

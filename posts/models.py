@@ -204,6 +204,13 @@ class Comment(models.Model):
 
 
 class Event(models.Model):
+    LEVEL_CHOICES = [
+        ("all", " Para todos"),
+        ("beginner", "Principiante"),
+        ("intermediate", "Intermedio"),
+        ("advanced", "Avanzado"),
+        ("expert", "Experto"),
+    ]
     title = models.CharField(max_length=200, verbose_name="Título de la quedada")
     description = models.TextField(verbose_name="Descripción del plan")
     location = models.CharField(max_length=255, verbose_name="Lugar de encuentro")
@@ -231,6 +238,12 @@ class Event(models.Model):
     # Aforo máximo
     max_participants = models.PositiveIntegerField(
         default=10, verbose_name="Número máximo de asistentes"
+    )
+    level = models.CharField(
+        max_length=20,
+        choices=LEVEL_CHOICES,
+        default="beginner",
+        verbose_name="Nivel de la actividad",
     )
 
     @property

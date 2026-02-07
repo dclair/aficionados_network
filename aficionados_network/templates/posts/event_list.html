@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
             <h2 class="mb-0"><i class="bi bi-calendar-event me-2 text-hubs"></i>Explorar Quedadas</h2>
-            <p class="text-muted small mb-0">Busca por nombre, ciudad o afición</p>
+            <p class="text-muted small mb-0">Busca por nombre, nivel o afición</p>
         </div>
         <a href="{% url 'posts:event_create' %}" class="btn btn-hubs shadow-sm">
             <i class="bi bi-plus-lg"></i> Proponer Plan
@@ -19,41 +19,48 @@
     {# SECCIÓN: BARRA DE FILTROS #}
     <div class="card border-0 shadow-sm mb-5">
         <div class="card-body bg-light rounded border-start border-hubs border-4">
-            <form method="GET" action="{% url 'posts:event_list' %}" class="row g-3 align-items-end">
-                <div class="col-md-4">
+            <form method="GET" action="{% url 'posts:event_list' %}" class="row g-2 align-items-end">
+                <div class="col-md-3">
                     <label class="form-label small fw-bold text-muted">¿Qué buscas?</label>
-                    <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-hubs"></i></span>
-                        <input type="text" name="q" class="form-control border-start-0" 
-                               placeholder="Título o palabras clave..." value="{{ current_q }}">
+                        <input type="text" name="q" class="form-control border-start-0" placeholder="Título..." value="{{ current_q }}">
                     </div>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small fw-bold text-muted">Ciudad</label>
-                    <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <span class="input-group-text bg-white border-end-0"><i class="bi bi-geo-alt text-hubs"></i></span>
-                        <input type="text" name="city" class="form-control border-start-0" 
-                               placeholder="Ej: Madrid, Sevilla..." value="{{ current_city }}">
+                        <input type="text" name="city" class="form-control border-start-0" placeholder="Ej: Madrid..." value="{{ current_city }}">
                     </div>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small fw-bold text-muted">Categoría</label>
-                    <select name="hobby" class="form-select">
-                        <option value="all">Todas las aficiones</option>
+                    <select name="hobby" class="form-select form-select-sm">
+                        <option value="all">Todas</option>
                         {% for hobby in hobbies %}
-                            <option value="{{ hobby.id }}" {% if current_hobby == hobby.id|stringformat:"s" %}selected{% endif %}>
-                                {{ hobby.name }}
-                            </option>
+                            <option value="{{ hobby.id }}" {% if current_hobby == hobby.id|stringformat:"s" %}selected{% endif %}>{{ hobby.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-hubs w-100">Filtrar</button>
-                    {% if current_q or current_city or current_hobby != 'all' %}
-                        <a href="{% url 'posts:event_list' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">Nivel de la actividad</label>
+                    <select name="level" class="form-select form-select-sm">
+                        <option value="all">Cualquier nivel</option>
+                        <option value="beginner" {% if current_level == 'beginner' %}selected{% endif %}>Principiante</option>
+                        <option value="intermediate" {% if current_level == 'intermediate' %}selected{% endif %}>Intermedio</option>
+                        <option value="advanced" {% if current_level == 'advanced' %}selected{% endif %}>Avanzado</option>
+                        <option value="expert" {% if current_level == 'expert' %}selected{% endif %}>Experto</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex gap-1">
+                    <button type="submit" class="btn btn-hubs btn-sm w-100">Filtrar</button>
+                    {% if current_q or current_city or current_hobby != 'all' or current_level != 'all' %}
+                        <a href="{% url 'posts:event_list' %}" class="btn btn-sm btn-outline-secondary" title="Limpiar">
                             <i class="bi bi-trash"></i>
                         </a>
                     {% endif %}
@@ -62,87 +69,93 @@
         </div>
     </div>
 
-    {# 3. CUADRÍCULA DE EVENTOS #}
+    {# CUADRÍCULA DE EVENTOS #}
     <div class="row g-4">
         {% for event in events %}
         <div class="col-md-6 col-lg-4">
-            <div class="card h-100 card-hubs border-0 {% if event.is_canceled %}opacity-75 card-canceled{% endif %}">
+            <div class="card h-100 card-hubs border-0 {% if event.is_canceled %}opacity-75{% endif %} {% if event.is_match %}card-match-level{% endif %}">
                 
-                {# IMAGEN DEL EVENTO #}
                 <a href="{% url 'posts:event_detail' event.id %}" class="text-decoration-none">
                     <div class="img-event-wrapper">
                         {% if event.is_canceled %}
                             <div class="position-absolute top-50 start-50 translate-middle w-100 text-center" style="z-index: 10;">
-                                <span class="badge bg-danger fs-6 shadow-lg px-3 py-2">
-                                    <i class="bi bi-x-circle me-1"></i> PLAN CANCELADO
-                                </span>
+                                <span class="badge bg-danger px-3 py-2">PLAN CANCELADO</span>
                             </div>
                         {% endif %}
-
-                        {% if event.image %}
-                            <img src="{{ event.image.url }}" class="img-event-hubs {% if event.is_canceled %}grayscale-filter{% endif %}" alt="{{ event.title }}">
-                        {% else %}
-                            <img src="{% static 'img/default_event.png' %}" class="img-event-hubs {% if event.is_canceled %}grayscale-filter{% endif %}" alt="Hubs & Clicks">
-                        {% endif %}
+                        <img src="{% if event.image %}{{ event.image.url }}{% else %}{% static 'img/default_event.png' %}{% endif %}" 
+                             class="img-event-hubs {% if event.is_canceled %}grayscale-filter{% endif %}" alt="{{ event.title }}">
                     </div>
                 </a>
 
                 <div class="card-body d-flex flex-column">
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="badge badge-hubs">{{ event.hobby.name }}</span>
-                        <small class="text-muted"><i class="bi bi-person-circle me-1 text-hubs"></i>{{ event.organizer.username }}</small>
+                    <div class="d-flex justify-content-between mb-3 align-items-start">
+                        <div class="d-flex flex-wrap gap-1">
+                            <span class="badge badge-hubs">{{ event.hobby.name }}</span>
+                            
+                            {# Lógica de Niveles #}
+                            {% if event.level == 'all' %}
+                                <span class="badge bg-all-levels badge-level-text">
+                                    <i class="bi bi-people-fill"></i> Todos
+                                </span>
+                            {% elif event.level == 'beginner' %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle badge-level-text">
+                                    <i class="bi bi-reception-1"></i> Principiante
+                                </span>
+                            {% elif event.level == 'intermediate' %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle badge-level-text">
+                                    <i class="bi bi-reception-2"></i> Intermedio
+                                </span>
+                            {% elif event.level == 'advanced' %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle badge-level-text">
+                                    <i class="bi bi-reception-3"></i> Avanzado
+                                </span>
+                            {% elif event.level == 'expert' %}
+                                <span class="badge bg-dark text-white border border-dark badge-level-text">
+                                    <i class="bi bi-reception-4"></i> Experto
+                                </span>
+                            {% endif %}
+
+                            {# Match Personalizado #}
+                            {% if request.user.is_authenticated and event.is_match %}
+                                <span class="badge rounded-pill bg-info text-dark shadow-sm badge-level-text">
+                                    <i class="bi bi-star-fill"></i> Tu nivel
+                                </span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">@{{ event.organizer.username }}</small>
                     </div>
                     
                     <h5 class="card-title fw-bold text-hubs {% if event.is_canceled %}text-decoration-line-through text-muted{% endif %}">
                         {{ event.title }}
                     </h5>
-                    <p class="text-muted small mb-3">{{ event.description|truncatechars:100 }}</p>
+                    <p class="text-muted small mb-3">{{ event.description|truncatechars:80 }}</p>
                     
                     <div class="bg-light p-3 rounded mb-3 small border-start border-hubs border-3">
-                        <div class="mb-1">
-                            <i class="bi bi-geo-alt-fill text-danger me-2"></i><strong>{{ event.location }}</strong>
-                        </div>
-                        <div>
-                            <i class="bi bi-calendar-check me-2 text-hubs"></i>{{ event.event_date|date:"d M, Y - H:i" }}
-                        </div>
+                        <div class="mb-1"><i class="bi bi-geo-alt-fill text-danger me-2"></i><strong>{{ event.location }}</strong></div>
+                        <div><i class="bi bi-calendar-check me-2 text-hubs"></i>{{ event.event_date|date:"d M, H:i" }}</div>
                     </div>
 
-                    {# MODIFICADO: Pie de tarjeta con barra de progreso #}
                     <div class="mt-auto pt-3 border-top">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="extra-small fw-bold {% if event.participants.count >= event.max_participants %}text-danger{% else %}text-muted{% endif %}">
                                 <i class="bi bi-people-fill me-1"></i>{{ event.participants.count }}/{{ event.max_participants }}
                             </span>
-                            {% if event.participants.count >= event.max_participants %}
-                                <span class="badge bg-danger-subtle text-danger extra-small">Completo</span>
-                            {% endif %}
                         </div>
                         
-                        {# Barra de progreso visual #}
                         <div class="progress mb-3" style="height: 6px; background-color: var(--hubs-primary-subtle);">
                             <div class="progress-bar {% if event.participants.count >= event.max_participants %}bg-danger{% else %}bg-hubs{% endif %}" 
-                                 role="progressbar" 
                                  style="width: {% widthratio event.participants.count event.max_participants 100 %}%">
                             </div>
                         </div>
 
                         <div class="d-flex gap-2">
-                            <a href="{% url 'posts:event_detail' event.id %}" class="btn btn-sm btn-outline-hubs flex-grow-1 px-3">Ver</a>
-                            
-                            {% if event.is_canceled %}
-                                <span class="badge bg-light text-danger border d-flex align-items-center px-3 small">Cancelado</span>
-                            {% elif request.user == event.organizer %}
-                                <span class="badge bg-secondary d-flex align-items-center px-3">
-                                    <i class="bi bi-star-fill text-warning me-1"></i> Mío
-                                </span>
-                            {% else %}
+                            <a href="{% url 'posts:event_detail' event.id %}" class="btn btn-sm btn-outline-hubs flex-grow-1">Ver</a>
+                            {% if not event.is_canceled and request.user != event.organizer %}
                                 <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="js-form-loading m-0">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm {% if request.user in event.participants.all %}btn-danger{% else %}btn-success{% endif %} px-3 shadow-sm">
                                         <span class="spinner-border btn-spinner d-none"></span>
-                                        <span class="btn-text">
-                                            {% if request.user in event.participants.all %}Salir{% else %}Unirme{% endif %}
-                                        </span>
+                                        <span class="btn-text">{% if request.user in event.participants.all %}Salir{% else %}Unirme{% endif %}</span>
                                     </button>
                                 </form>
                             {% endif %}
@@ -152,26 +165,26 @@
             </div>
         </div>
         {% empty %}
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-search fs-1 text-hubs opacity-25"></i>
-                <h4 class="mt-3 text-muted">No hemos encontrado quedadas</h4>
-                <p>Prueba a cambiar los filtros o sé el primero en proponer un plan.</p>
-            </div>
+            <div class="col-12 text-center py-5 text-muted">No hemos encontrado quedadas con estos filtros.</div>
         {% endfor %}
     </div>
-    
+
     {# PAGINACIÓN #}
     {% if is_paginated %}
     <nav class="mt-5">
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
-                <li class="page-item"><a class="page-link text-hubs" href="?page={{ page_obj.previous_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_city %}&city={{ current_city }}{% endif %}{% if current_hobby %}&hobby={{ current_hobby }}{% endif %}">Anterior</a></li>
+                <li class="page-item">
+                    <a class="page-link text-hubs" href="?page={{ page_obj.previous_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_city %}&city={{ current_city }}{% endif %}{% if current_hobby %}&hobby={{ current_hobby }}{% endif %}{% if current_level %}&level={{ current_level }}{% endif %}">Anterior</a>
+                </li>
             {% endif %}
             
             <li class="page-item active"><span class="page-link bg-hubs border-hubs">{{ page_obj.number }}</span></li>
             
             {% if page_obj.has_next %}
-                <li class="page-item"><a class="page-link text-hubs" href="?page={{ page_obj.next_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_city %}&city={{ current_city }}{% endif %}{% if current_hobby %}&hobby={{ current_hobby }}{% endif %}">Siguiente</a></li>
+                <li class="page-item">
+                    <a class="page-link text-hubs" href="?page={{ page_obj.next_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_city %}&city={{ current_city }}{% endif %}{% if current_hobby %}&hobby={{ current_hobby }}{% endif %}{% if current_level %}&level={{ current_level }}{% endif %}">Siguiente</a>
+                </li>
             {% endif %}
         </ul>
     </nav>
@@ -179,5 +192,4 @@
 </div>
 
 <script src="{% static 'js/community.js' %}"></script>
-
 {% endblock %}

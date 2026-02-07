@@ -20,7 +20,7 @@
                     
                     <div class="text-center mb-4">
                         <div class="bg-hubs-subtle d-inline-block p-3 rounded-circle mb-3">
-                            <i class="bi bi-camera-fill text-hubs fs-2"></i>
+                            <i class="bi {% if form.instance.pk %}bi-pencil-fill{% else %}bi-camera-fill{% endif %} text-hubs fs-2"></i>
                         </div>
                     </div>
 
@@ -58,6 +58,24 @@
                                         <div class="d-none">{{ field }}</div>
                                     </div>
                                 </div>
+
+                            {# --- SECCIÓN PARA EL NIVEL CON HELP TEXT --- #}
+                            {% elif field.name == 'level' %}
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 text-hubs">
+                                        <i class="bi bi-bar-chart-steps"></i>
+                                    </span>
+                                    <div class="hubs-input-group flex-grow-1">
+                                        {{ field }}
+                                    </div>
+                                </div>
+                                {# TEXTO DE AYUDA DINÁMICO #}
+                                {% if field.help_text %}
+                                    <div class="form-text extra-small text-muted ps-1 mt-1">
+                                        <i class="bi bi-info-circle me-1"></i>{{ field.help_text }}
+                                    </div>
+                                {% endif %}
+
                             {% else %}
                                 <div class="hubs-input-group">
                                     {{ field }}
@@ -78,9 +96,7 @@
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary shadow-sm py-2 fw-bold" id="submit-btn">
                                 <span class="spinner-border spinner-border-sm d-none" id="btn-spinner" role="status" aria-hidden="true"></span>
-                                
                                 <i class="bi bi-check-circle me-1" id="btn-icon"></i>
-                                
                                 <span id="btn-text">
                                     {% if form.instance.pk %}Guardar cambios{% else %}Publicar{% endif %}
                                 </span>
