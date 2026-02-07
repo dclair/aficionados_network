@@ -463,7 +463,7 @@ class EventDetailView(LoginRequiredMixin, DetailView):
     login_url = "login"
 
     def get_context_data(self, **kwargs):
-        # 1. Obtenemos el diccionario base de Django (que ya trae al 'event')
+        # 1. Obtenemos el diccionario base de Django
         context = super().get_context_data(**kwargs)
 
         # 2. Obtenemos la lista de participantes
@@ -472,23 +472,42 @@ class EventDetailView(LoginRequiredMixin, DetailView):
         # 3. Obtenemos la lista de comentarios
         context["comment_form"] = EventCommentForm()
 
-        # 4. Lógica de match de nivel
+        # 4. Lógica de match y mentoría
         if self.request.user.is_authenticated:
-            # Buscamos el nivel del usuario para el hobby de este evento
             user_hobby = UserHobby.objects.filter(
                 profile__user=self.request.user, hobby=self.object.hobby
             ).first()
 
             if user_hobby:
                 context["user_level_label"] = user_hobby.get_level_display()
+
+                # Definimos el orden de los niveles para comparar
+                level_order = {
+                    "beginner": 0,
+                    "intermediate": 1,
+                    "advanced": 2,
+                    "expert": 3,
+                }
+
+                # Obtenemos valores numéricos (si es 'all', le damos -1 para que todos sean superiores)
+                event_val = level_order.get(self.object.level, -1)
+                user_val = level_order.get(user_hobby.level, 0)
+
+                # Es match si son iguales o el evento es para todos
                 context["is_match"] = (
                     self.object.level == "all" or self.object.level == user_hobby.level
+                )
+
+                # Eres mentor si tu nivel es estrictamente mayor al del evento
+                context["is_mentor"] = (
+                    user_val > event_val and self.object.level != "all"
                 )
             else:
                 context["user_level_label"] = "No definido"
                 context["is_match"] = self.object.level == "all"
+                context["is_mentor"] = False
 
-        # 5. Devolvemos el contexto completo
+        # 5. Devolvemos el contexto
         return context
 
 
