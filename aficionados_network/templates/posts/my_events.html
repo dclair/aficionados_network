@@ -1,24 +1,28 @@
 {% extends "general/layout.html" %}
+{% load static %}
 
 {% block content %}
 <div class="container py-5">
+    
+    {# CABECERA DE LA SECCIÓN #}
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-primary"></i>Mis Planes</h2>
+            <h2 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-info"></i>Mis Planes</h2>
             <p class="text-muted small d-none d-md-block">Gestiona los eventos que has organizado para la comunidad.</p>
         </div>
-        <a href="{% url 'posts:event_create' %}" class="btn btn-primary shadow-sm">
-            <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Crear Nuevo</span>
+        <a href="{% url 'posts:event_create' %}" class="btn btn-hubs shadow-sm">
+            <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Proponer Plan</span>
         </a>
     </div>
 
+    {# TABLA DE GESTIÓN #}
     <div class="card shadow-sm border-0 card-visible">
         <div class="table-responsive border-0 table-responsive-visible">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-secondary small fw-bold">
                     <tr>
                         <th class="ps-4 col-event-width">Evento</th>
-                        <th class="d-none d-sm-table-cell">Fecha</th> 
+                        <th class="text-center">Fecha</th> 
                         <th class="text-center">Estado</th>
                         <th class="text-end pe-4">Acciones</th>
                     </tr>
@@ -30,42 +34,49 @@
                             <div class="fw-bold text-dark text-truncate event-title-max" title="{{ event.title }}">
                                 {{ event.title }}
                             </div>
+                            {# Vista móvil: resaltado si es hoy #}
                             <small class="text-muted d-sm-none">
-                                <i class="bi bi-clock me-1"></i>{{ event.event_date|date:"d/m H:i" }}
+                                <i class="bi bi-clock me-1"></i>
+                                {% if event.event_date|date:"Y-m-d" == now|date:"Y-m-d" %}
+                                    <span class="text-info fw-bold">¡Hoy a las {{ event.event_date|date:"H:i" }}!</span>
+                                {% else %}
+                                    {{ event.event_date|date:"d/m H:i" }}
+                                {% endif %}
                             </small> 
                         </td>
 
-                        <td class="d-none d-sm-table-cell text-muted small">
-                            <div>{{ event.event_date|date:"d M, Y" }}</div>
-                            <div class="text-xs">{{ event.event_date|date:"H:i" }}h</div>
+                        {# COLUMNA DE FECHA REFINADA #}
+                        <td class="text-center d-none d-sm-table-cell">
+                            {% if event.event_date|date:"Y-m-d" == now|date:"Y-m-d" %}
+                                <span class="badge rounded-pill bg-info-subtle text-info extra-small mb-1" style="font-size: 0.65rem;">¡HOY!</span>
+                                <div class="small fw-bold text-info">{{ event.event_date|date:"d M Y" }}</div>
+                            {% else %}
+                                <div class="small fw-bold text-dark">{{ event.event_date|date:"d M Y" }}</div>
+                            {% endif %}
+                            <div class="extra-small text-muted">{{ event.event_date|date:"H:i" }}h</div>
                         </td>
 
+                        {# ESTADO DEL EVENTO #}
                         <td class="text-center">
                             {% if event.is_canceled %}
-                                <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-2" title="Cancelado">
-                                    <i class="bi bi-x-circle"></i>
-                                    <span class="d-none d-md-inline ms-1 small">Cancelado</span>
+                                <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-2">
+                                    <i class="bi bi-x-circle me-1"></i> Cancelado
                                 </span>
                             {% elif event.event_date < now %}
-                                <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-2" title="Finalizado">
-                                    <i class="bi bi-check2-all"></i>
-                                    <span class="d-none d-md-inline ms-1 small">Finalizado</span>
+                                <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-2">
+                                    <i class="bi bi-check2-all me-1"></i> Finalizado
                                 </span>
                             {% else %}
-                                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2" title="Activo">
-                                    <i class="bi bi-calendar-check"></i>
-                                    <span class="d-none d-md-inline ms-1 small">Activo</span>
+                                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2">
+                                    <i class="bi bi-calendar-check me-1"></i> Activo
                                 </span>
                             {% endif %}
                         </td>
 
+                        {# MENÚ DE ACCIONES #}
                         <td class="text-end pe-4">
                             <div class="dropdown">
-                                <button class="btn btn-light btn-sm border shadow-sm" 
-                                    type="button" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false" 
-                                    data-bs-popper-config='{"strategy":"fixed"}'>
+                                <button class="btn btn-light btn-sm border shadow-sm" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
@@ -84,10 +95,11 @@
                                     {% elif event.is_canceled and event.event_date > now %}
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <form action="{% url 'posts:event_reactivate' event.pk %}" method="post" class="d-inline">
+                                            <form action="{% url 'posts:event_reactivate' event.pk %}" method="POST" class="js-form-loading">
                                                 {% csrf_token %}
                                                 <button type="submit" class="dropdown-item py-2 text-success">
-                                                    <i class="bi bi-arrow-clockwise me-2"></i> Reactivar
+                                                    <span class="spinner-border spinner-border-sm btn-spinner d-none me-2"></span>
+                                                    <span class="btn-text"><i class="bi bi-arrow-clockwise me-2"></i> Reactivar</span>
                                                 </button>
                                             </form>
                                         </li>
@@ -95,40 +107,42 @@
                                 </ul>
                             </div>
 
-                            {# MODAL DE CONFIRMACIÓN PARA CANCELAR (ESTILO TEAL) #}
+                            {# MODAL DE CANCELACIÓN (INCLUYE SPINNER) #}
                             {% if not event.is_canceled and event.event_date > now %}
                             <div class="modal fade" id="cancelEventModal{{ event.id }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered modal-sm">
                                     <div class="modal-content modal-content-custom">
                                         <div class="modal-body text-center py-4">
-                                            <div class="modal-confirm-icon">
-                                                <i class="bi bi-info-circle-fill"></i>
+                                            <div class="modal-confirm-icon text-danger mb-3">
+                                                <i class="bi bi-exclamation-triangle-fill fs-1"></i>
                                             </div>
                                             <h6 class="fw-bold mb-2">¿Cancelar este plan?</h6>
-                                            <p class="text-muted small mb-0 text-start px-3">
-                                                Esta acción notificará a los asistentes que el evento <strong>{{ event.title }}</strong> no se llevará a cabo.
+                                            <p class="text-muted small mb-0 px-3">
+                                                Se enviará un aviso a todos los asistentes del plan <strong>{{ event.title }}</strong>.
                                             </p>
                                         </div>
-                                        <div class="modal-footer modal-footer-confirm justify-content-center">
-                                            <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">No, mantener</button>
-                                            <form action="{% url 'posts:event_cancel' event.pk %}" method="post" class="d-inline">
+                                        <div class="modal-footer justify-content-center border-0 pb-4">
+                                            <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Mantener</button>
+                                            <form action="{% url 'posts:event_cancel' event.pk %}" method="POST" class="js-form-loading d-inline">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger btn-sm px-3 fw-bold shadow-sm">Sí, cancelar plan</button>
+                                                <button type="submit" class="btn btn-danger btn-sm px-3 fw-bold shadow-sm">
+                                                    <span class="spinner-border spinner-border-sm btn-spinner d-none me-1"></span>
+                                                    <span class="btn-text">Sí, cancelar</span>
+                                                </button>
                                             </form>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             {% endif %}
-
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="4" class="text-center py-5">
-                            <div class="text-muted">
-                                <i class="bi bi-emoji-smile fs-1"></i>
-                                <p class="mt-2">Aún no has organizado planes. ¡Anímate a crear uno!</p>
+                            <div class="text-muted opacity-50">
+                                <i class="bi bi-calendar-x fs-1"></i>
+                                <p class="mt-2">Aún no has organizado planes.</p>
                             </div>
                         </td>
                     </tr>
@@ -138,4 +152,6 @@
         </div>          
     </div>
 </div>
+
+
 {% endblock %}
