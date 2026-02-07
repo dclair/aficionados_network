@@ -22,6 +22,7 @@ from django.db.models import Exists, OuterRef
 from itertools import chain
 from operator import attrgetter
 
+
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.core.mail import send_mail
