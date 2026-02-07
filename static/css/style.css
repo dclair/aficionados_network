@@ -646,3 +646,21 @@ footer {
     border-color: #6f42c1 !important; /* Un tono púrpura */
     box-shadow: 0 4px 20px rgba(111, 66, 193, 0.2) !important;
 }
+
+/* Banner de Match en Detalle */
+.alert-info {
+    background: linear-gradient(45deg, #e0f7fa, #ffffff);
+    color: #0b5961;
+    border-left: 5px solid #0dcaf0 !important;
+}
+
+.alert-info i {
+    color: #0dcaf0;
+    animation: shine 2s infinite;
+}
+
+@keyframes shine {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}

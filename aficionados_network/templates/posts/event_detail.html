@@ -12,7 +12,48 @@
     <i class="bi bi-arrow-left"></i> Volver al listado
 </a>
 
-{# 2. ALERTA DE CANCELACIÓN O FINALIZACIÓN #}
+{# 2. INFORMACIÓN DE NIVEL #}
+<div class="mb-4">
+    <h5 class="fw-bold mb-3">Información de nivel</h5>
+    
+    <div class="d-flex align-items-center gap-2 mb-3">
+        {# Etiqueta de nivel del evento #}
+        {% if object.level == 'all' %}
+            <span class="badge bg-all-levels badge-level-text"><i class="bi bi-people-fill me-1"></i>Todos los niveles</span>
+        {% elif object.level == 'beginner' %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle badge-level-text"><i class="bi bi-reception-1 me-1"></i>Principiante</span>
+        {% elif object.level == 'intermediate' %}
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle badge-level-text"><i class="bi bi-reception-2 me-1"></i>Intermedio</span>
+        {% elif object.level == 'advanced' %}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle badge-level-text"><i class="bi bi-reception-3 me-1"></i>Avanzado</span>
+        {% elif object.level == 'expert' %}
+            <span class="badge bg-dark text-white border border-dark badge-level-text"><i class="bi bi-reception-4 me-1"></i>Experto</span>
+        {% endif %}
+    </div>
+
+    {% if request.user.is_authenticated %}
+        {% if is_match %}
+            {# MENSAJE DE ÉXITO SI HAY MATCH #}
+            <div class="alert alert-info border-0 shadow-sm d-flex align-items-center" role="alert">
+                <i class="bi bi-stars fs-4 me-3"></i>
+                <div>
+                    <div class="fw-bold">¡Esta quedada es para ti!</div>
+                    <div class="small">Tu nivel de <strong>{{ user_level_label }}</strong> coincide con el plan.</div>
+                </div>
+            </div>
+        {% else %}
+            {# INFO SI NO HAY MATCH #}
+            <div class="p-3 bg-light rounded border-start border-3 border-secondary">
+                <div class="small text-muted">
+                    <i class="bi bi-person-badge me-1"></i>
+                    Tu nivel en {{ object.hobby.name }}: <strong>{{ user_level_label }}</strong>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# 3. ALERTA DE CANCELACIÓN O FINALIZACIÓN #}
 {% if event.is_canceled %}
 <div class="alert alert-danger border-0 shadow-sm d-flex flex-column p-4 mb-4 rounded-4">
     <div class="d-flex align-items-center">
@@ -43,7 +84,7 @@
 </div>
 {% endif %}
 
-{# 3. HERO DEL EVENTO #}
+{# 4. HERO DEL EVENTO #}
 <div class="card border-0 shadow-sm overflow-hidden mb-4 card-hubs {% if event.is_canceled or event.is_past %}opacity-75{% endif %}">
     <div class="row g-0">
         <div class="col-lg-8">
@@ -81,7 +122,7 @@
     </div>
 </div>
 
-{# 4. CUERPO PRINCIPAL #}
+{# 5. CUERPO PRINCIPAL #}
 <div class="row mt-4">
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm p-4 mb-4 card-hubs">

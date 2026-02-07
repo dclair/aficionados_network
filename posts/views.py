@@ -465,11 +465,30 @@ class EventDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         # 1. Obtenemos el diccionario base de Django (que ya trae al 'event')
         context = super().get_context_data(**kwargs)
+
         # 2. Obtenemos la lista de participantes
         context["participants"] = self.object.participants.all()
+
         # 3. Obtenemos la lista de comentarios
         context["comment_form"] = EventCommentForm()
-        # 4. Devolvemos la caja de comentarios
+
+        # 4. Lógica de match de nivel
+        if self.request.user.is_authenticated:
+            # Buscamos el nivel del usuario para el hobby de este evento
+            user_hobby = UserHobby.objects.filter(
+                profile__user=self.request.user, hobby=self.object.hobby
+            ).first()
+
+            if user_hobby:
+                context["user_level_label"] = user_hobby.get_level_display()
+                context["is_match"] = (
+                    self.object.level == "all" or self.object.level == user_hobby.level
+                )
+            else:
+                context["user_level_label"] = "No definido"
+                context["is_match"] = self.object.level == "all"
+
+        # 5. Devolvemos el contexto completo
         return context
 
 
