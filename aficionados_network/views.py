@@ -19,7 +19,7 @@ from posts.forms import ProfileFollowForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.shortcuts import redirect, render, get_object_or_404
-from profiles.models import UserProfile, Follow, UserHobby
+from profiles.models import UserProfile, Follow, UserHobby, Hobby
 from django.contrib.auth.mixins import LoginRequiredMixin
 from posts.models import Posts, Event
 from django.contrib.auth.decorators import login_required
@@ -50,19 +50,34 @@ User = get_user_model()
 class HomeView(TemplateView):
     template_name = "general/home.html"
 
+    # aficionados_network/views.py
+
+
+from profiles.models import (
+    UserProfile,
+    Follow,
+    UserHobby,
+    Hobby,
+)  # Asegura estos imports
+
+
+class HomeView(TemplateView):
+    template_name = "general/home.html"
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
+        now = timezone.now()
 
-        # --- LÓGICA DE POSTS (Mantenida exactamente igual) ---
+        # --- TU LÓGICA DE POSTS ORIGINAL ---
         last_posts = Posts.objects.none()
-        if self.request.user.is_authenticated:
-            has_profile = hasattr(self.request.user, "profile")
+        if user.is_authenticated:
+            has_profile = hasattr(user, "profile")
             context["has_profile"] = has_profile
-
             if not has_profile:
                 last_posts = Posts.objects.all().order_by("-created_at")[:20]
             else:
-                profile = self.request.user.profile
+                profile = user.profile
                 seguidos = Follow.objects.filter(follower=profile).values_list(
                     "following__user", flat=True
                 )
@@ -73,69 +88,64 @@ class HomeView(TemplateView):
                     last_posts = Posts.objects.all().order_by("-created_at")[:20]
         else:
             last_posts = Posts.objects.all().order_by("-created_at")[:20]
-
         context["last_posts"] = last_posts
 
-        # --- LÓGICA DE EVENTOS ---
-        base_filter = Q(event_date__gte=timezone.now(), is_canceled=False)
+        # --- TU LÓGICA DE EVENTOS ORIGINAL ---
+        base_filter = Q(event_date__gte=now, is_canceled=False)
+        upcoming_events = Event.objects.none()
 
-        if self.request.user.is_authenticated and hasattr(self.request.user, "profile"):
-            user_hobbies = self.request.user.profile.hobbies.all()
+        if user.is_authenticated and hasattr(user, "profile"):
+            my_hobbies = user.profile.hobbies.all()  # Tus aficiones para la sidebar
 
-            if user_hobbies.exists():
-                personal_filter = Q(hobby__in=user_hobbies) | Q(
-                    organizer=self.request.user
+            # --- LÓGICA DE NIVELES PARA LA SIDEBAR (NUEVO) ---
+            user_levels = UserHobby.objects.filter(profile=user.profile).values(
+                "hobby_id", "level"
+            )
+            levels_map = {item["hobby_id"]: item["level"] for item in user_levels}
+
+            for hobby in my_hobbies:
+                u_level = levels_map.get(hobby.id)
+                hobby.match_count = (
+                    Event.objects.filter(
+                        hobby=hobby, **{"event_date__gte": now, "is_canceled": False}
+                    )
+                    .filter(
+                        Q(level="all") | Q(level=u_level) if u_level else Q(level="all")
+                    )
+                    .count()
                 )
+            context["my_hobbies"] = my_hobbies  # Esta es la variable que usa tu sidebar
 
-                events = (
+            if my_hobbies.exists():
+                personal_filter = Q(hobby__in=my_hobbies) | Q(organizer=user)
+                upcoming_events = (
                     Event.objects.filter(base_filter & personal_filter)
                     .select_related("hobby")
                     .distinct()
                     .order_by("event_date")[:5]
                 )
-
-                # --- NUEVA LÓGICA DE NIVELES PARA EL MATCH ---
-                user_levels_qs = UserHobby.objects.filter(
-                    profile=self.request.user.profile
-                ).values("hobby_id", "level")
-
-                levels_map = {
-                    item["hobby_id"]: item["level"] for item in user_levels_qs
-                }
-                level_order = {
-                    "beginner": 0,
-                    "intermediate": 1,
-                    "advanced": 2,
-                    "expert": 3,
-                }
-
-                for event in events:
-                    user_level = levels_map.get(event.hobby.id)
-                    # Es match si es igual o el evento es para todos
-                    event.is_match = (event.level == "all") or (
-                        event.level == user_level
-                    )
-
-                    # Lógica de mentor (solo si no es "all")
-                    if event.level != "all" and user_level:
-                        event_val = level_order.get(event.level, -1)
-                        user_val = level_order.get(user_level, 0)
-                        event.is_mentor = user_val > event_val
-                    else:
-                        event.is_mentor = False
-
-                context["upcoming_events"] = events
                 context["filtered_by_hobbies"] = True
             else:
-                context["upcoming_events"] = Event.objects.filter(base_filter).order_by(
+                upcoming_events = Event.objects.filter(base_filter).order_by(
                     "event_date"
                 )[:5]
                 context["filtered_by_hobbies"] = False
-        else:
-            context["upcoming_events"] = Event.objects.filter(base_filter).order_by(
-                "event_date"
-            )[:5]
 
+            # --- LÓGICA DE MATCH PARA LAS TARJETAS (NUEVO) ---
+            level_order = {"beginner": 0, "intermediate": 1, "advanced": 2, "expert": 3}
+            for event in upcoming_events:
+                u_level = levels_map.get(event.hobby.id)
+                event.is_match = (event.level == "all") or (event.level == u_level)
+                if event.level != "all" and u_level:
+                    event.is_mentor = level_order.get(u_level, 0) > level_order.get(
+                        event.level, -1
+                    )
+        else:
+            upcoming_events = Event.objects.filter(base_filter).order_by("event_date")[
+                :5
+            ]
+
+        context["upcoming_events"] = upcoming_events
         return context
 
 

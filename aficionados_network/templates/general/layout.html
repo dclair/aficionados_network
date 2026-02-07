@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
     document.addEventListener('htmx:configRequest', (event) => {
@@ -33,13 +34,19 @@
             
             <div class="col-12 d-lg-none mb-4">
                 <h6 class="sidebar-label px-1">MIS GRUPOS</h6>
-                <div class="mobile-hobby-scroll d-flex pb-2">
+                <div class="mobile-hobby-scroll d-flex pb-2 pt-2">
                     {% for hobby in my_hobbies %}
-                        <a href="{% url 'posts:hobby_hub' hobby.slug %}" class="mobile-hobby-pill">
+                        <a href="{% url 'posts:hobby_hub' hobby.slug %}" class="mobile-hobby-pill position-relative text-decoration-none">
                             <div class="hobby-dot-sm bg-hubs">
                                 {{ hobby.name|slice:":1"|upper }}
                             </div>
                             <span>{{ hobby.name }}</span>
+                            
+                            {% if request.user.is_authenticated and hobby.match_count > 0 %}
+                                <span class="badge rounded-pill bg-info text-dark mobile-hobby-badge">
+                                    {{ hobby.match_count }}
+                                </span>
+                            {% endif %}
                         </a>
                     {% empty %}
                         <small class="text-muted">Sin aficiones</small>
@@ -53,11 +60,19 @@
                     <div class="list-group sidebar-group shadow-sm">
                         {% for hobby in my_hobbies %}
                             <a href="{% url 'posts:hobby_hub' hobby.slug %}" 
-                            class="list-group-item list-group-item-action sidebar-item">
-                                <div class="hobby-dot bg-hubs">
-                                    {{ hobby.name|slice:":1"|upper }}
+                               class="list-group-item list-group-item-action sidebar-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="hobby-dot bg-hubs">
+                                        {{ hobby.name|slice:":1"|upper }}
+                                    </div>
+                                    <span class="hobby-name">{{ hobby.name }}</span>
                                 </div>
-                                <span class="hobby-name">{{ hobby.name }}</span>
+                                
+                                {% if request.user.is_authenticated and hobby.match_count > 0 %}
+                                    <span class="badge rounded-pill bg-info text-dark match-pulse sidebar-badge">
+                                        {{ hobby.match_count }}
+                                    </span>
+                                {% endif %}
                             </a>
                         {% endfor %}
                     </div>

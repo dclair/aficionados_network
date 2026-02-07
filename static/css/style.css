@@ -134,6 +134,49 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
     font-weight: 700;
 }
 
+/* --- SIDEBAR BADGES & ANIMATIONS --- */
+
+.sidebar-badge {
+    font-size: 0.65rem !important;
+    padding: 0.4em 0.6em !important;
+    min-width: 1.5rem;
+}
+
+.sidebar-badge-mini {
+    font-size: 0.55rem !important;
+    padding: 0.25em 0.5em !important;
+    border: 2px solid #fff;
+}
+
+/* Animación de pulso para el contador de match */
+.match-pulse {
+    animation: sidebar-glow 2s infinite ease-in-out;
+}
+
+@keyframes sidebar-glow {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(13, 202, 240, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(13, 202, 240, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(13, 202, 240, 0);
+    }
+}
+
+/* Ajustes para que la sidebar lateral sea flexible */
+.sidebar-item {
+    transition: all 0.2s ease;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(11, 89, 97, 0.05) !important;
+}
+
 /* ============================================================
    6. CARDS DE EVENTOS
    ============================================================ */
@@ -712,4 +755,22 @@ footer {
 @keyframes mentor-glow {
     0%, 100% { opacity: 0.7; }
     50% { opacity: 1; text-shadow: 0 0 5px rgba(111, 66, 193, 0.5); }
+}
+/* Badge específico para móvil */
+.mobile-hobby-badge {
+    position: absolute;
+    top: -4px;      /* Ajusta este valor para bajarlo o subirlo */
+    right: -4px;    /* Ajusta este valor para moverlo lateralmente */
+    font-size: 0.6rem !important;
+    padding: 0.25em 0.5em !important;
+    border: 2px solid #fff; /* Ayuda a que resalte sobre el fondo */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 5;
+}
+
+/* Espaciado del contenedor para evitar cortes */
+.mobile-hobby-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 12px !important; /* Espacio para que el badge respire */
 }
