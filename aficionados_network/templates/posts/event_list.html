@@ -144,7 +144,7 @@
                                 <form action="{% url 'posts:toggle_attendance' event.id %}" method="POST" class="js-form-loading m-0">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm {% if request.user in event.participants.all %}btn-danger{% else %}btn-success{% endif %} px-3 shadow-sm">
-                                        <span class="spinner-border spinner-border-sm btn-spinner d-none"></span>
+                                        <span class="spinner-border btn-spinner d-none"></span>
                                         <span class="btn-text">
                                             {% if request.user in event.participants.all %}Salir{% else %}Unirme{% endif %}
                                         </span>
@@ -184,6 +184,6 @@
 </div>
 
 {# CARGA DEL SCRIPT DE SPINNER #}
-<script src="{% static 'js/spinner.js' %}"></script>
+<script src="{% static 'js/community.js' %}"></script>
 
 {% endblock %}

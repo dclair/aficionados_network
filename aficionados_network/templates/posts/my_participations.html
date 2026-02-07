@@ -20,6 +20,7 @@
                     <tr>
                         <th class="ps-4 col-event-width">Evento</th>
                         <th class="d-none d-sm-table-cell">Organizador</th>
+                        <th class="text-center">Fecha</th>
                         <th class="text-center">Estado</th>
                         <th class="text-end pe-4">Acciones</th>
                     </tr>
@@ -35,6 +36,17 @@
 
                         <td class="d-none d-sm-table-cell">
                             <span class="small text-dark">{{ event.organizer.username }}</span>
+                        </td>
+
+                        <td class="text-center">
+                            {# Lógica para destacar si el evento es HOY #}
+                            {% if event.event_date|date:"Y-m-d" == now|date:"Y-m-d" %}
+                                <span class="badge rounded-pill bg-info-subtle text-info extra-small mb-1 animate__animated animate__pulse animate__infinite" style="font-size: 0.65rem;">¡HOY!</span>
+                                <div class="small fw-bold text-info">{{ event.event_date|date:"d M Y" }}</div>
+                            {% else %}
+                                <div class="small fw-bold text-dark">{{ event.event_date|date:"d M Y" }}</div>
+                            {% endif %}
+                            <div class="extra-small text-muted">{{ event.event_date|date:"H:i" }}h</div>
                         </td>
 
                         <td class="text-center">
@@ -147,7 +159,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center py-5 text-muted">
+                        <td colspan="5" class="text-center py-5 text-muted">
                             <p>No tienes planes registrados.</p>
                         </td>
                     </tr>

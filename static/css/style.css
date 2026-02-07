@@ -181,6 +181,17 @@ h1, h2 { text-shadow: var(--hubs-text-shadow-depth); }
     flex-direction: column;
 }
 
+/* Detalle de fecha en Mis Inscripciones */
+.bi-calendar3 {
+    font-size: 0.9rem;
+    color: var(--hubs-primary); /* Tu Teal corporativo */
+}
+
+.text-muted {
+    font-size: 0.95rem;
+    letter-spacing: -0.2px;
+}
+
 /* ============================================================
    7. UTILIDADES Y ANIMACIÓN
    ============================================================ */
@@ -226,6 +237,34 @@ footer {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+}
+
+/* ============================================================
+   8. DISTINTIVOS DE USUARIO (ORGANIZADOR)
+   ============================================================ */
+.badge-organizer {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background-color: #ffc107; /* Amarillo/Dorado vibrante */
+    color: white !important;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    border: 2px solid white; /* Crea un anillo blanco que lo separa de la foto */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+/* Asegura que el icono de la estrella dentro del badge sea blanco */
+.badge-organizer i {
+    color: white !important;
+    font-size: 10px;
+    line-height: 1;
 }
 
 /* ============================================================
@@ -325,9 +364,43 @@ footer {
 
 
 /* --- LÓGICA HTMX --- */
-.htmx-indicator { display: none; }
-.htmx-request .htmx-indicator { display: inline-block; }
-.htmx-request .htmx-indicator-hide { display: none; }
+/* 1. Ocultar el spinner por defecto */
+.htmx-indicator {
+    display: none !important;
+}
+
+/* 2. Mostrar el spinner solo cuando HTMX está trabajando */
+.htmx-request.htmx-indicator,
+.htmx-request .htmx-indicator {
+    display: inline-block !important;
+}
+
+/* 3. Ocultar el texto del botón mientras HTMX está trabajando */
+.htmx-request.htmx-indicator-hide,
+.htmx-request .htmx-indicator-hide {
+    display: none !important;
+}
+
+/* ============================================================
+   ESTILOS PARA CARGA DE FORMULARIOS (SPINNER)
+   ============================================================ */
+.btn-spinner {
+    width: 1rem !important;
+    height: 1rem !important;
+    border-width: 0.15em !important;
+    vertical-align: middle;
+    /* Eliminamos el color blanco fijo para que herede el del botón */
+}
+
+/* Solo forzamos blanco en botones que tienen fondo de color sólido */
+.btn-hubs .btn-spinner, 
+.btn-success .btn-spinner, 
+.btn-danger .btn-spinner,
+.btn-primary .btn-spinner {
+    color: white !important;
+}
+
+/* Para botones outline, el spinner usará el color del borde/texto automáticamente */
 
 /* ============================================================
    10. MODAL DE POST RESPONSIVO (FIX PARA IPHONE)

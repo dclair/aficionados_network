@@ -63,75 +63,74 @@ const CommunityHub = {
         });
     },
 
-    // 4. Estado de Carga (Spinner) - ¡ESTA ES LA VERSIÓN UNIFICADA!
+    // 4. Estado de Carga (Spinner) - ¡VERSION MEJORADA Y UNIVERSAL!
     initLoadingState: function() {
-        // Buscamos el botón con el ID exacto de tu HTML
-        const submitBtn = document.getElementById('submit-btn');
-        
-        if (submitBtn) {
-            // Buscamos el formulario al que pertenece el botón
-            const form = submitBtn.closest('form');
-            const spinner = document.getElementById('btn-spinner');
-            const icon = document.getElementById('btn-icon');
-            const text = document.getElementById('btn-text');
-
-            if (form) {
-                form.addEventListener('submit', function() {
-                    // 1. Desactivar botón para evitar doble envío
-                    submitBtn.disabled = true;
+        /**
+         * Esta función ahora escucha CUALQUIER formulario con la clase .js-form-loading
+         * o el botón específico #submit-btn.
+         */
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            
+            // Caso A: Formularios de la lista de eventos (.js-form-loading)
+            if (form.classList.contains('js-form-loading')) {
+                const button = form.querySelector('button[type="submit"]');
+                if (button) {
+                    const spinner = button.querySelector('.btn-spinner');
+                    const text = button.querySelector('.btn-text');
                     
-                    // 2. Mostrar Spinner
                     if (spinner) spinner.classList.remove('d-none');
+                    if (text) text.classList.add('d-none');
                     
-                    // 3. Ocultar Icono
-                    if (icon) icon.classList.add('d-none');
-                    
-                    // 4. Cambiar Texto
-                    if (text) {
-                        text.innerText = "Procesando...";
-                    }
-                });
+                    button.disabled = true;
+                    button.classList.add('disabled');
+                }
             }
-        }
+            
+            // Caso B: El botón único de "Crear Post" (#submit-btn)
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn && form.contains(submitBtn)) {
+                const spinner = document.getElementById('btn-spinner');
+                const icon = document.getElementById('btn-icon');
+                const text = document.getElementById('btn-text');
+
+                submitBtn.disabled = true;
+                if (spinner) spinner.classList.remove('d-none');
+                if (icon) icon.classList.add('d-none');
+                if (text) text.innerText = "Procesando...";
+            }
+        });
     }
 };
 
-// Arrancar todas las funciones cuando el DOM esté listo
+// --- RESTO DEL CODIGO (Masonry, Back to Top, Validation) SE MANTIENE IGUAL ---
 document.addEventListener('DOMContentLoaded', () => {
     CommunityHub.initImagePreview();
     CommunityHub.initCharCounter();
     CommunityHub.initSmartScroll();
-    CommunityHub.initLoadingState(); // Se encarga de todo ahora
+    CommunityHub.initLoadingState();
 });
-
 
 // Botón Back to Top
 const mybutton = document.getElementById("btn-back-to-top");
+if (mybutton) {
+    window.onscroll = function () {
+        if (document.documentElement.scrollTop > 50) {
+            mybutton.classList.remove("d-none");
+        } else {
+            mybutton.classList.add("d-none");
+        }
+    };
+    mybutton.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+}
 
-window.onscroll = function () {
-    if (document.documentElement.scrollTop > 50) {
-        mybutton.classList.remove("d-none");
-    } else {
-        mybutton.classList.add("d-none");
-    }
-};
-
-mybutton.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-});
-
-/**
- * Validación de Formularios de Bootstrap 5
- * Busca cualquier formulario con la clase .needs-validation y detiene el envío
- * si los campos no son válidos, mostrando los errores visuales.
- */
+// Validación de Bootstrap
 (function () {
     'use strict'
-    
-    // Escuchamos el evento de carga del DOM para asegurar que los elementos existen
     document.addEventListener('DOMContentLoaded', function() {
         const forms = document.querySelectorAll('.needs-validation');
-        
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
                 if (!form.checkValidity()) {
@@ -144,68 +143,33 @@ mybutton.addEventListener("click", () => {
     });
 })();
 
-
-// CON ESTO SE INICIALIZA EL MASONRY galeria de imagenes,
-// Usamos una función autoejecutable para proteger las variables
+// Masonry y HTMX
 (function() {
     'use strict';
-
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Community Hub JS: Cargado y listo.');
-
-        // ==============================================
-        // 1. INICIALIZACIÓN DE LA GALERÍA MASONRY
-        // ==============================================
         const gridContainer = document.querySelector('.clicks-grid');
-        let msnry; // Variable "global" dentro de este ámbito para acceder luego
+        let msnry;
 
-        // Solo ejecutamos si estamos en la página de la galería
         if (gridContainer) {
-            console.log('Galería detectada. Iniciando Masonry...');
-
-            // Esperamos a que las imágenes de la carga inicial estén listas
             imagesLoaded(gridContainer, function() {
                 msnry = new Masonry(gridContainer, {
                     itemSelector: '.grid-item',
-                    columnWidth: '.grid-item', // Usa el ancho del ítem como base
-                    percentPosition: true,     // Importante para diseño responsivo
-                    transitionDuration: '0.4s' // Animación suave al reordenar
+                    columnWidth: '.grid-item',
+                    percentPosition: true,
+                    transitionDuration: '0.4s'
                 });
-
-                // Inicializamos el Lightbox para las primeras fotos
                 GLightbox({ selector: '.glightbox', loop: true });
-                console.log('Masonry inicializado correctamente.');
             });
         }
 
-        // ==============================================
-        // 2. ESCUCHA DE HTMX (EL SCROLL INFINITO) - ¡LA CLAVE AQUÍ!
-        // ==============================================
         document.body.addEventListener('htmx:afterOnLoad', function(evt) {
-            // Verificamos si la petición que acaba de terminar es la de la galería
-            // Buscamos si la URL de la petición contiene "page=" (indicador de paginación)
-            // Y nos aseguramos de que el grid existe en esta página.
             if (gridContainer && msnry && evt.detail.xhr.responseURL.includes('page=')) {
-                console.log('HTMX ha traído nuevas fotos. Reordenando Masonry...');
-
-                // ¡IMPORTANTE! Esperar a que las NUEVAS imágenes se descarguen
                 imagesLoaded(gridContainer, function() {
-                    // 1. Dile a Masonry que busque los elementos nuevos en el DOM
                     msnry.reloadItems();
-                    // 2. Dile a Masonry que recalcule todas las posiciones
                     msnry.layout();
-
-                    // 3. Reinicializa GLightbox para que las fotos nuevas se puedan ampliar
                     GLightbox({ selector: '.glightbox', loop: true });
-
-                    console.log('Masonry reordenado y Lightbox actualizado.');
                 });
             }
         });
-
-        // ==============================================
-        // 3. OTRAS FUNCIONALIDADES DEL HUB (Ej: Botón volver arriba)
-        // ==============================================
-        // ... el resto de tu código para el botón, si lo tienes ...
     });
 })();
