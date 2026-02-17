@@ -3,8 +3,8 @@
 *.pot
 *.pyc
 __pycache__
-# db.sqlite3
-media
+db.sqlite3
+media/
 
 # Backup files # 
 *.bak 
@@ -139,10 +139,8 @@ GitHub.sublime-settings
 
 # archivos del sistema
 .DS_Store
-*.log
 
 # archivos temporales
 *.tmp
 *.temp
-
 
